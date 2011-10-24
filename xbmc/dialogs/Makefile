@@ -12,6 +12,7 @@ SRCS=GUIDialogBoxBase.cpp \
      GUIDialogMuteBug.cpp \
      GUIDialogNumeric.cpp \
      GUIDialogOK.cpp \
+		 GUIDialogPermissions.cpp \
      GUIDialogPlayEject.cpp \
      GUIDialogPlayerControls.cpp \
      GUIDialogProgress.cpp \

@@ -326,6 +326,7 @@
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogMuteBug.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogNumeric.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogOK.cpp" />
+    <ClCompile Include="..\..\xbmc\dialogs\GUIDialogPermissions.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogPlayEject.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogPlayerControls.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogProgress.cpp" />
@@ -756,6 +757,7 @@
     <ClCompile Include="..\..\xbmc\threads\LockFree.cpp" />
     <ClCompile Include="..\..\xbmc\threads\platform\Implementation.cpp" />
     <ClInclude Include="..\..\xbmc\cores\AudioRenderers\IAudioRenderer.h" />
+    <ClInclude Include="..\..\xbmc\dialogs\GUIDialogPermissions.h" />
     <ClInclude Include="..\..\xbmc\filesystem\FileUPnP.h" />
     <ClInclude Include="..\..\xbmc\storage\DetectDVDType.h" />
     <ClInclude Include="..\..\xbmc\threads\platform\win\Implementation.cpp" />

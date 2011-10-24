@@ -245,6 +245,7 @@
 #include "pictures/GUIDialogPictureInfo.h"
 #include "addons/GUIDialogAddonSettings.h"
 #include "addons/GUIDialogAddonInfo.h"
+#include "dialogs/GUIDialogPermissions.h"
 #ifdef HAS_LINUX_NETWORK
 #include "network/GUIDialogAccessPoints.h"
 #endif
@@ -1188,6 +1189,8 @@ bool CApplication::Initialize()
   g_windowManager.Add(new CGUIWindowScreensaver);        // window id = 2900 Screensaver
   g_windowManager.Add(new CGUIWindowWeather);            // window id = 2600 WEATHER
   g_windowManager.Add(new CGUIWindowStartup);            // startup window (id 2999)
+
+  g_windowManager.Add(new CGUIDialogPermissions);        // window id = 10151
 
   /* window id's 3000 - 3100 are reserved for python */
 
@@ -3231,6 +3234,8 @@ bool CApplication::Cleanup()
 
     g_windowManager.Remove(WINDOW_DIALOG_SEEK_BAR);
     g_windowManager.Remove(WINDOW_DIALOG_VOLUME_BAR);
+
+    g_windowManager.Delete(WINDOW_DIALOG_PERMISSIONS);
 
     CAddonMgr::Get().DeInit();
 
