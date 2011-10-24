@@ -1,5 +1,6 @@
 SRCS=ApplicationOperations.cpp \
      AudioLibrary.cpp \
+     ClientAuthManager.cpp \
      FileItemHandler.cpp \
      FileOperations.cpp \
      JSONRPC.cpp \

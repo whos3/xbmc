@@ -2571,6 +2571,9 @@
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogPermissions.cpp">
       <Filter>dialogs</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.cpp">
+      <Filter>interfaces\json-rpc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -5162,6 +5165,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogPermissions.h">
       <Filter>dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.h">
+      <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

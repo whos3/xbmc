@@ -466,6 +466,7 @@
     <ClCompile Include="..\..\xbmc\interfaces\info\SkinVariable.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ApplicationOperations.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\AudioLibrary.cpp" />
+    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\FileItemHandler.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\FileOperations.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\InputOperations.cpp" />
@@ -1413,6 +1414,7 @@
     <ClInclude Include="..\..\xbmc\interfaces\info\SkinVariable.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ApplicationOperations.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\AudioLibrary.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\FileItemHandler.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\FileOperations.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\IClient.h" />
