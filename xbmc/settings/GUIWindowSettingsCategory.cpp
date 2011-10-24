@@ -724,6 +724,12 @@ void CGUIWindowSettingsCategory::UpdateSettings()
         pControl->SetEnabled(g_guiSettings.GetBool("services.webserver"));
     }
 #endif
+    else if (strSetting.Equals("services.rememberclientauthentication"))
+    {
+      CGUIEditControl *pControl = (CGUIEditControl *)GetControl(pSettingControl->GetID());
+      if (pControl)
+        pControl->SetEnabled(g_guiSettings.GetBool("services.clientauthentication"));
+    }
 #ifdef HAS_AIRPLAY
     else if ( strSetting.Equals("services.airplaypassword") || 
               strSetting.Equals("services.useairplaypassword"))

@@ -52,6 +52,11 @@
 #include "ViewState.h"
 #include "guilib/Resolution.h"
 #include "guilib/GraphicContext.h"
+#include "utils/StdString.h"
+
+#ifdef HAS_JSONRPC
+#include "interfaces/json-rpc/IClient.h"
+#endif
 
 #include <vector>
 #include <map>
@@ -407,6 +412,10 @@ protected:
 
   void LoadUserFolderLayout();
 
+#ifdef HAS_JSONRPC
+  bool SaveJsonRpcClients(TiXmlNode *pNode) const;
+#endif
+
 private:
   std::vector<CProfile> m_vecProfiles;
   std::map<CStdString, int> m_watchMode;
@@ -414,6 +423,36 @@ private:
   unsigned int m_lastUsedProfile;
   unsigned int m_currentProfile;
   int m_nextIdProfile; // for tracking the next available id to give to a new profile to ensure id's are not re-used
+
+#ifdef HAS_JSONRPC
+  class CStoredJsonRpcClient : public JSONRPC::IClient
+  {
+  public:
+    CStoredJsonRpcClient(JSONRPC::IClient *client);
+    CStoredJsonRpcClient(TiXmlElement* pClientElement);
+
+    virtual bool SetPermissionFlags(int flags) { m_permissionFlags = flags; return true; }
+    virtual int  GetPermissionFlags() { return m_permissionFlags; }
+    virtual int  GetAnnouncementFlags() { return m_announcementFlags; }
+    virtual bool SetAnnouncementFlags(int flags) { m_announcementFlags = flags; return true; }
+
+    virtual bool SetAuthenticated() { m_authenticated = true; return true; }
+    virtual bool IsAuthenticated() { return m_authenticated; };
+    virtual bool SetIdentification(std::string identification) { m_identification = identification; return true; }
+    virtual std::string GetIdentification() { return m_identification; }
+    virtual bool SetName(std::string name) { m_name = name; return true; }
+    virtual std::string GetName() { return m_name; }
+
+    bool Save(TiXmlNode* pNode) const;
+
+  private:
+    int m_permissionFlags;
+    int m_announcementFlags;
+    bool m_authenticated;
+    CStdString m_identification;
+    CStdString m_name;
+  };
+#endif
 };
 
 extern class CSettings g_settings;

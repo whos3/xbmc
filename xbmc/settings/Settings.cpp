@@ -58,6 +58,10 @@
 #include "input/MouseStat.h"
 #include "filesystem/File.h"
 
+#ifdef HAS_JSONRPC
+#include "interfaces/json-rpc/ClientAuthManager.h"
+#endif
+
 using namespace std;
 using namespace XFILE;
 
@@ -761,8 +765,30 @@ bool CSettings::LoadSettings(const CStdString& strSettingsFile)
   {
     g_advancedSettings.m_logLevel = std::min(g_advancedSettings.m_logLevelHint, LOG_LEVEL_DEBUG/*LOG_LEVEL_NORMAL*/);
     CLog::Log(LOGNOTICE, "Disabled debug logging due to GUI setting. Level %d.", g_advancedSettings.m_logLevel);
-  }  
-  CLog::SetLogLevel(g_advancedSettings.m_logLevel);
+  }
+
+#ifdef HAS_JSONRPC
+  TiXmlElement *pJsonRpcElement = pRootElement->FirstChildElement("jsonrpc");
+  if (pJsonRpcElement)
+  {
+    TiXmlElement *pJsonRpcClient = pJsonRpcElement->FirstChildElement("client");
+    while (pJsonRpcClient)
+    {
+      try
+      {
+        CStoredJsonRpcClient client(pJsonRpcClient);
+        JSONRPC::CClientAuthManager::Add(&client);
+      }
+      catch (...)
+      {
+        CLog::Log(LOGWARNING, "Invalid <client> in <jsonrpc>");
+      }
+
+      pJsonRpcClient = pJsonRpcClient->NextSiblingElement("client");
+    }
+  }
+#endif
+
   return true;
 }
 
@@ -909,6 +935,15 @@ bool CSettings::SaveSettings(const CStdString& strSettingsFile, CGUISettings *lo
   XMLUtils::SetInt(pNode, "dynamicrangecompression", m_dynamicRangeCompressionLevel);
 
   SaveCalibration(pRoot);
+
+#ifdef HAS_JSONRPC
+  // jsonrpc settings
+  TiXmlElement jsonRpcNode("jsonrpc");
+  pNode = pRoot->InsertEndChild(jsonRpcNode);
+  if (!pNode) return false;
+  SaveJsonRpcClients(pNode);
+#endif
+
 
   if (localSettings) // local settings to save
     localSettings->SaveXML(pRoot);
@@ -1938,3 +1973,71 @@ void CSettings::LoadMasterForLogin()
   if (m_currentProfile != 0)
     LoadProfile(0);
 }
+
+#ifdef HAS_JSONRPC
+bool CSettings::SaveJsonRpcClients(TiXmlNode *pNode) const
+{
+  std::vector<JSONRPC::IClient*> clients;
+  JSONRPC::CClientAuthManager::GetClients(clients);
+
+  std::vector<JSONRPC::IClient*>::iterator iter;
+  std::vector<JSONRPC::IClient*>::iterator iterEnd = clients.end();
+  for (iter = clients.begin(); iter != iterEnd; iter++)
+  {
+    CStoredJsonRpcClient client(*iter);
+    client.Save(pNode);
+  }
+
+  return true;
+}
+
+CSettings::CStoredJsonRpcClient::CStoredJsonRpcClient(JSONRPC::IClient *client)
+{
+  if (client == NULL)
+    throw exception();
+
+  m_identification = client->GetIdentification();
+  m_name = client->GetName();
+  m_authenticated = client->IsAuthenticated();
+  m_permissionFlags = client->GetPermissionFlags();
+  m_announcementFlags = client->GetAnnouncementFlags();
+}
+
+CSettings::CStoredJsonRpcClient::CStoredJsonRpcClient(TiXmlElement* pClientElement)
+{
+  bool ok = true;
+  if (pClientElement)
+  {
+    if (!XMLUtils::GetString(pClientElement, "identification", m_identification) ||
+        !XMLUtils::GetString(pClientElement, "name", m_name) ||
+        !XMLUtils::GetBoolean(pClientElement, "authenticated", m_authenticated) ||
+        !XMLUtils::GetInt(pClientElement, "permissions", m_permissionFlags) ||
+        !XMLUtils::GetInt(pClientElement, "announcements", m_announcementFlags))
+      ok = false;
+  }
+  else
+    ok = false;
+
+  if (!ok)
+    throw exception();
+}
+
+bool CSettings::CStoredJsonRpcClient::Save(TiXmlNode* pNode) const
+{
+  if (pNode == NULL)
+    return false;
+
+  TiXmlElement xmlClientElement("client");
+  TiXmlNode *pClient = pNode->InsertEndChild(xmlClientElement);
+  if (pClient == NULL)
+    return false;
+
+  XMLUtils::SetString(pClient, "identification", m_identification);
+  XMLUtils::SetString(pClient, "name", m_name);
+  XMLUtils::SetBoolean(pClient, "authenticated", m_authenticated);
+  XMLUtils::SetInt(pClient, "permissions", m_permissionFlags);
+  XMLUtils::SetInt(pClient, "announcements", m_announcementFlags);
+
+  return true;
+}
+#endif
