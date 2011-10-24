@@ -20,6 +20,7 @@
  *
  */
 
+#include <map>
 #include "system.h"
 #ifdef HAS_WEB_SERVER
 #include "utils/StdString.h"
@@ -51,6 +52,17 @@ public:
   virtual bool PrepareDownload(const char *path, CVariant &details, std::string &protocol);
   virtual bool Download(const char *path, CVariant &result);
   virtual int GetCapabilities();
+
+  class CHTTPClientManager
+  {
+  public:
+    ~CHTTPClientManager();
+    JSONRPC::IClient* GetClient(std::string uuid = "");
+
+  private:
+    std::map<std::string, JSONRPC::IClient*> m_clients;
+  };
+
 private:
   enum HTTPMethod
   {
@@ -98,17 +110,39 @@ private:
 
   static const char *CreateMimeTypeFromExtension(const char *ext);
 
+  static int CookieIterator(void *cls, enum MHD_ValueKind kind, const char *key, const char* value);
+
   struct MHD_Daemon *m_daemon;
   bool m_running, m_needcredentials;
   CStdString m_Credentials64Encoded;
   CCriticalSection m_critSection;
 
+  static CHTTPClientManager m_clientManager;
+
   class CHTTPClient : public JSONRPC::IClient
   {
   public:
+    CHTTPClient(std::string uid);
     virtual int  GetPermissionFlags();
+    virtual bool SetPermissionFlags(int flags);
     virtual int  GetAnnouncementFlags();
     virtual bool SetAnnouncementFlags(int flags);
+
+    virtual bool SetAuthenticated() { m_authenticated = true; return true; }
+    virtual bool IsAuthenticated() { return m_authenticated; };
+    virtual bool SetIdentification(std::string identification) { m_identification = identification; return true; }
+    virtual std::string GetIdentification() { return m_identification; }
+    virtual bool SetName(std::string name) { m_name = name; return true; }
+    virtual std::string GetName() { return m_name; }
+
+    virtual std::string GetUID() { return m_uid; }
+
+  private:
+    int m_permissionFlags;
+    bool m_authenticated;
+    std::string m_identification;
+    std::string m_name;
+    std::string m_uid;
   };
 };
 #endif

@@ -23,6 +23,7 @@
 #ifdef HAS_WEB_SERVER
 #include "interfaces/http-api/HttpApi.h"
 #include "interfaces/json-rpc/JSONRPC.h"
+#include "settings/GUISettings.h"
 #include "filesystem/File.h"
 #include "filesystem/Directory.h"
 #include "URL.h"
@@ -32,6 +33,7 @@
 #include "threads/SingleLock.h"
 #include "XBDateTime.h"
 #include "addons/AddonManager.h"
+#include "utils/StringUtils.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "libmicrohttpd.dll.lib")
@@ -43,10 +45,19 @@
 #define NOT_SUPPORTED       "<html><head><title>Not Supported</title></head><body>The method you are trying to use is not supported by this server</body></html>"
 #define DEFAULT_PAGE        "index.html"
 
+#define COOKIE_JSONRPC_NAME "xbmc-jsonrpc-uid"
+#define COOKIE_DELIMITER    "; "
+#define COOKIE_ASSIGNMENT   "="
+#define COOKIE_SET          "Set-Cookie"
+#define COOKIE_SECURE       "secure"
+#define COOKIE_HTTPONLY     "httponly"
+
 using namespace ADDON;
 using namespace XFILE;
 using namespace std;
 using namespace JSONRPC;
+
+CWebServer::CHTTPClientManager CWebServer::m_clientManager;
 
 CWebServer::CWebServer()
 {
@@ -61,6 +72,20 @@ int CWebServer::FillArgumentMap(void *cls, enum MHD_ValueKind kind, const char *
   map<CStdString, CStdString> *arguments = (map<CStdString, CStdString> *)cls;
   arguments->insert( pair<CStdString,CStdString>(key,value) );
   return MHD_YES; 
+}
+
+int CWebServer::CookieIterator(void *cls, enum MHD_ValueKind kind, const char *key, const char* value)
+{
+  if (cls)
+  {
+    if (strcmpi(key, COOKIE_JSONRPC_NAME) == 0)
+    {
+      *((std::string *)cls) = value;
+      return MHD_NO;
+    }
+  }
+
+  return MHD_YES;
 }
 
 int CWebServer::AskForAuthentication(struct MHD_Connection *connection)
@@ -253,12 +278,30 @@ int CWebServer::JSONRPC(CWebServer *server, void **con_cls, struct MHD_Connectio
   {
     CStdString *jsoncall = (CStdString *)(*con_cls);
 
-    CHTTPClient client;
-    CStdString jsonresponse = CJSONRPC::MethodCall(*jsoncall, server, &client);
+    std::string uuid;
+    MHD_get_connection_values(connection, MHD_COOKIE_KIND, CookieIterator, &uuid);
+    bool isNew = uuid.empty();
+    CHTTPClient *client = (CHTTPClient *)m_clientManager.GetClient(uuid);
+    if (client == NULL)
+    {
+      client = (CHTTPClient *)m_clientManager.GetClient();
+      isNew = true;
+    }
+
+    CStdString jsonresponse = CJSONRPC::MethodCall(*jsoncall, server, client);
 
     struct MHD_Response *response = MHD_create_response_from_data(jsonresponse.length(), (void *) jsonresponse.c_str(), MHD_NO, MHD_YES);
     int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
     MHD_add_response_header(response, "Content-Type", "application/json");
+
+    // If this is a new client we need to add a cookie
+    CStdString cookie;
+    if (isNew)
+    {
+      cookie.Format("%s%s%s%s%s", COOKIE_JSONRPC_NAME, COOKIE_ASSIGNMENT, client->GetUID().c_str(), COOKIE_DELIMITER, COOKIE_HTTPONLY);
+      MHD_add_response_header(response, COOKIE_SET, cookie.c_str());
+    }
+
     MHD_destroy_response(response);
 
     delete jsoncall;
@@ -613,9 +656,27 @@ const char *CWebServer::CreateMimeTypeFromExtension(const char *ext)
   return NULL;
 }
 
+CWebServer::CHTTPClient::CHTTPClient(std::string uid)
+{
+  m_permissionFlags = OPERATION_PERMISSION_UNAUTHENTICATED;
+  m_authenticated = false;
+  m_identification = "";
+  m_name = "Non-authenticated TCP client";
+  m_uid = uid;
+}
+
+bool CWebServer::CHTTPClient::SetPermissionFlags(int flags)
+{
+  m_permissionFlags = PermissionReadData | flags;
+  return true;
+}
+
 int CWebServer::CHTTPClient::GetPermissionFlags()
 {
-  return OPERATION_PERMISSION_ALL;
+  if (g_guiSettings.GetBool("services.clientauthentication"))
+    return m_permissionFlags;
+  else
+    return OPERATION_PERMISSION_NOAUTHENTICATION;
 }
 
 int CWebServer::CHTTPClient::GetAnnouncementFlags()
@@ -627,5 +688,39 @@ int CWebServer::CHTTPClient::GetAnnouncementFlags()
 bool CWebServer::CHTTPClient::SetAnnouncementFlags(int flags)
 {
   return false;
+}
+
+CWebServer::CHTTPClientManager::~CHTTPClientManager()
+{
+  std::map<std::string, IClient*>::const_iterator iter;
+  std::map<std::string, IClient*>::const_iterator iterEnd = m_clients.end();
+
+  for (iter = m_clients.begin(); iter != iterEnd; iter++)
+  {
+    delete iter->second;
+  }
+
+  m_clients.clear();
+}
+
+IClient* CWebServer::CHTTPClientManager::GetClient(std::string uuid /* = "" */)
+{
+  if (!uuid.empty())
+  {
+    std::map<std::string, IClient*>::const_iterator client = m_clients.find(uuid);
+    if (client == m_clients.end())
+      return NULL;
+
+    return client->second;
+  }
+
+  do
+  {
+    uuid = StringUtils::CreateUUID();
+  } while (m_clients.find(uuid) != m_clients.end());
+  CHTTPClient *client = new CHTTPClient(uuid);
+  m_clients[uuid] = client;
+
+  return client;
 }
 #endif
