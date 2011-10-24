@@ -26,7 +26,9 @@
 #include "utils/log.h"
 #include "utils/Variant.h"
 #include <string.h>
+#include <math.h>
 #include "ServiceDescription.h"
+#include "ClientAuthManager.h"
 
 using namespace ANNOUNCEMENT;
 using namespace JSONRPC;
@@ -68,6 +70,29 @@ JSON_STATUS CJSONRPC::Introspect(const CStdString &method, ITransportLayer *tran
 JSON_STATUS CJSONRPC::Version(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
   result["version"] = CJSONServiceDescription::GetVersion();
+
+  return OK;
+}
+
+JSON_STATUS CJSONRPC::Authenticate(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+{
+  CStdString identification = parameterObject["identification"].asString();
+  CStdString name = parameterObject["name"].asString();
+
+  if (identification.empty() || name.empty())
+    return InvalidParams;
+
+  int permissionFlags = 0;
+  for (unsigned int index = 0; index < parameterObject["permissions"].size(); index++)
+    permissionFlags |= StringToPermission(parameterObject["permissions"][index].asString());
+  
+  client->SetIdentification(identification);
+  client->SetName(name);
+
+  if (CClientAuthManager::Authenticate(client, permissionFlags))
+    result = "Accepted";
+  else
+    result = "Rejected";
 
   return OK;
 }
@@ -263,7 +288,10 @@ inline void CJSONRPC::BuildResponse(const CVariant& request, JSON_STATUS code, c
       break;
     case BadPermission:
       response["error"]["code"] = BadPermission;
-      response["error"]["message"] = "Bad client permission.";
+      if (result.isNull() || !result.isMember("message"))
+        response["error"]["message"] = "Bad client permission.";
+      else
+        response["error"]["message"] = result["message"];
       break;
     case FailedToExecute:
       response["error"]["code"] = FailedToExecute;

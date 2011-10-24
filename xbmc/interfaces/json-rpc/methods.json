@@ -26,6 +26,25 @@
     "params": [],
     "returns": "string"
   },
+  "JSONRPC.Authenticate": {
+    "type": "method",
+    "description": "Authenticates a client",
+    "transport": "Response",
+    "permission": "Authentication",
+    "statechanging": false,
+    "params": [
+      { "name": "identification", "type": "string", "required": true },
+      { "name": "name", "type": "string", "required": true },
+      { "name": "permissions", "type": "array", "uniqueItems": true, "minItems": 1, "required": true,
+        "items": { "type": "string",
+          "enum": [ "ControlPlayback", "ControlNotify",
+                    "ControlPower", "UpdateData", "RemoveData",
+                    "Navigate", "WriteFile" ]
+        }
+      }
+    ],
+    "returns": { "type": "string", "enum": [ "Accepted", "Rejected" ] }
+  },
   "JSONRPC.Permission": {
     "type": "method",
     "description": "Retrieve the clients permissions",

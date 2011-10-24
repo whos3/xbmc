@@ -34,6 +34,7 @@
 #include "InputOperations.h"
 #include "XBMCOperations.h"
 #include "ApplicationOperations.h"
+#include "settings/GUISettings.h"
 
 using namespace std;
 using namespace JSONRPC;
@@ -78,6 +79,7 @@ JsonRpcMethodMap CJSONServiceDescription::m_methodMaps[] = {
 // JSON-RPC
   { "JSONRPC.Introspect",                           CJSONRPC::Introspect },
   { "JSONRPC.Version",                              CJSONRPC::Version },
+  { "JSONRPC.Authenticate",                         CJSONRPC::Authenticate },
   { "JSONRPC.Permission",                           CJSONRPC::Permission },
   { "JSONRPC.Ping",                                 CJSONRPC::Ping },
   { "JSONRPC.GetConfiguration",                     CJSONRPC::GetConfiguration },
@@ -503,7 +505,7 @@ JSON_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer *tr
     if (printMetadata)
     {
       CVariant permissions(CVariant::VariantTypeArray);
-      for (int i = ReadData; i <= OPERATION_PERMISSION_ALL; i *= 2)
+      for (int i = PermissionReadData; i <= OPERATION_PERMISSION_ALL; i *= 2)
       {
         if ((methodIterator->second.permission & i) == i)
           permissions.push_back(PermissionToString((OperationPermission)i));
@@ -544,7 +546,10 @@ JSON_STATUS CJSONServiceDescription::CheckCall(const char* const method, const C
   {
     if (transport != NULL && (transport->GetCapabilities() & iter->second.transportneed) == iter->second.transportneed)
     {
-      if (client != NULL && (client->GetPermissionFlags() & iter->second.permission) == iter->second.permission && (!notification || (iter->second.permission & OPERATION_PERMISSION_NOTIFICATION) == iter->second.permission))
+      if (client != NULL &&
+         (!g_guiSettings.GetBool("services.clientauthentication") || client->IsAuthenticated() || (iter->second.permission & OPERATION_PERMISSION_UNAUTHENTICATED) != PermissionNone) &&
+         (client->GetPermissionFlags() & iter->second.permission) == iter->second.permission &&
+         (!notification || (iter->second.permission & OPERATION_PERMISSION_NOTIFICATION)))
       {
         methodCall = iter->second.method;
 
@@ -578,7 +583,12 @@ JSON_STATUS CJSONServiceDescription::CheckCall(const char* const method, const C
         return OK;
       }
       else
+      {
+        if (g_guiSettings.GetBool("services.clientauthentication") && !client->IsAuthenticated() && (iter->second.permission & OPERATION_PERMISSION_UNAUTHENTICATED) == PermissionNone)
+          outputParameters["message"] = "Not authenticated";
+
         return BadPermission;
+      }
     }
   }
 
