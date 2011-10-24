@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 
 #include "settings/AdvancedSettings.h"
+#include "settings/GUISettings.h"
 #include "interfaces/json-rpc/JSONRPC.h"
 #include "interfaces/AnnouncementManager.h"
 #include "utils/log.h"
@@ -467,6 +468,10 @@ void CTCPServer::Deinitialize()
 
 CTCPServer::CTCPClient::CTCPClient()
 {
+  m_permissionFlags = OPERATION_PERMISSION_UNAUTHENTICATED;
+  m_authenticated = false;
+  m_identification = "";
+  m_name = "Non-authenticated TCP client";
   m_announcementflags = ANNOUNCE_ALL;
   m_socket = INVALID_SOCKET;
   m_beginBrackets = 0;
@@ -490,7 +495,16 @@ CTCPServer::CTCPClient& CTCPServer::CTCPClient::operator=(const CTCPClient& clie
 
 int CTCPServer::CTCPClient::GetPermissionFlags()
 {
-  return OPERATION_PERMISSION_ALL;
+  if (g_guiSettings.GetBool("services.clientauthentication"))
+    return m_permissionFlags;
+  else
+    return OPERATION_PERMISSION_NOAUTHENTICATION;
+}
+
+bool CTCPServer::CTCPClient::SetPermissionFlags(int flags)
+{
+  m_permissionFlags = PermissionReadData | flags;
+  return true;
 }
 
 int CTCPServer::CTCPClient::GetAnnouncementFlags()
@@ -556,11 +570,14 @@ void CTCPServer::CTCPClient::Copy(const CTCPClient& client)
   m_socket            = client.m_socket;
   m_cliaddr           = client.m_cliaddr;
   m_addrlen           = client.m_addrlen;
+  m_permissionFlags   = client.m_permissionFlags;
   m_announcementflags = client.m_announcementflags;
+  m_authenticated     = client.m_authenticated;
+  m_identification    = client.m_identification;
+  m_name              = client.m_name;
   m_beginBrackets     = client.m_beginBrackets;
   m_endBrackets       = client.m_endBrackets;
   m_beginChar         = client.m_beginChar;
   m_endChar           = client.m_endChar;
   m_buffer            = client.m_buffer;
 }
-

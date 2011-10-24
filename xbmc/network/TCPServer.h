@@ -59,8 +59,17 @@ namespace JSONRPC
       CTCPClient(const CTCPClient& client);
       CTCPClient& operator=(const CTCPClient& client);
       virtual int  GetPermissionFlags();
+      virtual bool SetPermissionFlags(int flags);
       virtual int  GetAnnouncementFlags();
       virtual bool SetAnnouncementFlags(int flags);
+
+      virtual bool SetAuthenticated() { m_authenticated = true; return true; }
+      virtual bool IsAuthenticated() { return m_authenticated; };
+      virtual bool SetIdentification(std::string identification) { m_identification = identification; return true; }
+      virtual std::string GetIdentification() { return m_identification; }
+      virtual bool SetName(std::string name) { m_name = name; return true; }
+      virtual std::string GetName() { return m_name; }
+
       void PushBuffer(CTCPServer *host, const char *buffer, int length);
       void Disconnect();
 
@@ -75,6 +84,11 @@ namespace JSONRPC
       int m_beginBrackets, m_endBrackets;
       char m_beginChar, m_endChar;
       std::string m_buffer;
+
+      int m_permissionFlags;
+      bool m_authenticated;
+      std::string m_identification;
+      std::string m_name;
     };
 
     std::vector<CTCPClient> m_connections;
