@@ -39,6 +39,7 @@
 #include "utils/StringUtils.h"
 #include "dialogs/GUIDialogKaiToast.h"
 #include "dialogs/GUIDialogProgress.h"
+#include "interfaces/json-rpc/ClientAuthManager.h"
 
 using namespace std;
 using namespace XFILE;
@@ -235,6 +236,14 @@ bool CAddonInstaller::DoInstall(const AddonPtr &addon, const CStdString &hash, b
   CSingleLock lock(m_critSection);
   if (m_downloadJobs.find(addon->ID()) != m_downloadJobs.end())
     return false;
+
+  // check if the plugin will use jsonrpc and show the respective dialog
+  if (addon->JsonRpcClient())
+  {
+    JSONRPC::IClient *client = addon->JsonRpcClient();
+    if (!JSONRPC::CClientAuthManager::Authenticate(client, client->GetPermissionFlags()))
+      return false;
+  }
 
   // check whether all the dependencies are available or not
   // TODO: we currently assume that dependencies will install correctly (and each of their dependencies and so on).

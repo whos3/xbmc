@@ -54,6 +54,7 @@
 #include "pythreadstate.h"
 #include "utils/log.h"
 #include "pyrendercapture.h"
+#include "addons/AddonManager.h"
 
 // include for constants
 #include "pyutil.h"
@@ -287,12 +288,47 @@ namespace PYXBMC
     if (!PyArg_ParseTuple(args, (char*)"s", &cLine))
       return NULL;
 
-    CStdString method = cLine;
+    CPythonTransport::CPythonClient *client = NULL;
 
+    // we need to retrieve the addon's ID from python using
+    // __xbmcaddonid__ so let's get a reference to the main
+    // module and global dictionary
+    PyObject* main_module = PyImport_AddModule((char*)"__main__");
+    PyObject* global_dict = PyModule_GetDict(main_module);
+    
+    // extract a reference to the function "func_name"
+    // from the global dictionary
+    PyObject* pyid = PyDict_GetItemString(global_dict, "__xbmcaddonid__");
+
+    // if we were able to retrieve the addon's ID, we can
+    // retrieve the addon itself
+    if (pyid)
+    {
+      ADDON::AddonPtr addon;
+      ADDON::CAddonMgr::Get().GetAddon(PyString_AsString(pyid), addon);
+      // If we got a valid addon we can finally retrieve
+      // the addon's JSON-RPC client with it's permissions
+      if (addon.get() != NULL)
+        client = (CPythonTransport::CPythonClient *)addon->JsonRpcClient();
+    }
+
+    // If the JSON-RPC client hasn't been retrieved
+    // use a default one
+    bool deleteClient = false;
+    if (client == NULL)
+    {
+      client = new CPythonTransport::CPythonClient();
+      deleteClient = true;
+    }
+    
     CPythonTransport transport;
-    CPythonTransport::CPythonClient client;
+    CStdString method = cLine;
+    PyObject* response = PyString_FromString(JSONRPC::CJSONRPC::MethodCall(method, &transport, client).c_str());
+    
+    if (deleteClient)
+      delete client;
 
-    return PyString_FromString(JSONRPC::CJSONRPC::MethodCall(method, &transport, &client).c_str());
+    return response;
   }
 #endif
 

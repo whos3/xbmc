@@ -26,6 +26,7 @@
 #include "Util.h"
 #include "URL.h"
 #include "guilib/LocalizeStrings.h"
+#include "interfaces/json-rpc/IClient.h"
 
 class CURL;
 class TiXmlElement;
@@ -54,11 +55,13 @@ public:
     , version(versionstr)
     , minversion(minversionstr)
     , stars(0)
+    , jsonrpcClient(NULL)
   {
   }
 
   AddonProps(const cp_extension_t *ext);
   AddonProps(const cp_plugin_info_t *plugin);
+  ~AddonProps();
 
   bool operator==(const AddonProps &rhs)
   { 
@@ -88,6 +91,7 @@ public:
   CStdString broken;
   InfoMap    extrainfo;
   int        stars;
+  JSONRPC::IClient* jsonrpcClient;
 private:
   void BuildDependencies(const cp_plugin_info_t *plugin);
 };
@@ -159,6 +163,7 @@ public:
   const CStdString FanArt() const { return m_props.fanart; }
   const CStdString Icon() const;
   int Stars() const { return m_props.stars; }
+  JSONRPC::IClient* JsonRpcClient() const { return m_props.jsonrpcClient; }
   const CStdString Disclaimer() const { return m_props.disclaimer; }
   const InfoMap &ExtraInfo() const { return m_props.extrainfo; }
   const ADDONDEPS &GetDeps() const { return m_props.dependencies; }
