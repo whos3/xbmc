@@ -58,7 +58,7 @@ JSON_STATUS CXBMCOperations::GetInfoBooleans(const CStdString &method, ITranspor
 {
   std::vector<CStdString> info;
 
-  bool CanControlPower = (client->GetPermissionFlags() & ControlPower) > 0;
+  bool CanControlPower = (client->GetPermissionFlags() & PermissionControlPower) > 0;
 
   for (unsigned int i = 0; i < parameterObject["booleans"].size(); i++)
   {

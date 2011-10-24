@@ -67,19 +67,31 @@ namespace JSONRPC
   */
   enum OperationPermission
   {
-    ReadData        =   0x1,
-    ControlPlayback =   0x2,
-    ControlNotify   =   0x4,
-    ControlPower    =   0x8,
-    UpdateData      =  0x10,
-    RemoveData      =  0x20,
-    Navigate        =  0x40,
-    WriteFile       =  0x80
+    PermissionNone            =   0x0,
+    PermissionReadData        =   0x1,
+    PermissionControlPlayback =   0x2,
+    PermissionControlNotify   =   0x4,
+    PermissionControlPower    =   0x8,
+    PermissionUpdateData      =  0x10,
+    PermissionRemoveData      =  0x20,
+    PermissionNavigate        =  0x40,
+    PermissionWriteFile       =  0x80,
+    PermissionAuthentication  = 0x100
   };
 
-  static const int OPERATION_PERMISSION_ALL = (ReadData | ControlPlayback | ControlNotify | ControlPower | UpdateData | RemoveData | Navigate | WriteFile);
+  static const int OPERATION_PERMISSION_ALL = (PermissionReadData | PermissionControlPlayback | PermissionControlNotify |
+                                               PermissionControlPower | PermissionUpdateData | PermissionRemoveData |
+                                               PermissionNavigate | PermissionWriteFile | PermissionAuthentication);
 
-  static const int OPERATION_PERMISSION_NOTIFICATION = (ControlPlayback | ControlNotify | ControlPower | UpdateData | RemoveData | Navigate | WriteFile);
+  static const int OPERATION_PERMISSION_NOTIFICATION = (PermissionControlPlayback | PermissionControlNotify | PermissionControlPower |
+                                                        PermissionUpdateData | PermissionRemoveData | PermissionNavigate | PermissionWriteFile);
+
+  static const int OPERATION_PERMISSION_UNAUTHENTICATED = (PermissionReadData | PermissionAuthentication);
+
+  /*!
+   \brief Permissions appliceable when authentication is turned of
+   */
+  static const int OPERATION_PERMISSION_NOAUTHENTICATION = (OPERATION_PERMISSION_ALL & ~PermissionAuthentication);
 
   /*!
    \brief Possible value types of a parameter or return type
@@ -118,6 +130,36 @@ namespace JSONRPC
       time = (time -m) / 60;
 
       result["hours"] = time;
+    }
+
+    /*!
+     \brief Returns a OperationPermission value for the given
+     string representation
+     \param permission String representation of the OperationPermission
+     \return OperationPermission value of the given string representation
+     */
+    static inline OperationPermission StringToPermission(std::string permission)
+    {
+      if (permission.compare("ReadData") == 0)
+        return PermissionReadData;
+       if (permission.compare("ControlPlayback") == 0)
+        return PermissionControlPlayback;
+      if (permission.compare("ControlNotify") == 0)
+        return PermissionControlNotify;
+      if (permission.compare("ControlPower") == 0)
+        return PermissionControlPower;
+      if (permission.compare("UpdateData") == 0)
+        return PermissionUpdateData;
+      if (permission.compare("RemoveData") == 0)
+        return PermissionRemoveData;
+      if (permission.compare("Navigate") == 0)
+        return PermissionNavigate;
+      if (permission.compare("WriteFile") == 0)
+        return PermissionWriteFile;
+      if (permission.compare("Authentication") == 0)
+        return PermissionAuthentication;
+
+      return PermissionNone;
     }
 
   protected:
@@ -186,9 +228,7 @@ namespace JSONRPC
     {
       std::string str = defaultValue;
       if (value.isString())
-      {
         str = value.asString();
-      }
 
       return str;
     }
@@ -203,51 +243,27 @@ namespace JSONRPC
     {
       switch (permission)
       {
-      case ReadData:
+      case PermissionReadData:
         return "ReadData";
-      case ControlPlayback:
+      case PermissionControlPlayback:
         return "ControlPlayback";
-      case ControlNotify:
+      case PermissionControlNotify:
         return "ControlNotify";
-      case ControlPower:
+      case PermissionControlPower:
         return "ControlPower";
-      case UpdateData:
+      case PermissionUpdateData:
         return "UpdateData";
-      case RemoveData:
+      case PermissionRemoveData:
         return "RemoveData";
-      case Navigate:
+      case PermissionNavigate:
         return "Navigate";
-      case WriteFile:
+      case PermissionWriteFile:
         return "WriteFile";
+      case PermissionAuthentication:
+        return "Authentication";
       default:
-        return "Unknown";
+        return "None";
       }
-    }
-
-    /*!
-     \brief Returns a OperationPermission value for the given
-     string representation
-     \param permission String representation of the OperationPermission
-     \return OperationPermission value of the given string representation
-     */
-    static inline OperationPermission StringToPermission(std::string permission)
-    {
-      if (permission.compare("ControlPlayback") == 0)
-        return ControlPlayback;
-      if (permission.compare("ControlNotify") == 0)
-        return ControlNotify;
-      if (permission.compare("ControlPower") == 0)
-        return ControlPower;
-      if (permission.compare("UpdateData") == 0)
-        return UpdateData;
-      if (permission.compare("RemoveData") == 0)
-        return RemoveData;
-      if (permission.compare("Navigate") == 0)
-        return Navigate;
-      if (permission.compare("WriteFile") == 0)
-        return WriteFile;
-
-      return ReadData;
     }
 
     /*!

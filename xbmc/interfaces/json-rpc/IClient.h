@@ -19,6 +19,8 @@
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
+ 
+ #include <string>
 
 namespace JSONRPC
 {
@@ -27,7 +29,15 @@ namespace JSONRPC
   public:
     virtual ~IClient() { };
     virtual int GetPermissionFlags() = 0;
+    virtual bool SetPermissionFlags(int flags) = 0;
     virtual int GetAnnouncementFlags() = 0;
     virtual bool SetAnnouncementFlags(int flags) = 0;
+
+    virtual bool SetAuthenticated() = 0;
+    virtual bool IsAuthenticated() = 0;
+    virtual bool SetIdentification(std::string identification) = 0;
+    virtual std::string GetIdentification() = 0;
+    virtual bool SetName(std::string name) = 0;
+    virtual std::string GetName() = 0;
   };
 }

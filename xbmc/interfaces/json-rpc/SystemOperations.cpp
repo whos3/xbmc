@@ -92,13 +92,13 @@ JSON_STATUS CSystemOperations::Reboot(const CStdString &method, ITransportLayer 
 JSON_STATUS CSystemOperations::GetPropertyValue(int permissions, const CStdString &property, CVariant &result)
 {
   if (property.Equals("canshutdown"))
-    result = g_powerManager.CanPowerdown() && (permissions & ControlPower);
+    result = g_powerManager.CanPowerdown() && (permissions & PermissionControlPower);
   else if (property.Equals("cansuspend"))
-    result = g_powerManager.CanSuspend() && (permissions & ControlPower);
+    result = g_powerManager.CanSuspend() && (permissions & PermissionControlPower);
   else if (property.Equals("canhibernate"))
-    result = g_powerManager.CanHibernate() && (permissions & ControlPower);
+    result = g_powerManager.CanHibernate() && (permissions & PermissionControlPower);
   else if (property.Equals("canreboot"))
-    result = g_powerManager.CanReboot() && (permissions & ControlPower);
+    result = g_powerManager.CanReboot() && (permissions & PermissionControlPower);
   else
     return InvalidParams;
 
