@@ -20,6 +20,7 @@
  *
  */
 #include "system.h"
+#include "settings/GUISettings.h"
 #include "interfaces/json-rpc/ITransportLayer.h"
 #include "interfaces/json-rpc/JSONRPC.h"
 
@@ -34,9 +35,27 @@ public:
   class CPythonClient : public JSONRPC::IClient
   {
   public:
-    virtual int  GetPermissionFlags() { return JSONRPC::OPERATION_PERMISSION_ALL; }
+    virtual bool SetPermissionFlags(int flags) { m_permissionFlags = JSONRPC::PermissionReadData | flags; return true; };
+    virtual int  GetPermissionFlags()
+    {
+      if (g_guiSettings.GetBool("services.clientauthentication"))
+        return m_permissionFlags;
+      else
+        return JSONRPC::OPERATION_PERMISSION_NOAUTHENTICATION;
+    }
     virtual int  GetAnnouncementFlags() { return 0; }
     virtual bool SetAnnouncementFlags(int flags) { return true; }
+
+    virtual bool SetAuthenticated() { return true; }
+    virtual bool IsAuthenticated() { return true; }
+    virtual bool SetIdentification(std::string identification) { m_identification = identification; return true; }
+    virtual std::string GetIdentification() { return m_identification; }
+    virtual bool SetName(std::string name) { m_name = name; return true; }
+    virtual std::string GetName() { return m_name; }
+  private:
+    int m_permissionFlags;
+    std::string m_identification;
+    std::string m_name;
   };
 };
 #endif
