@@ -2568,6 +2568,12 @@
     <ClCompile Include="..\..\xbmc\storage\DetectDVDType.cpp">
       <Filter>storage</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\filesystem\IFileSystemWatcher.cpp">
+      <Filter>filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\filesystem\FileSystemWatcher.cpp">
+      <Filter>filesystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -5157,6 +5163,10 @@
     <ClInclude Include="..\..\xbmc\storage\DetectDVDType.h">
       <Filter>storage</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\filesystem\IFileSystemWatcher.h">
+      <Filter>filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\filesystem\FileSystemWatcher.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">
