@@ -2574,6 +2574,9 @@
     <ClCompile Include="..\..\xbmc\filesystem\FileSystemWatcher.cpp">
       <Filter>filesystem</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\filesystem\Win32FileSystemWatcher.cpp">
+      <Filter>filesystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -5166,7 +5169,12 @@
     <ClInclude Include="..\..\xbmc\filesystem\IFileSystemWatcher.h">
       <Filter>filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\filesystem\FileSystemWatcher.h" />
+    <ClInclude Include="..\..\xbmc\filesystem\FileSystemWatcher.h">
+      <Filter>filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\filesystem\Win32FileSystemWatcher.h">
+      <Filter>filesystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">
