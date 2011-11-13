@@ -33,6 +33,8 @@ SRCS=AddonsDirectory.cpp \
      FileShoutcast.cpp \
      FileSFTP.cpp \
      FileSpecialProtocol.cpp \
+     FileSystemWatcher.cpp \
+     FileSystemWatcherManager.cpp \
      FileTuxBox.cpp \
      FileUDF.cpp \
      FileUPnP.cpp \
@@ -46,6 +48,8 @@ SRCS=AddonsDirectory.cpp \
      HTTPDirectory.cpp \
      IDirectory.cpp \
      IFile.cpp \
+     IFileSystemWatcher.cpp \
+     InotifyFileSystemWatcher.cpp \
      iso9660.cpp \
      ISO9660Directory.cpp \
      LastFMDirectory.cpp \
