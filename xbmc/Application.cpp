@@ -61,6 +61,7 @@
 #include "SectionLoader.h"
 #include "cores/DllLoader/DllLoaderContainer.h"
 #include "GUIUserMessages.h"
+#include "filesystem/FileSystemWatcherManager.h"
 #include "filesystem/DirectoryCache.h"
 #include "filesystem/StackDirectory.h"
 #include "filesystem/SpecialProtocol.h"
@@ -1250,6 +1251,37 @@ bool CApplication::Initialize()
 #ifdef HAS_PYTHON
     g_pythonParser.m_bLogin = true;
 #endif
+  }
+  
+  CVideoDatabase db;
+  if (db.Open())
+  {
+    for (unsigned int index = 0; index < g_settings.m_videoSources.size(); index++)
+    {
+      CMediaSource& source = g_settings.m_videoSources.at(index);
+      SScanSettings scanSettings;
+      ScraperPtr scraper;
+      if ((scraper = db.GetScraperForPath(source.strPath, scanSettings)).get() != NULL && scanSettings.watch &&
+          source.vecPaths.size() > 0)
+      {
+        vector<string> paths;
+        for (unsigned int i = 0; i < source.vecPaths.size(); i++)
+          paths.push_back(source.vecPaths.at(i));
+        source.m_watcher = CFileSystemWatcherManager::Get().Watch(paths, this, scraper->Content() == CONTENT_TVSHOWS || scanSettings.recurse != 0);
+      }
+    }
+  }
+
+  for (unsigned int index = 0; index < g_settings.m_musicSources.size(); index++)
+  {
+    CMediaSource& source = g_settings.m_musicSources.at(index);
+    if (source.vecPaths.size() > 0)
+    {
+      vector<string> paths;
+      for (unsigned int i = 0; i < source.vecPaths.size(); i++)
+        paths.push_back(source.vecPaths.at(i));
+      source.m_watcher = CFileSystemWatcherManager::Get().Watch(paths, this, true);
+    }
   }
 
   m_slowTimer.StartZero();
@@ -3290,6 +3322,57 @@ bool CApplication::Cleanup()
   {
     CLog::Log(LOGERROR, "Exception in CApplication::Cleanup()");
     return false;
+  }
+}
+
+void CApplication::FileSystemChanged(const std::string &path)
+{
+  CSingleLock lock(m_critFileSystemWatcher);
+
+  int windowId = -1;
+  for (unsigned int index = 0; index < g_settings.m_videoSources.size(); index++)
+  {
+    for (unsigned int i = 0; i < g_settings.m_videoSources.at(index).vecPaths.size(); i++)
+    {
+      if (g_settings.m_videoSources.at(index).vecPaths.at(i).compare(path) == 0)
+      {
+        windowId = WINDOW_DIALOG_VIDEO_SCAN;
+        break;
+      }
+    }
+  }
+
+  if (windowId < 0)
+  {
+    for (unsigned int index = 0; index < g_settings.m_musicSources.size(); index++)
+    {
+      for (unsigned int i = 0; i < g_settings.m_musicSources.at(index).vecPaths.size(); i++)
+      {
+        if (g_settings.m_musicSources.at(index).vecPaths.at(i).compare(path) == 0)
+        {
+          windowId = WINDOW_DIALOG_MUSIC_SCAN;
+          break;
+        }
+      }
+    }
+  }
+
+  if (windowId < 0)
+    return;
+
+  if (windowId == WINDOW_DIALOG_VIDEO_SCAN)
+  {
+    CLog::Log(LOGNOTICE, "%s - Starting video library startup scan", __FUNCTION__);
+    CGUIDialogVideoScan *scanner = (CGUIDialogVideoScan *)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_SCAN);
+    if (scanner && !scanner->IsScanning())
+      scanner->StartScanning(path);
+  }
+  else if (windowId == WINDOW_DIALOG_MUSIC_SCAN)
+  {
+    CLog::Log(LOGNOTICE, "%s - Starting music library startup scan", __FUNCTION__);
+    CGUIDialogMusicScan *scanner = (CGUIDialogMusicScan *)g_windowManager.GetWindow(WINDOW_DIALOG_MUSIC_SCAN);
+    if (scanner && !scanner->IsScanning())
+      scanner->StartScanning(path);
   }
 }
 

@@ -23,6 +23,7 @@
 #include "utils/StdString.h"
 #include <vector>
 #include "GUIPassword.h"
+#include "filesystem/FileSystemWatcher.h"
 
 /*!
 \ingroup windows
@@ -42,8 +43,8 @@ public:
     SOURCE_TYPE_VPATH        = 5,
     SOURCE_TYPE_REMOVABLE    = 6
   };
-  CMediaSource() { m_iDriveType=SOURCE_TYPE_UNKNOWN; m_iLockMode=LOCK_MODE_EVERYONE; m_iBadPwdCount=0; m_iHasLock=0; m_ignore=false; };
-  virtual ~CMediaSource() {};
+  CMediaSource() { m_iDriveType=SOURCE_TYPE_UNKNOWN; m_iLockMode=LOCK_MODE_EVERYONE; m_iBadPwdCount=0; m_iHasLock=0; m_ignore=false; m_watcher = boost::shared_ptr<XFILE::CFileSystemWatcher>((XFILE::CFileSystemWatcher *)NULL); };
+  virtual ~CMediaSource() { }
 
   bool operator==(const CMediaSource &right) const;
 
@@ -99,6 +100,8 @@ public:
 
   std::vector<CStdString> vecPaths;
   bool m_ignore; /// <Do not store in xml
+
+  XFILE::CFileSystemWatcherPtr m_watcher;
 };
 
 /*!

@@ -32,12 +32,13 @@ namespace VIDEO
 {
   typedef struct SScanSettings
   {
-    SScanSettings() { parent_name = parent_name_root = noupdate = exclude = false; recurse = 1;}
+    SScanSettings() { parent_name = parent_name_root = noupdate = exclude = false; recurse = 1; watch = false; }
     bool parent_name;       /* use the parent dirname as name of lookup */
     bool parent_name_root;  /* use the name of directory where scan started as name for files in that dir */
     int  recurse;           /* recurse into sub folders (indicate levels) */
     bool noupdate;          /* exclude from update library function */
     bool exclude;           /* exclude this path from scraping */
+    bool watch;             /* watch for changes in the directory */
   } SScanSettings;
 
   typedef struct SEpisode

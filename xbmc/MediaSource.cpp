@@ -24,6 +24,7 @@
 #include "Util.h"
 #include "URL.h"
 #include "filesystem/MultiPathDirectory.h"
+#include "filesystem/FileSystemWatcher.h"
 #include "utils/URIUtils.h"
 
 using namespace std;

@@ -165,6 +165,7 @@ void CGUIDialogContentSettings::CreateSettings()
       AddBool(1,20345,&m_bRunScan, m_bShowScanSettings);
       AddBool(2,20379,&m_bSingleItem, m_bShowScanSettings);
       AddBool(3,20432,&m_bNoUpdate, m_bShowScanSettings);
+      AddBool(4,20404,&m_bWatch, m_bShowScanSettings && !m_bNoUpdate);
     }
     break;
   case CONTENT_MOVIES:
@@ -174,6 +175,7 @@ void CGUIDialogContentSettings::CreateSettings()
       AddBool(3,20346,&m_bScanRecursive, m_bShowScanSettings && ((m_bUseDirNames && !m_bSingleItem) || !m_bUseDirNames));
       AddBool(4,20383,&m_bSingleItem, m_bShowScanSettings && (m_bUseDirNames && !m_bScanRecursive));
       AddBool(5,20432,&m_bNoUpdate, m_bShowScanSettings);
+      AddBool(6,20404,&m_bWatch, m_bShowScanSettings && !m_bNoUpdate);
     }
     break;
   case CONTENT_MUSICVIDEOS:
@@ -181,6 +183,7 @@ void CGUIDialogContentSettings::CreateSettings()
       AddBool(1,20345,&m_bRunScan, m_bShowScanSettings);
       AddBool(2,20346,&m_bScanRecursive, m_bShowScanSettings);
       AddBool(3,20432,&m_bNoUpdate, m_bShowScanSettings);
+      AddBool(4,20404,&m_bWatch, m_bShowScanSettings && !m_bNoUpdate);
     }
     break;
   case CONTENT_ALBUMS:
@@ -218,6 +221,21 @@ void CGUIDialogContentSettings::OnSettingChanged(SettingInfo &setting)
     {
       m_bScanRecursive = false;
       UpdateSetting(3);
+    }
+    else if (setting.id == 5)
+    {
+      if (*(bool*)setting.data == true)
+        m_bWatch = false;
+      UpdateSetting(6);
+    }
+  }
+  else if (m_content == CONTENT_TVSHOWS || m_content == CONTENT_MUSICVIDEOS)
+  {
+    if (setting.id == 3)
+    {
+      if (*(bool*)setting.data == true)
+        m_bWatch = false;
+      UpdateSetting(4);
     }
   }
   m_bNeedSave = true;
@@ -402,6 +420,7 @@ bool CGUIDialogContentSettings::Show(ADDON::ScraperPtr& scraper, VIDEO::SScanSet
   }
 
   dialog->m_bRunScan = bRunScan;
+  dialog->m_bWatch = settings.watch && !settings.exclude && !settings.noupdate;
   dialog->m_bScanRecursive = (settings.recurse > 0 && !settings.parent_name) || (settings.recurse > 1 && settings.parent_name);
   dialog->m_bUseDirNames   = settings.parent_name;
   dialog->m_bExclude       = settings.exclude; 
@@ -424,6 +443,7 @@ bool CGUIDialogContentSettings::Show(ADDON::ScraperPtr& scraper, VIDEO::SScanSet
       settings.exclude = false;
       settings.noupdate = dialog->m_bNoUpdate;
       bRunScan = dialog->m_bRunScan;
+      settings.watch = dialog->m_bWatch && !dialog->m_bExclude && !dialog->m_bNoUpdate;
       scraper->SetPathSettings(content, "");
 
       if (content == CONTENT_TVSHOWS)

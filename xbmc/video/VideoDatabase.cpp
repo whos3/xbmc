@@ -156,7 +156,7 @@ bool CVideoDatabase::CreateTables()
     m_pDS->exec("CREATE TABLE actors ( idActor integer primary key, strActor text, strThumb text )\n");
 
     CLog::Log(LOGINFO, "create path table");
-    m_pDS->exec("CREATE TABLE path ( idPath integer primary key, strPath text, strContent text, strScraper text, strHash text, scanRecursive integer, useFolderNames bool, strSettings text, noUpdate bool, exclude bool)");
+    m_pDS->exec("CREATE TABLE path ( idPath integer primary key, strPath text, strContent text, strScraper text, strHash text, scanRecursive integer, useFolderNames bool, strSettings text, noUpdate bool, exclude bool, watch bool)");
     m_pDS->exec("CREATE UNIQUE INDEX ix_path ON path ( strPath(255) )");
 
     CLog::Log(LOGINFO, "create files table");
@@ -3246,7 +3246,7 @@ void CVideoDatabase::RemoveContentForPath(const CStdString& strPath, CGUIDialogP
       }
       pDS->next();
     }
-    strSQL = PrepareSQL("update path set strContent = '', strScraper='', strHash='',strSettings='',useFolderNames=0,scanRecursive=0 where strPath like '%%%s%%'",strPath1.c_str());
+    strSQL = PrepareSQL("update path set strContent = '', strScraper='', strHash='',strSettings='',useFolderNames=0,scanRecursive=0,watch=0 where strPath like '%%%s%%'",strPath1.c_str());
     pDS->exec(strSQL.c_str());
   }
   catch (...)
@@ -3282,7 +3282,7 @@ void CVideoDatabase::SetScraperForPath(const CStdString& filePath, const Scraper
     CStdString strSQL;
     if (settings.exclude)
     { //NB See note in ::GetScraperForPath about strContent=='none'
-      strSQL=PrepareSQL("update path set strContent='', strScraper='', scanRecursive=0, useFolderNames=0, strSettings='', noUpdate=0 , exclude=1 where idPath=%i", idPath);
+      strSQL=PrepareSQL("update path set strContent='', strScraper='', scanRecursive=0, useFolderNames=0, strSettings='', noUpdate=0 , exclude=1, watch=0 where idPath=%i", idPath);
     }
     else if(!scraper)
     { // catch clearing content, but not excluding
@@ -3291,7 +3291,7 @@ void CVideoDatabase::SetScraperForPath(const CStdString& filePath, const Scraper
     else
     {
       CStdString content = TranslateContent(scraper->Content());
-      strSQL=PrepareSQL("update path set strContent='%s', strScraper='%s', scanRecursive=%i, useFolderNames=%i, strSettings='%s', noUpdate=%i, exclude=0 where idPath=%i", content.c_str(), scraper->ID().c_str(),settings.recurse,settings.parent_name,scraper->GetPathSettings().c_str(),settings.noupdate, idPath);
+      strSQL=PrepareSQL("update path set strContent='%s', strScraper='%s', scanRecursive=%i, useFolderNames=%i, strSettings='%s', noUpdate=%i, exclude=0, watch=%i where idPath=%i", content.c_str(), scraper->ID().c_str(),settings.recurse,settings.parent_name,scraper->GetPathSettings().c_str(),settings.noupdate,settings.watch, idPath);
     }
     m_pDS->exec(strSQL.c_str());
   }
@@ -3470,6 +3470,10 @@ bool CVideoDatabase::UpdateOldVersion(int iVersion)
       m_pDS->exec("UPDATE settings SET DeinterlaceMode = 2 WHERE Deinterlace NOT IN (0,1)"); // anything other than none: method auto => mode force
       m_pDS->exec("UPDATE settings SET DeinterlaceMode = 1 WHERE Deinterlace = 1"); // method auto => mode auto
       m_pDS->exec("UPDATE settings SET DeinterlaceMode = 0, Deinterlace = 1 WHERE Deinterlace = 0"); // method none => mode off, method auto
+    }
+    if (iVersion < 58)
+    {
+      m_pDS->exec("ALTER TABLE path ADD watch bool");
     }
 
     if (iVersion < 59)
@@ -5329,7 +5333,7 @@ ScraperPtr CVideoDatabase::GetScraperForPath(const CStdString& strPath, SScanSet
 
     if (idPath > -1)
     {
-      CStdString strSQL=PrepareSQL("select path.strContent,path.strScraper,path.scanRecursive,path.useFolderNames,path.strSettings,path.noUpdate,path.exclude from path where path.idPath=%i",idPath);
+      CStdString strSQL=PrepareSQL("select path.strContent,path.strScraper,path.scanRecursive,path.useFolderNames,path.strSettings,path.noUpdate,path.exclude,path.watch from path where path.idPath=%i",idPath);
       m_pDS->query( strSQL.c_str() );
     }
 
@@ -5368,6 +5372,7 @@ ScraperPtr CVideoDatabase::GetScraperForPath(const CStdString& strPath, SScanSet
         settings.parent_name = m_pDS->fv("path.useFolderNames").get_asBool();
         settings.recurse = m_pDS->fv("path.scanRecursive").get_asInt();
         settings.noupdate = m_pDS->fv("path.noUpdate").get_asBool();
+        settings.watch = m_pDS->fv("path.watch").get_asBool();
       }
     }
 
@@ -5379,7 +5384,7 @@ ScraperPtr CVideoDatabase::GetScraperForPath(const CStdString& strPath, SScanSet
       {
         iFound++;
 
-        CStdString strSQL=PrepareSQL("select path.strContent,path.strScraper,path.scanRecursive,path.useFolderNames,path.strSettings,path.noUpdate from path where strPath like '%s'",strParent.c_str());
+        CStdString strSQL=PrepareSQL("select path.strContent,path.strScraper,path.scanRecursive,path.useFolderNames,path.strSettings,path.noUpdate,path.watch from path where strPath like '%s'",strParent.c_str());
         m_pDS->query(strSQL.c_str());
 
         CONTENT_TYPE content = CONTENT_NONE;
@@ -5407,6 +5412,7 @@ ScraperPtr CVideoDatabase::GetScraperForPath(const CStdString& strPath, SScanSet
             settings.parent_name = m_pDS->fv("path.useFolderNames").get_asBool();
             settings.recurse = m_pDS->fv("path.scanRecursive").get_asInt();
             settings.noupdate = m_pDS->fv("path.noUpdate").get_asBool();
+            settings.watch = m_pDS->fv("path.watch").get_asBool();
             settings.exclude = false;
             break;
           }
@@ -7381,6 +7387,7 @@ void CVideoDatabase::ExportToXML(const CStdString &path, bool singleFiles /* = f
           XMLUtils::SetBoolean(pPath,"usefoldernames", settings.parent_name);
           XMLUtils::SetString(pPath,"content", TranslateContent(info->Content()));
           XMLUtils::SetString(pPath,"scraperpath", info->ID());
+          XMLUtils::SetBoolean(pPath,"watch", settings.watch);
         }
       }
       xmlDoc.SaveFile(xmlFile);
@@ -7533,6 +7540,7 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
           scraper->SetPathSettings(TranslateContent(content), "");
           XMLUtils::GetInt(path,"scanrecursive",settings.recurse);
           XMLUtils::GetBoolean(path,"usefoldernames",settings.parent_name);
+          XMLUtils::GetBoolean(path,"watch",settings.watch);
           SetScraperForPath(strPath,scraper,settings);
         }
       }

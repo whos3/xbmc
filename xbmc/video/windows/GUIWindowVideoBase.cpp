@@ -39,6 +39,7 @@
 #include "NfoFile.h"
 #include "PlayListPlayer.h"
 #include "GUIPassword.h"
+#include "filesystem/FileSystemWatcherManager.h"
 #include "filesystem/ZipManager.h"
 #include "filesystem/StackDirectory.h"
 #include "filesystem/MultiPathDirectory.h"
@@ -2001,6 +2002,7 @@ void CGUIWindowVideoBase::OnAssignContent(const CStdString &path, int iFound, AD
   
   ADDON::ScraperPtr info2(info);
   
+  SScanSettings oldSettings = settings;
   if (CGUIDialogContentSettings::Show(info, settings, bScan))
   {
     if(settings.exclude || (!info && info2))
@@ -2020,6 +2022,30 @@ void CGUIWindowVideoBase::OnAssignContent(const CStdString &path, int iFound, AD
       CGUIDialogVideoScan* pDialog = (CGUIDialogVideoScan*)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_SCAN);
       if (pDialog)
         pDialog->StartScanning(path, true);
+    }
+
+    CMediaSource* source = NULL;
+    for (unsigned int index = 0; index < g_settings.m_videoSources.size(); index++)
+    {
+      if (g_settings.m_videoSources.at(index).strPath == path)
+      {
+        source = &g_settings.m_videoSources.at(index);
+        break;
+      }
+    }
+
+    if (source != NULL && (settings.watch != oldSettings.watch || settings.recurse != oldSettings.recurse))
+    {
+      if (source->m_watcher.get())
+        CFileSystemWatcherManager::Get().Stop(source->m_watcher);
+      
+      if (settings.watch && source->vecPaths.size() > 0)
+      {
+        vector<string> paths;
+        for (unsigned int i = 0; i < source->vecPaths.size(); i++)
+          paths.push_back(source->vecPaths.at(i));
+        source->m_watcher = CFileSystemWatcherManager::Get().Watch(paths, &g_application, info->Content() == CONTENT_TVSHOWS || settings.recurse != 0);
+      }
     }
   }
 }

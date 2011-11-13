@@ -41,6 +41,7 @@
 #include "guilib/GUIWindowManager.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "filesystem/Directory.h"
+#include "filesystem/FileSystemWatcherManager.h"
 #include "FileItem.h"
 #include "LangInfo.h"
 #include "guilib/LocalizeStrings.h"
@@ -1174,6 +1175,7 @@ bool CSettings::UpdateShare(const CStdString &type, const CStdString oldName, co
       (*it).strName = share.strName;
       (*it).strPath = share.strPath;
       (*it).vecPaths = share.vecPaths;
+      (*it).m_watcher = share.m_watcher;
       pShare = &(*it);
       break;
     }
@@ -1232,6 +1234,9 @@ bool CSettings::DeleteSource(const CStdString &strType, const CStdString strName
   {
     if ((*it).strName == strName && (*it).strPath == strPath)
     {
+      if ((*it).m_watcher.get() != NULL)
+        CFileSystemWatcherManager::Get().Stop((*it).m_watcher);
+
       CLog::Log(LOGDEBUG,"found share, removing!");
       pShares->erase(it);
       found = true;

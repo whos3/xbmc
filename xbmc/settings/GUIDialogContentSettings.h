@@ -61,6 +61,7 @@ protected:
 
   bool m_bShowScanSettings;
   bool m_bRunScan;
+  bool m_bWatch;
   bool m_bScanRecursive;
   bool m_bUseDirNames;
   bool m_bSingleItem;

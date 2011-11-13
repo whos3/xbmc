@@ -62,6 +62,8 @@ namespace MEDIA_DETECT
 #include "windowing/XBMC_events.h"
 #include "threads/Thread.h"
 
+#include "filesystem/IFileSystemWatcher.h"
+
 class CKaraokeLyricsManager;
 class CInertialScrollingHandler;
 class CApplicationMessenger;
@@ -81,7 +83,7 @@ protected:
   int       m_iPlayList;
 };
 
-class CApplication : public CXBApplicationEx, public IPlayerCallback, public IMsgTargetCallback
+class CApplication : public CXBApplicationEx, public IPlayerCallback, public IMsgTargetCallback, public XFILE::IFileSystemWatcherNotification
 {
 public:
   CApplication(void);
@@ -93,6 +95,8 @@ public:
   virtual void Preflight();
   virtual bool Create();
   virtual bool Cleanup();
+
+  virtual void FileSystemChanged(const std::string &path);
 
   void StartServices();
   void StopServices();
@@ -392,6 +396,7 @@ protected:
   std::map<std::string, std::map<int, float> > m_lastAxisMap;
 #endif
 
+  CCriticalSection m_critFileSystemWatcher;
 };
 
 extern CApplication g_application;

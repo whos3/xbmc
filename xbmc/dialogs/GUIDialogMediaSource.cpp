@@ -24,15 +24,18 @@
 #include "GUIDialogFileBrowser.h"
 #include "video/windows/GUIWindowVideoBase.h"
 #include "video/dialogs/GUIDialogVideoScan.h"
+#include "video/VideoDatabase.h"
 #include "guilib/GUIWindowManager.h"
 #include "Util.h"
 #include "utils/URIUtils.h"
 #include "filesystem/Directory.h"
+#include "filesystem/FileSystemWatcherManager.h"
 #include "GUIDialogYesNo.h"
 #include "FileItem.h"
 #include "settings/Settings.h"
 #include "settings/GUISettings.h"
 #include "guilib/LocalizeStrings.h"
+#include "Application.h"
 
 using namespace std;
 using namespace XFILE;
@@ -148,6 +151,20 @@ bool CGUIDialogMediaSource::ShowAndAddMediaSource(const CStdString &type)
     if (dialog->m_paths->Size() > 0) {
       share.m_strThumbnailImage = dialog->m_paths->Get(0)->GetThumbnailImage();
     }
+
+    // Create a new watcher
+    VIDEO::SScanSettings scanSettings;
+    CVideoDatabase db;
+    ADDON::ScraperPtr scraper;
+    if (db.Open() && (scraper = db.GetScraperForPath(share.strPath, scanSettings)).get() != NULL && scanSettings.watch &&
+        share.vecPaths.size() > 0)
+    {
+      vector<string> paths;
+      for (unsigned int i = 0; i < share.vecPaths.size(); i++)
+        paths.push_back(share.vecPaths.at(i));
+      share.m_watcher = CFileSystemWatcherManager::Get().Watch(paths, &g_application, scraper->Content() == CONTENT_TVSHOWS || scanSettings.recurse != 0);
+    }
+
     g_settings.AddShare(type, share);
 
     if (type == "video")
@@ -183,6 +200,7 @@ bool CGUIDialogMediaSource::ShowAndEditMediaSource(const CStdString &type, const
 bool CGUIDialogMediaSource::ShowAndEditMediaSource(const CStdString &type, const CMediaSource &share)
 {
   CStdString strOldName = share.strName;
+  CStdString strOldPath = share.strPath;
   CGUIDialogMediaSource *dialog = (CGUIDialogMediaSource *)g_windowManager.GetWindow(WINDOW_DIALOG_MEDIA_SOURCE);
   if (!dialog) return false;
   dialog->Initialize();
@@ -211,6 +229,29 @@ bool CGUIDialogMediaSource::ShowAndEditMediaSource(const CStdString &type, const
 
     CMediaSource newShare;
     newShare.FromNameAndPaths(type, strName, dialog->GetPaths());
+
+    // If the paths have changed and we have a filesystem watcher on those
+    // paths we need to stop the old watcher and start a new one
+    if (!newShare.strPath.Equals(strOldPath) != 0)
+    {
+      // Stop the old watcher
+      if (share.m_watcher.get())
+        CFileSystemWatcherManager::Get().Stop(share.m_watcher);
+
+      // Create a new watcher
+      VIDEO::SScanSettings scanSettings;
+      CVideoDatabase db;
+      ADDON::ScraperPtr scraper;
+      if (db.Open() && (scraper = db.GetScraperForPath(newShare.strPath, scanSettings)).get() != NULL && scanSettings.watch &&
+          newShare.vecPaths.size() > 0)
+      {
+        vector<string> paths;
+        for (unsigned int i = 0; i < newShare.vecPaths.size(); i++)
+          paths.push_back(newShare.vecPaths.at(i));
+        newShare.m_watcher = CFileSystemWatcherManager::Get().Watch(paths, &g_application, scraper->Content() == CONTENT_TVSHOWS || scanSettings.recurse != 0);
+      }
+    }
+
     g_settings.UpdateShare(type, strOldName, newShare);
   }
   dialog->m_paths->Clear();
