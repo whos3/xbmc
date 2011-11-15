@@ -345,6 +345,7 @@
     <ClCompile Include="..\..\xbmc\filesystem\FileNFS.cpp" />
     <ClCompile Include="..\..\xbmc\filesystem\FilePipe.cpp" />
     <ClCompile Include="..\..\xbmc\filesystem\FileSystemWatcher.cpp" />
+    <ClCompile Include="..\..\xbmc\filesystem\FileSystemWatcherManager.cpp" />
     <ClCompile Include="..\..\xbmc\filesystem\FileUPnP.cpp" />
     <ClCompile Include="..\..\xbmc\filesystem\IFileSystemWatcher.cpp" />
     <ClCompile Include="..\..\xbmc\FileSystem\iso9660.cpp" />
@@ -760,6 +761,7 @@
     <ClCompile Include="..\..\xbmc\threads\platform\Implementation.cpp" />
     <ClInclude Include="..\..\xbmc\cores\AudioRenderers\IAudioRenderer.h" />
     <ClInclude Include="..\..\xbmc\filesystem\FileSystemWatcher.h" />
+    <ClInclude Include="..\..\xbmc\filesystem\FileSystemWatcherManager.h" />
     <ClInclude Include="..\..\xbmc\filesystem\IFileSystemWatcher.h" />
     <ClInclude Include="..\..\xbmc\filesystem\FileUPnP.h" />
     <ClInclude Include="..\..\xbmc\storage\DetectDVDType.h" />
