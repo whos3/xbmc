@@ -139,7 +139,7 @@ AddonProps::AddonProps(const cp_extension_t *ext)
   , path(ext->plugin->plugin_path)
   , author(ext->plugin->provider_name)
   , stars(0)
-  , jsonrpcClient(NULL)
+  , interfaceClient(NULL)
 {
   if (ext->ext_point_id)
     type = TranslateType(ext->ext_point_id);
@@ -160,22 +160,20 @@ AddonProps::AddonProps(const cp_extension_t *ext)
     EMPTY_IF("noicon",icon)
     EMPTY_IF("nochangelog",changelog)
 
-#ifdef HAS_JSONRPC
     std::vector<CStdString> permissions;
-    CAddonMgr::Get().GetExtList(metadata->configuration, "jsonrpc-permissions", permissions);
+    CAddonMgr::Get().GetExtList(metadata->configuration, "interface-permissions", permissions);
     if (permissions.size() > 0)
     {
-      jsonrpcClient = new CPythonTransport::CPythonClient();
-      jsonrpcClient->SetIdentification(id);
-      jsonrpcClient->SetName(name);
+      interfaceClient = new CPythonTransport::CPythonClient();
+      interfaceClient->SetIdentification(id);
+      interfaceClient->SetName(name);
 
-      int permissionFlags = JSONRPC::PermissionReadData;
+      int permissionFlags = PermissionReadData;
       for (unsigned int index = 0; index < permissions.size(); index++)
         permissionFlags |= JSONRPC::CJSONUtils::StringToPermission(permissions.at(index));
 
-      jsonrpcClient->SetPermissionFlags(permissionFlags);
+      interfaceClient->SetPermissionFlags((InterfacePermission)permissionFlags);
     }
-#endif
   }
   BuildDependencies(ext->plugin);
 }
@@ -188,15 +186,15 @@ AddonProps::AddonProps(const cp_plugin_info_t *plugin)
   , path(plugin->plugin_path)
   , author(plugin->provider_name)
   , stars(0)
-  , jsonrpcClient(NULL)
+  , interfaceClient(NULL)
 {
   BuildDependencies(plugin);
 }
 
 AddonProps::~AddonProps()
 {
-  delete jsonrpcClient;
-  jsonrpcClient = NULL;
+  delete interfaceClient;
+  interfaceClient = NULL;
 }
 
 void AddonProps::BuildDependencies(const cp_plugin_info_t *plugin)

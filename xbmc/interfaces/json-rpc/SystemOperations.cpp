@@ -26,7 +26,7 @@
 
 using namespace JSONRPC;
 
-JSON_STATUS CSystemOperations::GetProperties(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CSystemOperations::GetProperties(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVariant properties = CVariant(CVariant::VariantTypeObject);
   for (unsigned int index = 0; index < parameterObject["properties"].size(); index++)
@@ -45,7 +45,7 @@ JSON_STATUS CSystemOperations::GetProperties(const CStdString &method, ITranspor
   return OK;
 }
 
-JSON_STATUS CSystemOperations::Shutdown(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CSystemOperations::Shutdown(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   if (g_powerManager.CanPowerdown())
   {
@@ -56,7 +56,7 @@ JSON_STATUS CSystemOperations::Shutdown(const CStdString &method, ITransportLaye
     return FailedToExecute;
 }
 
-JSON_STATUS CSystemOperations::Suspend(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CSystemOperations::Suspend(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   if (g_powerManager.CanSuspend())
   {
@@ -67,7 +67,7 @@ JSON_STATUS CSystemOperations::Suspend(const CStdString &method, ITransportLayer
     return FailedToExecute;
 }
 
-JSON_STATUS CSystemOperations::Hibernate(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CSystemOperations::Hibernate(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   if (g_powerManager.CanHibernate())
   {
@@ -78,7 +78,7 @@ JSON_STATUS CSystemOperations::Hibernate(const CStdString &method, ITransportLay
     return FailedToExecute;
 }
 
-JSON_STATUS CSystemOperations::Reboot(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CSystemOperations::Reboot(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   if (g_powerManager.CanReboot())
   {

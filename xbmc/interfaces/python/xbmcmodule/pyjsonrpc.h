@@ -21,10 +21,10 @@
  */
 #include "system.h"
 #include "settings/GUISettings.h"
+#include "interfaces/IInterfaceClient.h"
 #include "interfaces/json-rpc/ITransportLayer.h"
 #include "interfaces/json-rpc/JSONRPC.h"
 
-#ifdef HAS_JSONRPC
 class CPythonTransport : public JSONRPC::ITransportLayer
 {
 public:
@@ -32,16 +32,16 @@ public:
   virtual bool Download(const char *path, CVariant &result) { return false; }
   virtual int GetCapabilities() { return JSONRPC::Response; }
 
-  class CPythonClient : public JSONRPC::IClient
+  class CPythonClient : public IInterfaceClient
   {
   public:
-    virtual bool SetPermissionFlags(int flags) { m_permissionFlags = JSONRPC::PermissionReadData | flags; return true; };
-    virtual int  GetPermissionFlags()
+    virtual bool SetPermissionFlags(InterfacePermission flags) { m_permissionFlags = (InterfacePermission)(PermissionReadData | flags); return true; };
+    virtual InterfacePermission GetPermissionFlags()
     {
       if (g_guiSettings.GetBool("services.clientauthentication"))
         return m_permissionFlags;
       else
-        return JSONRPC::OPERATION_PERMISSION_NOAUTHENTICATION;
+        return INTERFACEPERMISSION_NOAUTHENTICATION;
     }
     virtual int  GetAnnouncementFlags() { return 0; }
     virtual bool SetAnnouncementFlags(int flags) { return true; }
@@ -53,9 +53,8 @@ public:
     virtual bool SetName(std::string name) { m_name = name; return true; }
     virtual std::string GetName() { return m_name; }
   private:
-    int m_permissionFlags;
+    InterfacePermission m_permissionFlags;
     std::string m_identification;
     std::string m_name;
   };
 };
-#endif

@@ -28,7 +28,7 @@
 
 using namespace JSONRPC;
 
-JSON_STATUS CVideoLibrary::GetMovies(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetMovies(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVideoDatabase videodatabase;
   if (!videodatabase.Open())
@@ -43,7 +43,7 @@ JSON_STATUS CVideoLibrary::GetMovies(const CStdString &method, ITransportLayer *
   return ret;
 }
 
-JSON_STATUS CVideoLibrary::GetMovieDetails(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetMovieDetails(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int id = (int)parameterObject["movieid"].asInteger();
 
@@ -65,7 +65,7 @@ JSON_STATUS CVideoLibrary::GetMovieDetails(const CStdString &method, ITransportL
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetMovieSets(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetMovieSets(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVideoDatabase videodatabase;
   if (!videodatabase.Open())
@@ -79,7 +79,7 @@ JSON_STATUS CVideoLibrary::GetMovieSets(const CStdString &method, ITransportLaye
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetMovieSetDetails(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetMovieSetDetails(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int id = (int)parameterObject["setid"].asInteger();
 
@@ -108,7 +108,7 @@ JSON_STATUS CVideoLibrary::GetMovieSetDetails(const CStdString &method, ITranspo
   return ret;
 }
 
-JSON_STATUS CVideoLibrary::GetTVShows(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetTVShows(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVideoDatabase videodatabase;
   if (!videodatabase.Open())
@@ -137,7 +137,7 @@ JSON_STATUS CVideoLibrary::GetTVShows(const CStdString &method, ITransportLayer 
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetTVShowDetails(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetTVShowDetails(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int id = (int)parameterObject["tvshowid"].asInteger();
 
@@ -159,7 +159,7 @@ JSON_STATUS CVideoLibrary::GetTVShowDetails(const CStdString &method, ITransport
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetSeasons(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetSeasons(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int tvshowID = (int)parameterObject["tvshowid"].asInteger();
 
@@ -177,7 +177,7 @@ JSON_STATUS CVideoLibrary::GetSeasons(const CStdString &method, ITransportLayer 
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetEpisodes(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetEpisodes(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int tvshowID = (int)parameterObject["tvshowid"].asInteger();
   int season   = (int)parameterObject["season"].asInteger();
@@ -196,7 +196,7 @@ JSON_STATUS CVideoLibrary::GetEpisodes(const CStdString &method, ITransportLayer
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetEpisodeDetails(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetEpisodeDetails(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int id = (int)parameterObject["episodeid"].asInteger();
 
@@ -225,7 +225,7 @@ JSON_STATUS CVideoLibrary::GetEpisodeDetails(const CStdString &method, ITranspor
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetMusicVideos(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetMusicVideos(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int artistID = (int)parameterObject["artistid"].asInteger();
   int albumID  = (int)parameterObject["albumid"].asInteger();
@@ -242,7 +242,7 @@ JSON_STATUS CVideoLibrary::GetMusicVideos(const CStdString &method, ITransportLa
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetMusicVideoDetails(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetMusicVideoDetails(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int id = (int)parameterObject["musicvideoid"].asInteger();
 
@@ -264,7 +264,7 @@ JSON_STATUS CVideoLibrary::GetMusicVideoDetails(const CStdString &method, ITrans
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetRecentlyAddedMovies(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetRecentlyAddedMovies(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVideoDatabase videodatabase;
   if (!videodatabase.Open())
@@ -278,7 +278,7 @@ JSON_STATUS CVideoLibrary::GetRecentlyAddedMovies(const CStdString &method, ITra
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetRecentlyAddedEpisodes(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetRecentlyAddedEpisodes(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVideoDatabase videodatabase;
   if (!videodatabase.Open())
@@ -292,7 +292,7 @@ JSON_STATUS CVideoLibrary::GetRecentlyAddedEpisodes(const CStdString &method, IT
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetRecentlyAddedMusicVideos(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetRecentlyAddedMusicVideos(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVideoDatabase videodatabase;
   if (!videodatabase.Open())
@@ -306,7 +306,7 @@ JSON_STATUS CVideoLibrary::GetRecentlyAddedMusicVideos(const CStdString &method,
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::GetGenres(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::GetGenres(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CStdString media = parameterObject["type"].asString();
   media = media.ToLower();
@@ -349,13 +349,13 @@ JSON_STATUS CVideoLibrary::GetGenres(const CStdString &method, ITransportLayer *
   return OK;
 }
 
-JSON_STATUS CVideoLibrary::Scan(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::Scan(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   g_application.getApplicationMessenger().ExecBuiltIn("updatelibrary(video)");
   return ACK;
 }
 
-JSON_STATUS CVideoLibrary::Export(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::Export(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CStdString cmd;
   if (parameterObject["options"].isMember("path"))
@@ -370,7 +370,7 @@ JSON_STATUS CVideoLibrary::Export(const CStdString &method, ITransportLayer *tra
   return ACK;
 }
 
-JSON_STATUS CVideoLibrary::Clean(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CVideoLibrary::Clean(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   g_application.getApplicationMessenger().ExecBuiltIn("cleanlibrary(video)");
   return ACK;

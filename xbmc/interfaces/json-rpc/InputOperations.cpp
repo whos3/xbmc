@@ -84,37 +84,37 @@ JSON_STATUS CInputOperations::activateWindow(int windowID)
   return ACK;
 }
 
-JSON_STATUS CInputOperations::Left(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CInputOperations::Left(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   return sendKey(XBMCVK_LEFT);
 }
 
-JSON_STATUS CInputOperations::Right(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CInputOperations::Right(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   return sendKey(XBMCVK_RIGHT);
 }
 
-JSON_STATUS CInputOperations::Down(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CInputOperations::Down(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   return sendKey(XBMCVK_DOWN);
 }
 
-JSON_STATUS CInputOperations::Up(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CInputOperations::Up(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   return sendKey(XBMCVK_UP);
 }
 
-JSON_STATUS CInputOperations::Select(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CInputOperations::Select(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   return sendKey(XBMCVK_RETURN);
 }
 
-JSON_STATUS CInputOperations::Back(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CInputOperations::Back(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   return sendKey(XBMCVK_BACK);
 }
 
-JSON_STATUS CInputOperations::Home(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+JSON_STATUS CInputOperations::Home(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant &parameterObject, CVariant &result)
 {
   return activateWindow(WINDOW_HOME);
 }

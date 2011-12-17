@@ -21,7 +21,6 @@
  */
 
 #include <string>
-#include "IClient.h"
 
 class CVariant;
 

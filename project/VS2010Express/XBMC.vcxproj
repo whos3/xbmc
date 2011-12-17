@@ -460,13 +460,13 @@
     <ClCompile Include="..\..\xbmc\input\XBMC_keytable.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\AnnouncementManager.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\Builtins.cpp" />
+    <ClCompile Include="..\..\xbmc\interfaces\ClientAuthManager.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\http-api\HttpApi.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\http-api\XBMChttp.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\info\InfoBool.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\info\SkinVariable.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ApplicationOperations.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\AudioLibrary.cpp" />
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\FileItemHandler.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\FileOperations.cpp" />
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\InputOperations.cpp" />
@@ -761,6 +761,8 @@
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogPermissions.h" />
     <ClInclude Include="..\..\xbmc\filesystem\FileUPnP.h" />
     <ClInclude Include="..\..\xbmc\storage\DetectDVDType.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\ClientAuthManager.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\IInterfaceClient.h" />
     <ClInclude Include="..\..\xbmc\threads\platform\win\Implementation.cpp" />
     <ClCompile Include="..\..\xbmc\threads\SystemClock.cpp" />
     <ClCompile Include="..\..\xbmc\threads\Thread.cpp" />
@@ -1414,10 +1416,8 @@
     <ClInclude Include="..\..\xbmc\interfaces\info\SkinVariable.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ApplicationOperations.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\AudioLibrary.h" />
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\FileItemHandler.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\FileOperations.h" />
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\IClient.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\InputOperations.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ITransportLayer.h" />
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\JSONRPC.h" />

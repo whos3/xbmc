@@ -2409,14 +2409,15 @@
 	<string id="37001">Authentication Upgrade</string>
 	<string id="37002">"%s" requests access to XBMC.</string>
 	<string id="37003">The following permissions are requested:</string>
-	<string id="37004">Reject</string>
-	<string id="37005">Accept</string>
-	<string id="37006">Always Accept</string>
-	<string id="37007">Controlling players</string>
-	<string id="37008">Sending notifications</string>
-	<string id="37009">Controlling the system power</string>
-	<string id="37010">Adding/Updating data in databases</string>
-	<string id="37011">Removing data from databases</string>
-	<string id="37012">Navigating the user interface</string>
-	<string id="37013">Writing to local files</string>
+	<string id="37010">Always Reject</string>
+	<string id="37011">Reject</string>
+	<string id="37012">Accept</string>
+	<string id="37013">Always Accept</string>
+	<string id="37020">Controlling players</string>
+	<string id="37021">Sending notifications</string>
+	<string id="37022">Controlling the system power</string>
+	<string id="37023">Adding/Updating data in databases</string>
+	<string id="37024">Removing data from databases</string>
+	<string id="37025">Navigating the user interface</string>
+	<string id="37026">Writing to local files</string>
 </strings>

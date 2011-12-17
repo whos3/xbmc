@@ -24,6 +24,7 @@
 #include <vector>
 #include <limits>
 #include "JSONUtils.h"
+#include "interfaces/IInterfaceClient.h"
 
 namespace JSONRPC
 {
@@ -235,7 +236,7 @@ namespace JSONRPC
      \brief Definition of the permissions needed
      to execute the method
      */
-    OperationPermission permission;
+    InterfacePermission permission;
     /*!
      \brief Description of the method
      */
@@ -334,7 +335,7 @@ namespace JSONRPC
      \param printMetadata Whether to print XBMC specific data or not
      \param filterByTransport Whether to filter by transport or not
      */
-    static JSON_STATUS Print(CVariant &result, ITransportLayer *transport, IClient *client, bool printDescriptions = true, bool printMetadata = false, bool filterByTransport = true, std::string filterByName = "", std::string filterByType = "", bool printReferences = true);
+    static JSON_STATUS Print(CVariant &result, ITransportLayer *transport, IInterfaceClient *client, bool printDescriptions = true, bool printMetadata = false, bool filterByTransport = true, std::string filterByName = "", std::string filterByType = "", bool printReferences = true);
 
     /*!
      \brief Checks the given parameters from the request against the
@@ -352,7 +353,7 @@ namespace JSONRPC
      actual C/C++ implementation of the method to the "methodCall" parameter and checks the
      given parameters from the request against the json schema description for the given method.
      */
-    static JSON_STATUS CheckCall(const char* const method, const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters);
+    static JSON_STATUS CheckCall(const char* const method, const CVariant &requestParameters, ITransportLayer *transport, IInterfaceClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters);
 
   private:
     static bool prepareDescription(std::string &description, CVariant &descriptionObject, std::string &name);

@@ -21,7 +21,7 @@
 */
 #include "boost/shared_ptr.hpp"
 #include "utils/StdString.h"
-#include "interfaces/json-rpc/IClient.h"
+#include "interfaces/IInterfaceClient.h"
 
 #include <boost/enable_shared_from_this.hpp>
 
@@ -102,7 +102,7 @@ namespace ADDON
     virtual const CStdString Author() const =0;
     virtual const CStdString Icon() const =0;
     virtual int  Stars() const =0;
-    virtual JSONRPC::IClient* JsonRpcClient() const =0;
+    virtual IInterfaceClient* InterfaceClient() const =0;
     virtual const CStdString Disclaimer() const =0;
     virtual const InfoMap &ExtraInfo() const =0;
     virtual bool HasSettings() =0;

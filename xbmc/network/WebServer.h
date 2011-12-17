@@ -36,6 +36,7 @@
 #else
 #include <microhttpd.h>
 #endif
+#include "interfaces/IInterfaceClient.h"
 #include "interfaces/json-rpc/ITransportLayer.h"
 #include "threads/CriticalSection.h"
 
@@ -57,10 +58,10 @@ public:
   {
   public:
     ~CHTTPClientManager();
-    JSONRPC::IClient* GetClient(std::string uuid = "");
+    IInterfaceClient* GetClient(std::string uuid = "");
 
   private:
-    std::map<std::string, JSONRPC::IClient*> m_clients;
+    std::map<std::string, IInterfaceClient*> m_clients;
   };
 
 private:
@@ -119,12 +120,12 @@ private:
 
   static CHTTPClientManager m_clientManager;
 
-  class CHTTPClient : public JSONRPC::IClient
+  class CHTTPClient : public IInterfaceClient
   {
   public:
     CHTTPClient(std::string uid);
-    virtual int  GetPermissionFlags();
-    virtual bool SetPermissionFlags(int flags);
+    virtual InterfacePermission GetPermissionFlags();
+    virtual bool SetPermissionFlags(InterfacePermission flags);
     virtual int  GetAnnouncementFlags();
     virtual bool SetAnnouncementFlags(int flags);
 
@@ -138,7 +139,7 @@ private:
     virtual std::string GetUID() { return m_uid; }
 
   private:
-    int m_permissionFlags;
+    InterfacePermission m_permissionFlags;
     bool m_authenticated;
     std::string m_identification;
     std::string m_name;

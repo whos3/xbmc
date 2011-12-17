@@ -28,7 +28,7 @@
 #include <string.h>
 #include <math.h>
 #include "ServiceDescription.h"
-#include "ClientAuthManager.h"
+#include "interfaces/ClientAuthManager.h"
 
 using namespace ANNOUNCEMENT;
 using namespace JSONRPC;
@@ -60,21 +60,21 @@ void CJSONRPC::Initialize()
   CLog::Log(LOGINFO, "JSONRPC: Sucessfully initialized");
 }
 
-JSON_STATUS CJSONRPC::Introspect(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::Introspect(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   return CJSONServiceDescription::Print(result, transport, client,
     parameterObject["getdescriptions"].asBoolean(), parameterObject["getmetadata"].asBoolean(), parameterObject["filterbytransport"].asBoolean(),
     parameterObject["filter"]["id"].asString(), parameterObject["filter"]["type"].asString(), parameterObject["filter"]["getreferences"].asBoolean());
 }
 
-JSON_STATUS CJSONRPC::Version(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::Version(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   result["version"] = CJSONServiceDescription::GetVersion();
 
   return OK;
 }
 
-JSON_STATUS CJSONRPC::Authenticate(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::Authenticate(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   CStdString identification = parameterObject["identification"].asString();
   CStdString name = parameterObject["name"].asString();
@@ -89,7 +89,7 @@ JSON_STATUS CJSONRPC::Authenticate(const CStdString &method, ITransportLayer *tr
   client->SetIdentification(identification);
   client->SetName(name);
 
-  if (CClientAuthManager::Authenticate(client, permissionFlags))
+  if (CClientAuthManager::Authenticate(client, (InterfacePermission)permissionFlags))
     result = "Accepted";
   else
     result = "Rejected";
@@ -97,24 +97,24 @@ JSON_STATUS CJSONRPC::Authenticate(const CStdString &method, ITransportLayer *tr
   return OK;
 }
 
-JSON_STATUS CJSONRPC::Permission(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::Permission(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   int flags = client->GetPermissionFlags();
 
-  for (int i = 1; i <= OPERATION_PERMISSION_ALL; i *= 2)
-    result[PermissionToString((OperationPermission)i)] = (flags & i) > 0;
+  for (int i = 1; i <= INTERFACEPERMISSION_ALL; i *= 2)
+    result[PermissionToString((InterfacePermission)i)] = (flags & i) > 0;
 
   return OK;
 }
 
-JSON_STATUS CJSONRPC::Ping(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::Ping(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   CVariant temp = "pong";
   result.swap(temp);
   return OK;
 }
 
-JSON_STATUS CJSONRPC::GetConfiguration(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::GetConfiguration(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   int flags = client->GetAnnouncementFlags();
 
@@ -124,7 +124,7 @@ JSON_STATUS CJSONRPC::GetConfiguration(const CStdString &method, ITransportLayer
   return OK;
 }
 
-JSON_STATUS CJSONRPC::SetConfiguration(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::SetConfiguration(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   int flags = 0;
   int oldFlags = client->GetAnnouncementFlags();
@@ -158,7 +158,7 @@ JSON_STATUS CJSONRPC::SetConfiguration(const CStdString &method, ITransportLayer
   return GetConfiguration(method, transport, client, parameterObject, result);
 }
 
-JSON_STATUS CJSONRPC::NotifyAll(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+JSON_STATUS CJSONRPC::NotifyAll(const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result)
 {
   if (parameterObject["data"].isNull())
     CAnnouncementManager::Announce(Other, parameterObject["sender"].asString().c_str(),  
@@ -173,7 +173,7 @@ JSON_STATUS CJSONRPC::NotifyAll(const CStdString &method, ITransportLayer *trans
   return ACK;
 }
 
-CStdString CJSONRPC::MethodCall(const CStdString &inputString, ITransportLayer *transport, IClient *client)
+CStdString CJSONRPC::MethodCall(const CStdString &inputString, ITransportLayer *transport, IInterfaceClient *client)
 {
   CVariant inputroot, outputroot, result;
   bool hasResponse = false;
@@ -217,7 +217,7 @@ CStdString CJSONRPC::MethodCall(const CStdString &inputString, ITransportLayer *
   return str;
 }
 
-bool CJSONRPC::HandleMethodCall(const CVariant& request, CVariant& response, ITransportLayer *transport, IClient *client)
+bool CJSONRPC::HandleMethodCall(const CVariant& request, CVariant& response, ITransportLayer *transport, IInterfaceClient *client)
 {
   JSON_STATUS errorCode = OK;
   CVariant result;

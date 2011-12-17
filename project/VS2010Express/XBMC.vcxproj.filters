@@ -2571,8 +2571,8 @@
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogPermissions.cpp">
       <Filter>dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.cpp">
-      <Filter>interfaces\json-rpc</Filter>
+    <ClCompile Include="..\..\xbmc\interfaces\ClientAuthManager.cpp">
+      <Filter>interfaces</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -4015,9 +4015,6 @@
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\FileOperations.h">
       <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\IClient.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ITransportLayer.h">
       <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
@@ -5166,8 +5163,11 @@
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogPermissions.h">
       <Filter>dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ClientAuthManager.h">
-      <Filter>interfaces\json-rpc</Filter>
+    <ClInclude Include="..\..\xbmc\interfaces\ClientAuthManager.h">
+      <Filter>interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\IInterfaceClient.h">
+      <Filter>interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

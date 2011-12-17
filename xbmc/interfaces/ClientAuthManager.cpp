@@ -20,12 +20,10 @@
  */
 
 #include "ClientAuthManager.h"
-#include "JSONUtils.h"
 #include "settings/GUISettings.h"
 #include "dialogs/GUIDialogPermissions.h"
 
 using namespace std;
-using namespace JSONRPC;
 
 std::map<std::string, CClientAuthManager::CManagedClient> CClientAuthManager::m_clients;
 
@@ -39,7 +37,7 @@ CClientAuthManager::CManagedClient::CManagedClient()
   m_store = false;
 }
 
-CClientAuthManager::CManagedClient::CManagedClient(IClient *client, bool store /* = true */)
+CClientAuthManager::CManagedClient::CManagedClient(IInterfaceClient *client, bool store /* = true */)
 {
   if (client == NULL)
     throw std::exception();
@@ -52,7 +50,7 @@ CClientAuthManager::CManagedClient::CManagedClient(IClient *client, bool store /
   m_store = store;
 }
 
-CClientAuthManager::CManagedClient::CManagedClient(std::string identification, std::string name, int permissions, bool authenticated, int announcementFlags, bool store /* = true */)
+CClientAuthManager::CManagedClient::CManagedClient(std::string identification, std::string name, InterfacePermission permissions, bool authenticated, int announcementFlags, bool store /* = true */)
 {
   if (identification.empty() || name.empty())
     throw std::exception();
@@ -65,7 +63,7 @@ CClientAuthManager::CManagedClient::CManagedClient(std::string identification, s
   m_store = store;
 }
 
-bool CClientAuthManager::Add(IClient *client, bool store /* = true */)
+bool CClientAuthManager::Add(IInterfaceClient *client, bool store /* = true */)
 {
   if (client == NULL)
     return false;
@@ -87,7 +85,7 @@ bool CClientAuthManager::Add(IClient *client, bool store /* = true */)
   return true;
 }
 
-bool CClientAuthManager::Add(std::string identification, std::string name, int permissions, bool authenticated, int announcementFlags, bool store /* = true */)
+bool CClientAuthManager::Add(std::string identification, std::string name, InterfacePermission permissions, bool authenticated, int announcementFlags, bool store /* = true */)
 {
   if (identification.empty() || name.empty())
     return false;
@@ -109,7 +107,7 @@ bool CClientAuthManager::Add(std::string identification, std::string name, int p
   return true;
 }
 
-bool CClientAuthManager::Update(IClient *client)
+bool CClientAuthManager::Update(IInterfaceClient *client)
 {
   if (client == NULL)
     return false;
@@ -122,7 +120,7 @@ bool CClientAuthManager::Update(IClient *client)
   return true;
 }
 
-bool CClientAuthManager::Update(std::string identification, int permissions)
+bool CClientAuthManager::Update(std::string identification, InterfacePermission permissions)
 {
   std::map<std::string, CClientAuthManager::CManagedClient>::iterator existingClient = m_clients.find(identification);
   if (existingClient != m_clients.end())
@@ -142,7 +140,7 @@ bool CClientAuthManager::Remove(std::string identification)
   return true;
 }
 
-CLIENT_AUTH_STATUS CClientAuthManager::Check(std::string identification, std::string name, int permissions, bool &authenticated)
+CLIENT_AUTH_STATUS CClientAuthManager::Check(std::string identification, std::string name, InterfacePermission permissions, bool &authenticated)
 {
   authenticated = false;
   std::map<std::string, CClientAuthManager::CManagedClient>::iterator foundClient = m_clients.find(identification);
@@ -163,7 +161,7 @@ CLIENT_AUTH_STATUS CClientAuthManager::Check(std::string identification, std::st
   return UnknownClient;
 }
 
-bool CClientAuthManager::Authenticate(IClient *client, int permissions)
+bool CClientAuthManager::Authenticate(IInterfaceClient *client, InterfacePermission permissions)
 {
   if (client == NULL)
     return false;
@@ -171,21 +169,20 @@ bool CClientAuthManager::Authenticate(IClient *client, int permissions)
   if (permissions <= PermissionReadData)
     return true;
 
-  int originalPermissions = client->GetPermissionFlags();
+  InterfacePermission originalPermissions = client->GetPermissionFlags();
   client->SetPermissionFlags(permissions);
 
   bool isAuthenticated = false;
   CLIENT_AUTH_STATUS clientStatus = Check(client->GetIdentification(), client->GetName(), client->GetPermissionFlags(), isAuthenticated);
 
-  CGUIDialogPermissions::PermissionsResult userChoice;
+  CGUIDialogPermissions::PermissionsResult userChoice = CGUIDialogPermissions::PermissionsUnknown;
 
   if (!g_guiSettings.GetBool("services.clientauthentication") ||
       (clientStatus == KnownClient && isAuthenticated) ||
       (clientStatus != KnownClient &&
-      (userChoice = CGUIDialogPermissions::ShowAndGetInput(client, clientStatus == PartiallyKnownClient)) != CGUIDialogPermissions::PermissionsRejected))
+      (userChoice = CGUIDialogPermissions::ShowAndGetInput(client, clientStatus == PartiallyKnownClient)) > CGUIDialogPermissions::PermissionsRejectedAlways))
   {
-    if (!isAuthenticated)
-      client->SetAuthenticated();
+    client->SetAuthenticated();
 
     if (clientStatus == UnknownClient)
       Add(client, g_guiSettings.GetBool("services.rememberclientauthentication") && userChoice == CGUIDialogPermissions::PermissionsGrantedAlways);
@@ -194,19 +191,24 @@ bool CClientAuthManager::Authenticate(IClient *client, int permissions)
 
     return true;
   }
+  else if (userChoice <= CGUIDialogPermissions::PermissionsRejectedAlways)
+  {
+    if (clientStatus == UnknownClient)
+      Add(client, g_guiSettings.GetBool("services.rememberclientauthentication") && userChoice == CGUIDialogPermissions::PermissionsRejectedAlways);
+  }
   
-  // TODO: Add "always deny" clients to CClientAuthManager
   client->SetPermissionFlags(originalPermissions);
   return false;
 }
 
-void CClientAuthManager::GetClients(std::vector<IClient*> &clients)
+void CClientAuthManager::GetClients(std::vector<IInterfaceClient*> &clients)
 {
   std::map<std::string, CClientAuthManager::CManagedClient>::const_iterator iter;
   std::map<std::string, CClientAuthManager::CManagedClient>::const_iterator iterEnd = m_clients.end();
 
   for (iter = m_clients.begin(); iter != iterEnd; iter++)
   {
-    clients.push_back((IClient *)&(iter->second));
+    if (iter->second.m_store)
+      clients.push_back((IInterfaceClient *)&(iter->second));
   }
 }

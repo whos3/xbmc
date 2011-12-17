@@ -24,7 +24,7 @@
 
 #include "dialogs/GUIDialogBoxBase.h"
 #include "GUIViewControl.h"
-#include "interfaces/json-rpc/IClient.h"
+#include "interfaces/IInterfaceClient.h"
 #include "interfaces/json-rpc/JSONUtils.h"
 
 class CGUIDialogPermissions : public CGUIDialogBoxBase
@@ -33,8 +33,10 @@ public:
   enum PermissionsResult
   {
     PermissionsRejected = 0,
+    PermissionsRejectedAlways,
     PermissionsGranted,
-    PermissionsGrantedAlways
+    PermissionsGrantedAlways,
+    PermissionsUnknown
   };
 
 public:
@@ -50,9 +52,9 @@ public:
   virtual bool HasListItems() const { return m_client != NULL; };
   virtual void Update();
   
-  bool SetClient(JSONRPC::IClient *client);
+  bool SetClient(IInterfaceClient *client);
   PermissionsResult GetChoice() const { return m_result; }
-  static PermissionsResult ShowAndGetInput(JSONRPC::IClient *client, bool permissionUpdate = false);
+  static PermissionsResult ShowAndGetInput(IInterfaceClient *client, bool permissionUpdate = false);
 
 protected:
   virtual bool OnMessageClick(CGUIMessage &message);
@@ -61,17 +63,17 @@ private:
   void clear();
 
   bool m_permissionUpdate;
-  JSONRPC::IClient *m_client;
+  IInterfaceClient *m_client;
   CFileItemList *m_permissions;
   CGUIViewControl m_viewControl;
   PermissionsResult m_result;
 
-  typedef struct OperationPermissionInfo
+  typedef struct InterfacePermissionInfo
   {
     int localisedLabel;
     int level;
-  } OperationPermissionInfo;
+  } InterfacePermissionInfo;
 
-  static std::map<JSONRPC::OperationPermission, OperationPermissionInfo> m_permissionInfo;
-  static std::map<JSONRPC::OperationPermission, OperationPermissionInfo> fillPermissionInfo();
+  static std::map<InterfacePermission, InterfacePermissionInfo> m_permissionInfo;
+  static std::map<InterfacePermission, InterfacePermissionInfo> fillPermissionInfo();
 };

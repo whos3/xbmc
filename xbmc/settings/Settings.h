@@ -53,10 +53,7 @@
 #include "guilib/Resolution.h"
 #include "guilib/GraphicContext.h"
 #include "utils/StdString.h"
-
-#ifdef HAS_JSONRPC
-#include "interfaces/json-rpc/IClient.h"
-#endif
+#include "interfaces/IInterfaceClient.h"
 
 #include <vector>
 #include <map>
@@ -412,9 +409,7 @@ protected:
 
   void LoadUserFolderLayout();
 
-#ifdef HAS_JSONRPC
-  bool SaveJsonRpcClients(TiXmlNode *pNode) const;
-#endif
+  bool SaveInterfaceClients(TiXmlNode *pNode) const;
 
 private:
   std::vector<CProfile> m_vecProfiles;
@@ -424,15 +419,14 @@ private:
   unsigned int m_currentProfile;
   int m_nextIdProfile; // for tracking the next available id to give to a new profile to ensure id's are not re-used
 
-#ifdef HAS_JSONRPC
-  class CStoredJsonRpcClient : public JSONRPC::IClient
+  class CStoredInterfaceClient : public IInterfaceClient
   {
   public:
-    CStoredJsonRpcClient(JSONRPC::IClient *client);
-    CStoredJsonRpcClient(TiXmlElement* pClientElement);
+    CStoredInterfaceClient(IInterfaceClient *client);
+    CStoredInterfaceClient(TiXmlElement* pClientElement);
 
-    virtual bool SetPermissionFlags(int flags) { m_permissionFlags = flags; return true; }
-    virtual int  GetPermissionFlags() { return m_permissionFlags; }
+    virtual bool SetPermissionFlags(InterfacePermission flags) { m_permissionFlags = flags; return true; }
+    virtual InterfacePermission GetPermissionFlags() { return m_permissionFlags; }
     virtual int  GetAnnouncementFlags() { return m_announcementFlags; }
     virtual bool SetAnnouncementFlags(int flags) { m_announcementFlags = flags; return true; }
 
@@ -446,13 +440,12 @@ private:
     bool Save(TiXmlNode* pNode) const;
 
   private:
-    int m_permissionFlags;
+    InterfacePermission m_permissionFlags;
     int m_announcementFlags;
     bool m_authenticated;
     CStdString m_identification;
     CStdString m_name;
   };
-#endif
 };
 
 extern class CSettings g_settings;

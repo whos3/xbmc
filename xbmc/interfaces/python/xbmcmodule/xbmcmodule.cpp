@@ -309,7 +309,7 @@ namespace PYXBMC
       // If we got a valid addon we can finally retrieve
       // the addon's JSON-RPC client with it's permissions
       if (addon.get() != NULL)
-        client = (CPythonTransport::CPythonClient *)addon->JsonRpcClient();
+        client = (CPythonTransport::CPythonClient *)addon->InterfaceClient();
     }
 
     // If the JSON-RPC client hasn't been retrieved

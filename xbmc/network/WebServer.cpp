@@ -658,25 +658,25 @@ const char *CWebServer::CreateMimeTypeFromExtension(const char *ext)
 
 CWebServer::CHTTPClient::CHTTPClient(std::string uid)
 {
-  m_permissionFlags = OPERATION_PERMISSION_UNAUTHENTICATED;
+  m_permissionFlags = INTERFACEPERMISSION_UNAUTHENTICATED;
   m_authenticated = false;
   m_identification = "";
   m_name = "Non-authenticated TCP client";
   m_uid = uid;
 }
 
-bool CWebServer::CHTTPClient::SetPermissionFlags(int flags)
+bool CWebServer::CHTTPClient::SetPermissionFlags(InterfacePermission flags)
 {
-  m_permissionFlags = PermissionReadData | flags;
+  m_permissionFlags = (InterfacePermission)(PermissionReadData | flags);
   return true;
 }
 
-int CWebServer::CHTTPClient::GetPermissionFlags()
+InterfacePermission CWebServer::CHTTPClient::GetPermissionFlags()
 {
   if (g_guiSettings.GetBool("services.clientauthentication"))
     return m_permissionFlags;
   else
-    return OPERATION_PERMISSION_NOAUTHENTICATION;
+    return INTERFACEPERMISSION_NOAUTHENTICATION;
 }
 
 int CWebServer::CHTTPClient::GetAnnouncementFlags()
@@ -692,8 +692,8 @@ bool CWebServer::CHTTPClient::SetAnnouncementFlags(int flags)
 
 CWebServer::CHTTPClientManager::~CHTTPClientManager()
 {
-  std::map<std::string, IClient*>::const_iterator iter;
-  std::map<std::string, IClient*>::const_iterator iterEnd = m_clients.end();
+  std::map<std::string, IInterfaceClient*>::const_iterator iter;
+  std::map<std::string, IInterfaceClient*>::const_iterator iterEnd = m_clients.end();
 
   for (iter = m_clients.begin(); iter != iterEnd; iter++)
   {
@@ -703,11 +703,11 @@ CWebServer::CHTTPClientManager::~CHTTPClientManager()
   m_clients.clear();
 }
 
-IClient* CWebServer::CHTTPClientManager::GetClient(std::string uuid /* = "" */)
+IInterfaceClient* CWebServer::CHTTPClientManager::GetClient(std::string uuid /* = "" */)
 {
   if (!uuid.empty())
   {
-    std::map<std::string, IClient*>::const_iterator client = m_clients.find(uuid);
+    std::map<std::string, IInterfaceClient*>::const_iterator client = m_clients.find(uuid);
     if (client == m_clients.end())
       return NULL;
 

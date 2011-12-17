@@ -28,46 +28,47 @@
 #include "utils/log.h"
 #include "utils/StdString.h"
 
-#define BUTTON_REJECT       10
-#define BUTTON_GRANT        11
-#define BUTTON_GRANT_ALWAYS 12
-#define CONTROL_LIST        20
+#define BUTTON_REJECT_ALWAYS  10
+#define BUTTON_REJECT         11
+#define BUTTON_GRANT          12
+#define BUTTON_GRANT_ALWAYS   13
+#define CONTROL_LIST          20
 
 using namespace std;
 using namespace JSONRPC;
 
-map<OperationPermission, CGUIDialogPermissions::OperationPermissionInfo> CGUIDialogPermissions::m_permissionInfo = fillPermissionInfo();
+map<InterfacePermission, CGUIDialogPermissions::InterfacePermissionInfo> CGUIDialogPermissions::m_permissionInfo = fillPermissionInfo();
 
-map<JSONRPC::OperationPermission, CGUIDialogPermissions::OperationPermissionInfo> CGUIDialogPermissions::fillPermissionInfo()
+map<InterfacePermission, CGUIDialogPermissions::InterfacePermissionInfo> CGUIDialogPermissions::fillPermissionInfo()
 {
-  map<JSONRPC::OperationPermission, OperationPermissionInfo> map;
-  OperationPermissionInfo info;
+  map<InterfacePermission, InterfacePermissionInfo> map;
+  InterfacePermissionInfo info;
 
-  info.localisedLabel = 37007;
+  info.localisedLabel = 37020;
   info.level = 0;
   map[PermissionControlPlayback] = info;
   
-  info.localisedLabel = 37008;
+  info.localisedLabel = 37021;
   info.level = 0;
   map[PermissionControlNotify] = info;
   
-  info.localisedLabel = 37009;
+  info.localisedLabel = 37022;
   info.level = 1;
   map[PermissionControlPower] = info;
   
-  info.localisedLabel = 37010;
+  info.localisedLabel = 37023;
   info.level = 1;
   map[PermissionUpdateData] = info;
   
-  info.localisedLabel = 37011;
+  info.localisedLabel = 37024;
   info.level = 2;
   map[PermissionRemoveData] = info;
   
-  info.localisedLabel = 37012;
+  info.localisedLabel = 37025;
   info.level = 0;
   map[PermissionNavigate] = info;
   
-  info.localisedLabel = 37013;
+  info.localisedLabel = 37026;
   info.level = 2;
   map[PermissionWriteFile] = info;
 
@@ -151,7 +152,9 @@ void CGUIDialogPermissions::Update()
   CSingleLock lock(g_graphicsContext);
 
   m_result = PermissionsRejected;
-  CONTROL_ENABLE_ON_CONDITION(BUTTON_GRANT_ALWAYS, g_guiSettings.GetBool("services.rememberclientauthentication"));
+  bool remember = g_guiSettings.GetBool("services.rememberclientauthentication");
+  CONTROL_ENABLE_ON_CONDITION(BUTTON_REJECT_ALWAYS, remember);
+  CONTROL_ENABLE_ON_CONDITION(BUTTON_GRANT_ALWAYS, remember);
   m_viewControl.SetCurrentView(CONTROL_LIST);
 
   SetHeading(m_permissionUpdate ? 37001 : 37000);
@@ -159,19 +162,20 @@ void CGUIDialogPermissions::Update()
   line.Format(GetLocalized(37002), m_client->GetName());
   SetLine(0, line);
   SetLine(1, 37003);
-  SetChoice(BUTTON_REJECT - 10, 37004);
-  SetChoice(BUTTON_GRANT - 10, 37005);
-  SetChoice(BUTTON_GRANT_ALWAYS - 10, 37006);
+  SetChoice(BUTTON_REJECT_ALWAYS - 10, 37010);
+  SetChoice(BUTTON_REJECT - 10, 37011);
+  SetChoice(BUTTON_GRANT - 10, 37012);
+  SetChoice(BUTTON_GRANT_ALWAYS - 10, 37013);
 
   int permissions = m_client->GetPermissionFlags();
 
   m_permissions->Clear();
-  vector<OperationPermissionInfo> permissionList;
-  for (int permission = (int)PermissionReadData * 2; permission <= OPERATION_PERMISSION_ALL; permission *= 2)
+  vector<InterfacePermissionInfo> permissionList;
+  for (int permission = (int)PermissionReadData * 2; permission <= INTERFACEPERMISSION_ALL; permission *= 2)
   {
     if ((permissions & permission) > 0)
     {
-      map<JSONRPC::OperationPermission, OperationPermissionInfo>::const_iterator permissionInfo = m_permissionInfo.find((OperationPermission)permission);
+      map<InterfacePermission, InterfacePermissionInfo>::const_iterator permissionInfo = m_permissionInfo.find((InterfacePermission)permission);
       if (permissionInfo == m_permissionInfo.end())
         continue;
 
@@ -222,7 +226,7 @@ void CGUIDialogPermissions::Update()
     list->SetInvalid();
 }
 
-bool CGUIDialogPermissions::SetClient(JSONRPC::IClient *client)
+bool CGUIDialogPermissions::SetClient(IInterfaceClient *client)
 {
   if (client == NULL)
     return false;
@@ -231,7 +235,7 @@ bool CGUIDialogPermissions::SetClient(JSONRPC::IClient *client)
   return true;
 }
 
-CGUIDialogPermissions::PermissionsResult CGUIDialogPermissions::ShowAndGetInput(IClient *client, bool permissionUpdate /* = false */)
+CGUIDialogPermissions::PermissionsResult CGUIDialogPermissions::ShowAndGetInput(IInterfaceClient *client, bool permissionUpdate /* = false */)
 {
   CGUIDialogPermissions *dialog = (CGUIDialogPermissions *)g_windowManager.GetWindow(WINDOW_DIALOG_PERMISSIONS);
   if (!dialog)
@@ -252,6 +256,11 @@ bool CGUIDialogPermissions::OnMessageClick(CGUIMessage &message)
   switch(iControl)
   {
   case CONTROL_LIST:
+    return true;
+
+  case BUTTON_REJECT_ALWAYS:
+    m_result = PermissionsRejectedAlways;
+    Close();
     return true;
 
   case BUTTON_REJECT:

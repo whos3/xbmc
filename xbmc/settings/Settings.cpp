@@ -57,10 +57,8 @@
 #include "utils/URIUtils.h"
 #include "input/MouseStat.h"
 #include "filesystem/File.h"
-
-#ifdef HAS_JSONRPC
-#include "interfaces/json-rpc/ClientAuthManager.h"
-#endif
+#include "addons/AddonManager.h"
+#include "interfaces/ClientAuthManager.h"
 
 using namespace std;
 using namespace XFILE;
@@ -767,27 +765,25 @@ bool CSettings::LoadSettings(const CStdString& strSettingsFile)
     CLog::Log(LOGNOTICE, "Disabled debug logging due to GUI setting. Level %d.", g_advancedSettings.m_logLevel);
   }
 
-#ifdef HAS_JSONRPC
-  TiXmlElement *pJsonRpcElement = pRootElement->FirstChildElement("jsonrpc");
-  if (pJsonRpcElement)
+  TiXmlElement *pInterfaceElement = pRootElement->FirstChildElement("interface");
+  if (pInterfaceElement)
   {
-    TiXmlElement *pJsonRpcClient = pJsonRpcElement->FirstChildElement("client");
-    while (pJsonRpcClient)
+    TiXmlElement *pInterfaceClient = pInterfaceElement->FirstChildElement("client");
+    while (pInterfaceClient)
     {
       try
       {
-        CStoredJsonRpcClient client(pJsonRpcClient);
-        JSONRPC::CClientAuthManager::Add(&client);
+        CStoredInterfaceClient client(pInterfaceClient);
+        CClientAuthManager::Add(&client);
       }
       catch (...)
       {
-        CLog::Log(LOGWARNING, "Invalid <client> in <jsonrpc>");
+        CLog::Log(LOGWARNING, "Invalid <client> in <interface>");
       }
 
-      pJsonRpcClient = pJsonRpcClient->NextSiblingElement("client");
+      pInterfaceClient = pInterfaceClient->NextSiblingElement("client");
     }
   }
-#endif
 
   return true;
 }
@@ -936,13 +932,10 @@ bool CSettings::SaveSettings(const CStdString& strSettingsFile, CGUISettings *lo
 
   SaveCalibration(pRoot);
 
-#ifdef HAS_JSONRPC
-  // jsonrpc settings
-  TiXmlElement jsonRpcNode("jsonrpc");
-  pNode = pRoot->InsertEndChild(jsonRpcNode);
+  TiXmlElement interfaceNode("interface");
+  pNode = pRoot->InsertEndChild(interfaceNode);
   if (!pNode) return false;
-  SaveJsonRpcClients(pNode);
-#endif
+  SaveInterfaceClients(pNode);
 
 
   if (localSettings) // local settings to save
@@ -1974,24 +1967,23 @@ void CSettings::LoadMasterForLogin()
     LoadProfile(0);
 }
 
-#ifdef HAS_JSONRPC
-bool CSettings::SaveJsonRpcClients(TiXmlNode *pNode) const
+bool CSettings::SaveInterfaceClients(TiXmlNode *pNode) const
 {
-  std::vector<JSONRPC::IClient*> clients;
-  JSONRPC::CClientAuthManager::GetClients(clients);
+  std::vector<IInterfaceClient*> clients;
+  CClientAuthManager::GetClients(clients);
 
-  std::vector<JSONRPC::IClient*>::iterator iter;
-  std::vector<JSONRPC::IClient*>::iterator iterEnd = clients.end();
+  std::vector<IInterfaceClient*>::iterator iter;
+  std::vector<IInterfaceClient*>::iterator iterEnd = clients.end();
   for (iter = clients.begin(); iter != iterEnd; iter++)
   {
-    CStoredJsonRpcClient client(*iter);
+    CStoredInterfaceClient client(*iter);
     client.Save(pNode);
   }
 
   return true;
 }
 
-CSettings::CStoredJsonRpcClient::CStoredJsonRpcClient(JSONRPC::IClient *client)
+CSettings::CStoredInterfaceClient::CStoredInterfaceClient(IInterfaceClient *client)
 {
   if (client == NULL)
     throw exception();
@@ -2003,7 +1995,7 @@ CSettings::CStoredJsonRpcClient::CStoredJsonRpcClient(JSONRPC::IClient *client)
   m_announcementFlags = client->GetAnnouncementFlags();
 }
 
-CSettings::CStoredJsonRpcClient::CStoredJsonRpcClient(TiXmlElement* pClientElement)
+CSettings::CStoredInterfaceClient::CStoredInterfaceClient(TiXmlElement* pClientElement)
 {
   bool ok = true;
   if (pClientElement)
@@ -2011,7 +2003,7 @@ CSettings::CStoredJsonRpcClient::CStoredJsonRpcClient(TiXmlElement* pClientEleme
     if (!XMLUtils::GetString(pClientElement, "identification", m_identification) ||
         !XMLUtils::GetString(pClientElement, "name", m_name) ||
         !XMLUtils::GetBoolean(pClientElement, "authenticated", m_authenticated) ||
-        !XMLUtils::GetInt(pClientElement, "permissions", m_permissionFlags) ||
+        !XMLUtils::GetInt(pClientElement, "permissions", (int&)m_permissionFlags) ||
         !XMLUtils::GetInt(pClientElement, "announcements", m_announcementFlags))
       ok = false;
   }
@@ -2022,7 +2014,7 @@ CSettings::CStoredJsonRpcClient::CStoredJsonRpcClient(TiXmlElement* pClientEleme
     throw exception();
 }
 
-bool CSettings::CStoredJsonRpcClient::Save(TiXmlNode* pNode) const
+bool CSettings::CStoredInterfaceClient::Save(TiXmlNode* pNode) const
 {
   if (pNode == NULL)
     return false;
@@ -2040,4 +2032,3 @@ bool CSettings::CStoredJsonRpcClient::Save(TiXmlNode* pNode) const
 
   return true;
 }
-#endif

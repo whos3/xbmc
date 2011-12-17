@@ -374,7 +374,7 @@ int CJSONServiceDescription::GetVersion()
   return JSONRPC_SERVICE_VERSION;
 }
 
-JSON_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer *transport, IClient *client,
+JSON_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer *transport, IInterfaceClient *client,
   bool printDescriptions /* = true */, bool printMetadata /* = false */, bool filterByTransport /* = true */,
   std::string filterByName /* = "" */, std::string filterByType /* = "" */, bool printReferences /* = true */)
 {
@@ -505,10 +505,10 @@ JSON_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer *tr
     if (printMetadata)
     {
       CVariant permissions(CVariant::VariantTypeArray);
-      for (int i = PermissionReadData; i <= OPERATION_PERMISSION_ALL; i *= 2)
+      for (int i = PermissionReadData; i <= INTERFACEPERMISSION_ALL; i *= 2)
       {
         if ((methodIterator->second.permission & i) == i)
-          permissions.push_back(PermissionToString((OperationPermission)i));
+          permissions.push_back(PermissionToString((InterfacePermission)i));
       }
 
       if (permissions.size() == 1)
@@ -539,7 +539,7 @@ JSON_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer *tr
   return OK;
 }
 
-JSON_STATUS CJSONServiceDescription::CheckCall(const char* const method, const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters)
+JSON_STATUS CJSONServiceDescription::CheckCall(const char* const method, const CVariant &requestParameters, ITransportLayer *transport, IInterfaceClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters)
 {
   CJsonRpcMethodMap::JsonRpcMethodIterator iter = m_actionMap.find(method);
   if (iter != m_actionMap.end())
@@ -547,9 +547,9 @@ JSON_STATUS CJSONServiceDescription::CheckCall(const char* const method, const C
     if (transport != NULL && (transport->GetCapabilities() & iter->second.transportneed) == iter->second.transportneed)
     {
       if (client != NULL &&
-         (!g_guiSettings.GetBool("services.clientauthentication") || client->IsAuthenticated() || (iter->second.permission & OPERATION_PERMISSION_UNAUTHENTICATED) != PermissionNone) &&
+         (!g_guiSettings.GetBool("services.clientauthentication") || client->IsAuthenticated() || (iter->second.permission & INTERFACEPERMISSION_UNAUTHENTICATED) != PermissionNone) &&
          (client->GetPermissionFlags() & iter->second.permission) == iter->second.permission &&
-         (!notification || (iter->second.permission & OPERATION_PERMISSION_NOTIFICATION)))
+         (!notification || (iter->second.permission & INTERFACEPERMISSION_NOTIFICATION)))
       {
         methodCall = iter->second.method;
 
@@ -584,7 +584,7 @@ JSON_STATUS CJSONServiceDescription::CheckCall(const char* const method, const C
       }
       else
       {
-        if (g_guiSettings.GetBool("services.clientauthentication") && !client->IsAuthenticated() && (iter->second.permission & OPERATION_PERMISSION_UNAUTHENTICATED) == PermissionNone)
+        if (g_guiSettings.GetBool("services.clientauthentication") && !client->IsAuthenticated() && (iter->second.permission & INTERFACEPERMISSION_UNAUTHENTICATED) == PermissionNone)
           outputParameters["message"] = "Not authenticated";
 
         return BadPermission;
@@ -1153,7 +1153,7 @@ bool CJSONServiceDescription::parseMethod(const CVariant &value, JsonRpcMethod &
     for (unsigned int index = 0; index < value["permission"].size(); index++)
       permissions |= StringToPermission(value["permission"][index].asString());
 
-    method.permission = (OperationPermission)permissions;
+    method.permission = (InterfacePermission)permissions;
   }
   else
     method.permission = StringToPermission(value.isMember("permission") ? value["permission"].asString() : "");

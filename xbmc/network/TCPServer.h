@@ -50,7 +50,7 @@ namespace JSONRPC
     bool InitializeTCP();
     void Deinitialize();
 
-    class CTCPClient : public IClient
+    class CTCPClient : public IInterfaceClient
     {
     public:
       CTCPClient();
@@ -58,8 +58,8 @@ namespace JSONRPC
       //when adding a member variable, make sure to copy it in CTCPClient::Copy
       CTCPClient(const CTCPClient& client);
       CTCPClient& operator=(const CTCPClient& client);
-      virtual int  GetPermissionFlags();
-      virtual bool SetPermissionFlags(int flags);
+      virtual InterfacePermission GetPermissionFlags();
+      virtual bool SetPermissionFlags(InterfacePermission flags);
       virtual int  GetAnnouncementFlags();
       virtual bool SetAnnouncementFlags(int flags);
 
@@ -85,7 +85,7 @@ namespace JSONRPC
       char m_beginChar, m_endChar;
       std::string m_buffer;
 
-      int m_permissionFlags;
+      InterfacePermission m_permissionFlags;
       bool m_authenticated;
       std::string m_identification;
       std::string m_name;

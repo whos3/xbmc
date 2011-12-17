@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "utils/StdString.h"
+#include "interfaces/IInterfaceClient.h"
 #include "interfaces/IAnnouncer.h"
 #include "interfaces/AnnouncementUtils.h"
 #include "ITransportLayer.h"
@@ -55,43 +56,10 @@ namespace JSONRPC
   /*!
    \brief Function pointer for json rpc methods
    */
-  typedef JSON_STATUS (*MethodCall) (const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result);
+  typedef JSON_STATUS (*MethodCall) (const CStdString &method, ITransportLayer *transport, IInterfaceClient *client, const CVariant& parameterObject, CVariant &result);
 
-  /*!
-   \ingroup jsonrpc
-   \brief Permission categories for json rpc methods
-   
-   A json rpc method will only be called if the caller 
-   has the correct permissions to exectue the method.
-   The method call needs to be perfectly threadsafe.
-  */
-  enum OperationPermission
-  {
-    PermissionNone            =   0x0,
-    PermissionReadData        =   0x1,
-    PermissionControlPlayback =   0x2,
-    PermissionControlNotify   =   0x4,
-    PermissionControlPower    =   0x8,
-    PermissionUpdateData      =  0x10,
-    PermissionRemoveData      =  0x20,
-    PermissionNavigate        =  0x40,
-    PermissionWriteFile       =  0x80,
-    PermissionAuthentication  = 0x100
-  };
-
-  static const int OPERATION_PERMISSION_ALL = (PermissionReadData | PermissionControlPlayback | PermissionControlNotify |
-                                               PermissionControlPower | PermissionUpdateData | PermissionRemoveData |
-                                               PermissionNavigate | PermissionWriteFile | PermissionAuthentication);
-
-  static const int OPERATION_PERMISSION_NOTIFICATION = (PermissionControlPlayback | PermissionControlNotify | PermissionControlPower |
+  static const int INTERFACEPERMISSION_NOTIFICATION = (PermissionControlPlayback | PermissionControlNotify | PermissionControlPower |
                                                         PermissionUpdateData | PermissionRemoveData | PermissionNavigate | PermissionWriteFile);
-
-  static const int OPERATION_PERMISSION_UNAUTHENTICATED = (PermissionReadData | PermissionAuthentication);
-
-  /*!
-   \brief Permissions appliceable when authentication is turned of
-   */
-  static const int OPERATION_PERMISSION_NOAUTHENTICATION = (OPERATION_PERMISSION_ALL & ~PermissionAuthentication);
 
   /*!
    \brief Possible value types of a parameter or return type
@@ -133,12 +101,12 @@ namespace JSONRPC
     }
 
     /*!
-     \brief Returns a OperationPermission value for the given
+     \brief Returns a InterfacePermission value for the given
      string representation
-     \param permission String representation of the OperationPermission
-     \return OperationPermission value of the given string representation
+     \param permission String representation of the InterfacePermission
+     \return InterfacePermission value of the given string representation
      */
-    static inline OperationPermission StringToPermission(std::string permission)
+    static inline InterfacePermission StringToPermission(std::string permission)
     {
       if (permission.compare("ReadData") == 0)
         return PermissionReadData;
@@ -235,11 +203,11 @@ namespace JSONRPC
 
     /*!
      \brief Returns a string representation for the 
-     given OperationPermission
-     \param permission Specific OperationPermission
-     \return String representation of the given OperationPermission
+     given InterfacePermission
+     \param permission Specific InterfacePermission
+     \return String representation of the given InterfacePermission
      */
-    static inline const char *PermissionToString(const OperationPermission &permission)
+    static inline const char *PermissionToString(const InterfacePermission &permission)
     {
       switch (permission)
       {

@@ -468,7 +468,7 @@ void CTCPServer::Deinitialize()
 
 CTCPServer::CTCPClient::CTCPClient()
 {
-  m_permissionFlags = OPERATION_PERMISSION_UNAUTHENTICATED;
+  m_permissionFlags = INTERFACEPERMISSION_UNAUTHENTICATED;
   m_authenticated = false;
   m_identification = "";
   m_name = "Non-authenticated TCP client";
@@ -493,17 +493,17 @@ CTCPServer::CTCPClient& CTCPServer::CTCPClient::operator=(const CTCPClient& clie
   return *this;
 }
 
-int CTCPServer::CTCPClient::GetPermissionFlags()
+InterfacePermission CTCPServer::CTCPClient::GetPermissionFlags()
 {
   if (g_guiSettings.GetBool("services.clientauthentication"))
     return m_permissionFlags;
   else
-    return OPERATION_PERMISSION_NOAUTHENTICATION;
+    return INTERFACEPERMISSION_NOAUTHENTICATION;
 }
 
-bool CTCPServer::CTCPClient::SetPermissionFlags(int flags)
+bool CTCPServer::CTCPClient::SetPermissionFlags(InterfacePermission flags)
 {
-  m_permissionFlags = PermissionReadData | flags;
+  m_permissionFlags = (InterfacePermission)(PermissionReadData | flags);
   return true;
 }
 
