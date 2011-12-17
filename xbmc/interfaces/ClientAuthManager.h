@@ -42,6 +42,8 @@ public:
   static bool Update(IInterfaceClient *client);
   static bool Update(std::string identification, InterfacePermission permissions);
   static bool Remove(std::string identification);
+  static void Clear();
+  static unsigned int Size() { return m_clients.size(); }
   static void GetClients(std::vector<IInterfaceClient*> &clients);
 
 private:

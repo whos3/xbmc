@@ -728,7 +728,7 @@ void CGUISettings::Initialize()
   AddString(srv,"services.webserverpassword",733, "", EDIT_CONTROL_HIDDEN_INPUT, true, 733);
   AddDefaultAddon(srv, "services.webskin",199, DEFAULT_WEB_INTERFACE, ADDON_WEB_INTERFACE);
 #endif
-  AddSeparator(srv,"services.sep4");
+  AddSeparator(srv,"services.sep5");
   AddBool(srv, "services.clientauthentication", 799, true);
   AddBool(srv, "services.rememberclientauthentication", 800, true);
 #ifdef HAS_EVENT_SERVER

@@ -201,6 +201,11 @@ bool CClientAuthManager::Authenticate(IInterfaceClient *client, InterfacePermiss
   return false;
 }
 
+void CClientAuthManager::Clear()
+{
+  m_clients.clear();
+}
+
 void CClientAuthManager::GetClients(std::vector<IInterfaceClient*> &clients)
 {
   std::map<std::string, CClientAuthManager::CManagedClient>::const_iterator iter;

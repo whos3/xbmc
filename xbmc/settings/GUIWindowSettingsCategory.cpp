@@ -24,6 +24,7 @@
 #include "GUIWindowSettingsCategory.h"
 #include "Application.h"
 #include "interfaces/Builtins.h"
+#include "interfaces/ClientAuthManager.h"
 #include "input/KeyboardLayoutConfiguration.h"
 #include "filesystem/Directory.h"
 #include "Util.h"
@@ -1249,15 +1250,23 @@ void CGUIWindowSettingsCategory::OnSettingChanged(CBaseSettingControl *pSettingC
       ValidatePortNumber(pSettingControl, "8080", "80");
     g_application.StopWebServer();
     if (g_guiSettings.GetBool("services.webserver"))
+    {
       if (!g_application.StartWebServer())
       {
         CGUIDialogOK::ShowAndGetInput(g_localizeStrings.Get(33101), "", g_localizeStrings.Get(33100), "");
         g_guiSettings.SetBool("services.webserver", false);
       }
+    }
   }
   else if (strSetting.Equals("services.webserverusername") || strSetting.Equals("services.webserverpassword"))
   {
     g_application.m_WebServer.SetCredentials(g_guiSettings.GetString("services.webserverusername"), g_guiSettings.GetString("services.webserverpassword"));
+  }
+  else if (strSetting.Equals("services.rememberclientauthentication"))
+  {
+    if (!g_guiSettings.GetBool("services.rememberclientauthentication") &&
+        CGUIDialogYesNo::ShowAndGetInput(g_localizeStrings.Get(37004), "", g_localizeStrings.Get(37005), ""))
+      CClientAuthManager::Clear();
   }
 #endif
   else if (strSetting.Equals("services.zeroconf"))
