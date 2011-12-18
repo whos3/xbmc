@@ -2,6 +2,7 @@ SRCS=GUIDialogBoxBase.cpp \
      GUIDialogBusy.cpp \
      GUIDialogButtonMenu.cpp \
      GUIDialogCache.cpp \
+     GUIDialogClientManager.cpp \
      GUIDialogContextMenu.cpp \
      GUIDialogFavourites.cpp \
      GUIDialogFileBrowser.cpp \

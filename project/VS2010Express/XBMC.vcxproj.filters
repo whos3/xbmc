@@ -2574,6 +2574,9 @@
     <ClCompile Include="..\..\xbmc\interfaces\ClientAuthManager.cpp">
       <Filter>interfaces</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\dialogs\GUIDialogClientManager.cpp">
+      <Filter>dialogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -5168,6 +5171,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\interfaces\IInterfaceClient.h">
       <Filter>interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\dialogs\GUIDialogClientManager.h">
+      <Filter>dialogs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

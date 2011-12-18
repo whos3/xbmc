@@ -95,6 +95,8 @@
 #include "peripherals/Peripherals.h"
 #include "peripherals/dialogs/GUIDialogPeripheralManager.h"
 
+#include "dialogs/GUIDialogClientManager.h"
+
 #ifdef _WIN32
 #include "WIN32Util.h"
 #include "cores/AudioRenderers/AudioRendererFactory.h"
@@ -731,6 +733,14 @@ void CGUIWindowSettingsCategory::UpdateSettings()
       if (pControl)
         pControl->SetEnabled(g_guiSettings.GetBool("services.clientauthentication"));
     }
+    else if (strSetting.Equals("services.manageclients"))
+    {
+      CGUIEditControl *pControl = (CGUIEditControl *)GetControl(pSettingControl->GetID());
+      if (pControl)
+        pControl->SetEnabled(g_guiSettings.GetBool("services.clientauthentication") &&
+                             g_guiSettings.GetBool("services.rememberclientauthentication") &&
+                             CClientAuthManager::Size() > 0);
+    }
 #ifdef HAS_AIRPLAY
     else if ( strSetting.Equals("services.airplaypassword") || 
               strSetting.Equals("services.useairplaypassword"))
@@ -1267,6 +1277,13 @@ void CGUIWindowSettingsCategory::OnSettingChanged(CBaseSettingControl *pSettingC
     if (!g_guiSettings.GetBool("services.rememberclientauthentication") &&
         CGUIDialogYesNo::ShowAndGetInput(g_localizeStrings.Get(37004), "", g_localizeStrings.Get(37005), ""))
       CClientAuthManager::Clear();
+  }
+  else if (strSetting.Equals("services.manageclients"))
+  {
+    CGUIDialogClientManager *dialog = (CGUIDialogClientManager *)g_windowManager.GetWindow(WINDOW_DIALOG_CLIENT_MANAGER);
+    if (dialog)
+      dialog->DoModal();
+    return;
   }
 #endif
   else if (strSetting.Equals("services.zeroconf"))

@@ -44,7 +44,7 @@ public:
   static bool Remove(std::string identification);
   static void Clear();
   static unsigned int Size() { return m_clients.size(); }
-  static void GetClients(std::vector<IInterfaceClient*> &clients);
+  static void GetClients(std::vector<IInterfaceClient*> &clients, bool onlyStored = true);
 
 private:
   class CManagedClient : public IInterfaceClient

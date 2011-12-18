@@ -316,6 +316,7 @@
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogBusy.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogButtonMenu.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogCache.cpp" />
+    <ClCompile Include="..\..\xbmc\dialogs\GUIDialogClientManager.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogContextMenu.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogFavourites.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogFileBrowser.cpp" />
@@ -758,6 +759,7 @@
     <ClCompile Include="..\..\xbmc\threads\LockFree.cpp" />
     <ClCompile Include="..\..\xbmc\threads\platform\Implementation.cpp" />
     <ClInclude Include="..\..\xbmc\cores\AudioRenderers\IAudioRenderer.h" />
+    <ClInclude Include="..\..\xbmc\dialogs\GUIDialogClientManager.h" />
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogPermissions.h" />
     <ClInclude Include="..\..\xbmc\filesystem\FileUPnP.h" />
     <ClInclude Include="..\..\xbmc\storage\DetectDVDType.h" />

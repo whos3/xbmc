@@ -90,9 +90,7 @@ CGUIDialogPermissions::~CGUIDialogPermissions()
 
 bool CGUIDialogPermissions::OnMessage(CGUIMessage& message)
 {
-  unsigned int iMessage = message.GetMessage();
-
-  switch (iMessage)
+  switch (message.GetMessage())
   {
     case GUI_MSG_WINDOW_INIT:
       CGUIWindow::OnMessage(message);
@@ -156,16 +154,31 @@ void CGUIDialogPermissions::Update()
   CONTROL_ENABLE_ON_CONDITION(BUTTON_REJECT_ALWAYS, remember);
   CONTROL_ENABLE_ON_CONDITION(BUTTON_GRANT_ALWAYS, remember);
   m_viewControl.SetCurrentView(CONTROL_LIST);
-
-  SetHeading(m_permissionUpdate ? 37001 : 37000);
+  
   CStdString line;
-  line.Format(GetLocalized(37002), m_client->GetName());
-  SetLine(0, line);
-  SetLine(1, 37003);
-  SetChoice(BUTTON_REJECT_ALWAYS - 10, 37010);
-  SetChoice(BUTTON_REJECT - 10, 37011);
-  SetChoice(BUTTON_GRANT - 10, 37012);
-  SetChoice(BUTTON_GRANT_ALWAYS - 10, 37013);
+  if (m_delete)
+  {
+    SET_CONTROL_HIDDEN(BUTTON_REJECT_ALWAYS);
+    SET_CONTROL_HIDDEN(BUTTON_GRANT_ALWAYS);
+
+    SetHeading(37110);
+    line.Format(GetLocalized(37111), m_client->GetName());
+    SetLine(0, line);
+    SetLine(1, 37112);
+    SetChoice(BUTTON_REJECT - 10, 222);
+    SetChoice(BUTTON_GRANT - 10, 1210);
+  }
+  else
+  {
+    SetHeading(m_permissionUpdate ? 37001 : 37000);
+    line.Format(GetLocalized(37002), m_client->GetName());
+    SetLine(0, line);
+    SetLine(1, 37003);
+    SetChoice(BUTTON_REJECT_ALWAYS - 10, 37010);
+    SetChoice(BUTTON_REJECT - 10, 37011);
+    SetChoice(BUTTON_GRANT - 10, 37012);
+    SetChoice(BUTTON_GRANT_ALWAYS - 10, 37013);
+  }
 
   int permissions = m_client->GetPermissionFlags();
 
@@ -245,15 +258,30 @@ CGUIDialogPermissions::PermissionsResult CGUIDialogPermissions::ShowAndGetInput(
   if (!dialog->SetClient(client))
     return CGUIDialogPermissions::PermissionsRejected;
 
+  dialog->m_delete = false;
   dialog->m_permissionUpdate = permissionUpdate;
   dialog->DoModal();
   return dialog->m_result;
 }
 
+bool CGUIDialogPermissions::ShowAndGetInputOnRemove(IInterfaceClient *client)
+{
+  CGUIDialogPermissions *dialog = (CGUIDialogPermissions *)g_windowManager.GetWindow(WINDOW_DIALOG_PERMISSIONS);
+  if (!dialog)
+    return CGUIDialogPermissions::PermissionsRejected;
+
+  dialog->clear();
+  if (!dialog->SetClient(client))
+    return false;
+
+  dialog->m_delete = true;
+  dialog->DoModal();
+  return (dialog->m_result >= CGUIDialogPermissions::PermissionsGranted ? true : false);
+}
+
 bool CGUIDialogPermissions::OnMessageClick(CGUIMessage &message)
 {
-  int iControl = message.GetSenderId();
-  switch(iControl)
+  switch(message.GetSenderId())
   {
   case CONTROL_LIST:
     return true;

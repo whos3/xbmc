@@ -2423,4 +2423,11 @@
   <string id="37024">Removing data from databases</string>
   <string id="37025">Navigating the user interface</string>
   <string id="37026">Writing to local files</string>
+  
+  <string id="37100">Remembered clients</string>
+  <string id="37101">Identification</string>
+  <string id="37102">Authenticated</string>
+  <string id="37110">Remove remembered client</string>
+  <string id="37111">Do you want to remove "%s" from the remembered clients?</string>
+  <string id="37112">It asked for the following permissions:</string>
 </strings>

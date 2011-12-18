@@ -55,6 +55,7 @@ public:
   bool SetClient(IInterfaceClient *client);
   PermissionsResult GetChoice() const { return m_result; }
   static PermissionsResult ShowAndGetInput(IInterfaceClient *client, bool permissionUpdate = false);
+  static bool ShowAndGetInputOnRemove(IInterfaceClient *client);
 
 protected:
   virtual bool OnMessageClick(CGUIMessage &message);
@@ -63,6 +64,7 @@ private:
   void clear();
 
   bool m_permissionUpdate;
+  bool m_delete;
   IInterfaceClient *m_client;
   CFileItemList *m_permissions;
   CGUIViewControl m_viewControl;

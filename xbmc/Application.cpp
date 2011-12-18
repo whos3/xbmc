@@ -246,6 +246,7 @@
 #include "addons/GUIDialogAddonSettings.h"
 #include "addons/GUIDialogAddonInfo.h"
 #include "dialogs/GUIDialogPermissions.h"
+#include "dialogs/GUIDialogClientManager.h"
 #ifdef HAS_LINUX_NETWORK
 #include "network/GUIDialogAccessPoints.h"
 #endif
@@ -1191,6 +1192,7 @@ bool CApplication::Initialize()
   g_windowManager.Add(new CGUIWindowStartup);            // startup window (id 2999)
 
   g_windowManager.Add(new CGUIDialogPermissions);        // window id = 10151
+  g_windowManager.Add(new CGUIDialogClientManager);
 
   /* window id's 3000 - 3100 are reserved for python */
 

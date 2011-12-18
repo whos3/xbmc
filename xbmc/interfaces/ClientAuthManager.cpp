@@ -133,7 +133,7 @@ bool CClientAuthManager::Update(std::string identification, InterfacePermission 
 bool CClientAuthManager::Remove(std::string identification)
 {
   std::map<std::string, CClientAuthManager::CManagedClient>::const_iterator existingClient = m_clients.find(identification);
-  if (existingClient != m_clients.end())
+  if (existingClient == m_clients.end())
     return false;
 
   m_clients.erase(identification);
@@ -206,14 +206,14 @@ void CClientAuthManager::Clear()
   m_clients.clear();
 }
 
-void CClientAuthManager::GetClients(std::vector<IInterfaceClient*> &clients)
+void CClientAuthManager::GetClients(std::vector<IInterfaceClient*> &clients, bool onlyStored /* = true */)
 {
   std::map<std::string, CClientAuthManager::CManagedClient>::const_iterator iter;
   std::map<std::string, CClientAuthManager::CManagedClient>::const_iterator iterEnd = m_clients.end();
 
   for (iter = m_clients.begin(); iter != iterEnd; iter++)
   {
-    if (iter->second.m_store)
+    if (!onlyStored || iter->second.m_store)
       clients.push_back((IInterfaceClient *)&(iter->second));
   }
 }

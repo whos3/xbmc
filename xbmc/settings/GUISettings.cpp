@@ -731,6 +731,7 @@ void CGUISettings::Initialize()
   AddSeparator(srv,"services.sep5");
   AddBool(srv, "services.clientauthentication", 799, true);
   AddBool(srv, "services.rememberclientauthentication", 800, true);
+  AddString(srv, "services.manageclients", 801, "", BUTTON_CONTROL_STANDARD);
 #ifdef HAS_EVENT_SERVER
   AddSeparator(srv,"services.sep1");
   AddBool(srv,  "services.esenabled",         791, true);
