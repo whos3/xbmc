@@ -1339,8 +1339,6 @@ int CVideoDatabase::AddActor(const CStdString& strActor, const CStdString& thumb
   return -1;
 }
 
-
-
 void CVideoDatabase::AddLinkToActor(const char *table, int actorID, const char *secondField, int secondID, const CStdString &role, int order)
 {
   try
@@ -7078,216 +7076,115 @@ void CVideoDatabase::GetMusicVideosByName(const CStdString& strSearch, CFileItem
 
 void CVideoDatabase::GetEpisodesByPlot(const CStdString& strSearch, CFileItemList& items)
 {
-// Alternative searching - not quite as fast though due to
-// retrieving all information
+// Alternative searching - not quite as fast though due to retrieving all information
 //  Filter filter;
 //  filter.where = PrepareSQL("c%02d like '%s%%' or c%02d like '%% %s%%'", VIDEODB_ID_EPISODE_PLOT, strSearch.c_str(), VIDEODB_ID_EPISODE_PLOT, strSearch.c_str());
 //  filter.where += PrepareSQL("or c%02d like '%s%%' or c%02d like '%% %s%%'", VIDEODB_ID_EPISODE_TITLE, strSearch.c_str(), VIDEODB_ID_EPISODE_TITLE, strSearch.c_str());
 //  GetEpisodesByWhere("videodb://2/2/", filter, items);
-//  return;
-  CStdString strSQL;
 
-  try
+  CStdString strSQL = "select %s from episode, tvshow";
+
+  Filter filter;
+  filter.fields = PrepareSQL("episode.idEpisode, episode.c%02d, episode.c%02d, episode.idShow, tvshow.c%02d", VIDEODB_ID_EPISODE_TITLE, VIDEODB_ID_EPISODE_SEASON, VIDEODB_ID_TV_TITLE);
+  filter.where = PrepareSQL("tvshow.idShow = episode.idShow and episode.c%02d like '%%%s%%'", VIDEODB_ID_EPISODE_PLOT, strSearch.c_str());
+
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
   {
-    if (NULL == m_pDB.get()) return;
-    if (NULL == m_pDS.get()) return;
+    strSQL += ", files, path";
 
-    if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-      strSQL = PrepareSQL("select episode.idEpisode,episode.c%02d,episode.c%02d,episode.idShow,tvshow.c%02d,path.strPath from episode,files,path,tvshow where files.idFile=episode.idFile and files.idPath=path.idPath and tvshow.idShow=episode.idShow and episode.c%02d like '%%%s%%'",VIDEODB_ID_EPISODE_TITLE,VIDEODB_ID_EPISODE_SEASON,VIDEODB_ID_TV_TITLE,VIDEODB_ID_EPISODE_PLOT,strSearch.c_str());
-    else
-      strSQL = PrepareSQL("select episode.idEpisode,episode.c%02d,episode.c%02d,episode.idShow,tvshow.c%02d from episode,tvshow where tvshow.idShow=episode.idShow and episode.c%02d like '%%%s%%'",VIDEODB_ID_EPISODE_TITLE,VIDEODB_ID_EPISODE_SEASON,VIDEODB_ID_TV_TITLE,VIDEODB_ID_EPISODE_PLOT,strSearch.c_str());
-    m_pDS->query( strSQL.c_str() );
-
-    while (!m_pDS->eof())
-    {
-      if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-        if (!g_passwordManager.IsDatabasePathUnlocked(CStdString(m_pDS->fv("path.strPath").get_asString()),g_settings.m_videoSources))
-        {
-          m_pDS->next();
-          continue;
-        }
-
-      CFileItemPtr pItem(new CFileItem(m_pDS->fv(1).get_asString()+" ("+m_pDS->fv(4).get_asString()+")"));
-      CStdString path; path.Format("videodb://2/2/%ld/%ld/%ld",m_pDS->fv("episode.idShow").get_asInt(),m_pDS->fv(2).get_asInt(),m_pDS->fv(0).get_asInt());
-      pItem->SetPath(path);
-      pItem->m_bIsFolder=false;
-      items.Add(pItem);
-      m_pDS->next();
-    }
-    m_pDS->close();
+    filter.fields += ", path.strPath";
+    filter.where += " and files.idFile = episode.idFile and files.idPath = path.idPath";
   }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
-  }
+
+  GetItems(strSQL, &getEpisodesByPlot, items, filter);
 }
 
 void CVideoDatabase::GetMoviesByPlot(const CStdString& strSearch, CFileItemList& items)
 {
-  CStdString strSQL;
+  CStdString strSQL = "select %s from movie";
+    
+  Filter filter;
+  filter.fields = PrepareSQL("movie.idMovie, movie.c%02d", VIDEODB_ID_TITLE);
+  filter.where = PrepareSQL("(movie.c%02d like '%%%s%%' or movie.c%02d like '%%%s%%' or movie.c%02d like '%%%s%%')", VIDEODB_ID_PLOT, strSearch.c_str(), VIDEODB_ID_PLOTOUTLINE, strSearch.c_str(), VIDEODB_ID_TAGLINE, strSearch.c_str());
 
-  try
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
   {
-    if (NULL == m_pDB.get()) return;
-    if (NULL == m_pDS.get()) return;
-
-    if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-      strSQL = PrepareSQL("select movie.idMovie, movie.c%02d, path.strPath from movie,files,path where files.idFile=movie.idFile and files.idPath=path.idPath and (movie.c%02d like '%%%s%%' or movie.c%02d like '%%%s%%' or movie.c%02d like '%%%s%%')",VIDEODB_ID_TITLE,VIDEODB_ID_PLOT,strSearch.c_str(),VIDEODB_ID_PLOTOUTLINE,strSearch.c_str(),VIDEODB_ID_TAGLINE,strSearch.c_str());
-    else
-      strSQL = PrepareSQL("select movie.idMovie, movie.c%02d from movie where (movie.c%02d like '%%%s%%' or movie.c%02d like '%%%s%%' or movie.c%02d like '%%%s%%')",VIDEODB_ID_TITLE,VIDEODB_ID_PLOT,strSearch.c_str(),VIDEODB_ID_PLOTOUTLINE,strSearch.c_str(),VIDEODB_ID_TAGLINE,strSearch.c_str());
-
-    m_pDS->query( strSQL.c_str() );
-
-    while (!m_pDS->eof())
-    {
-      if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-        if (!g_passwordManager.IsDatabasePathUnlocked(CStdString(m_pDS->fv(2).get_asString()),g_settings.m_videoSources))
-        {
-          m_pDS->next();
-          continue;
-        }
-
-      CFileItemPtr pItem(new CFileItem(m_pDS->fv(1).get_asString()));
-      CStdString path; path.Format("videodb://1/2/%ld", m_pDS->fv(0).get_asInt());
-      pItem->SetPath(path);
-      pItem->m_bIsFolder=false;
-
-      items.Add(pItem);
-      m_pDS->next();
-    }
-    m_pDS->close();
-
+    strSQL += ", files, path";
+    
+    filter.fields += ", path.strPath";
+    filter.where += " and files.idFile = movie.idFile and files.idPath = path.idPath";
   }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
-  }
+
+  GetItems(strSQL, &getMoviesByPlot, items, filter);
 }
 
 void CVideoDatabase::GetMovieDirectorsByName(const CStdString& strSearch, CFileItemList& items)
 {
-  CStdString strSQL;
+  CStdString strSQL = "select %s from movie, actors, directorlinkmovie";
 
-  try
+  Filter filter;
+  filter.fields = "distinct directorlinkmovie.idDirector, actors.strActor";
+  filter.where = PrepareSQL("directorlinkmovie.idMovie = movie.idMovie and directorlinkmovie.idDirector = actors.idActor and actors.strActor like '%%%s%%'", strSearch.c_str());
+  
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
   {
-    if (NULL == m_pDB.get()) return;
-    if (NULL == m_pDS.get()) return;
+    strSQL += ", files, path";
 
-    if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-      strSQL = PrepareSQL("select distinct directorlinkmovie.idDirector,actors.strActor,path.strPath from movie,files,path,actors,directorlinkmovie where files.idFile=movie.idFile and files.idPath=path.idPath and directorlinkmovie.idMovie=movie.idMovie and directorlinkmovie.idDirector=actors.idActor and actors.strActor like '%%%s%%'",strSearch.c_str());
-    else
-      strSQL = PrepareSQL("select distinct directorlinkmovie.idDirector,actors.strActor from movie,actors,directorlinkmovie where directorlinkmovie.idMovie=movie.idMovie and directorlinkmovie.idDirector=actors.idActor and actors.strActor like '%%%s%%'",strSearch.c_str());
-
-    m_pDS->query( strSQL.c_str() );
-
-    while (!m_pDS->eof())
-    {
-      if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-        if (!g_passwordManager.IsDatabasePathUnlocked(CStdString(m_pDS->fv("path.strPath").get_asString()),g_settings.m_videoSources))
-        {
-          m_pDS->next();
-          continue;
-        }
-
-      CStdString strDir;
-      strDir.Format("%ld/", m_pDS->fv("directorlinkmovie.idDirector").get_asInt());
-      CFileItemPtr pItem(new CFileItem(m_pDS->fv("actors.strActor").get_asString()));
-
-      pItem->SetPath("videodb://1/5/"+ strDir);
-      pItem->m_bIsFolder=true;
-      items.Add(pItem);
-      m_pDS->next();
-    }
-    m_pDS->close();
+    filter.fields += ", path.strPath";
+    filter.where += " and files.idFile = movie.idFile and files.idPath = path.idPath";
   }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
-  }
+
+  ContextMap context;
+  context["path"] = "videodb://1/5/";
+  context["directorlinktable"] = "directorlinkmovie";
+
+  GetItems(strSQL, &getDirectorsByName, items, filter, context);
 }
 
 void CVideoDatabase::GetTvShowsDirectorsByName(const CStdString& strSearch, CFileItemList& items)
 {
-  CStdString strSQL;
+  CStdString strSQL = "select %s from tvshow, actors, directorlinktvshow";
 
-  try
+  Filter filter;
+  filter.fields = "distinct directorlinktvshow.idDirector, actors.strActor";
+  filter.where = PrepareSQL("directorlinktvshow.idShow = tvshow.idShow and directorlinktvshow.idDirector = actors.idActor and actors.strActor like '%%%s%%'", strSearch.c_str());
+  
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
   {
-    if (NULL == m_pDB.get()) return;
-    if (NULL == m_pDS.get()) return;
+    strSQL += ", path, tvshowlinkpath";
 
-    if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-      strSQL = PrepareSQL("select distinct directorlinktvshow.idDirector,actors.strActor,path.strPath from tvshow,path,actors,directorlinktvshow,tvshowlinkpath where tvshowlinkpath.idPath=path.idPath and tvshowlinkpath.idShow=tvshow.idShow and directorlinktvshow.idShow=tvshow.idShow and directorlinktvshow.idDirector=actors.idActor and actors.strActor like '%%%s%%'",strSearch.c_str());
-    else
-      strSQL = PrepareSQL("select distinct directorlinktvshow.idDirector,actors.strActor from tvshow,actors,directorlinktvshow where directorlinktvshow.idShow=tvshow.idShow and directorlinktvshow.idDirector=actors.idActor and actors.strActor like '%%%s%%'",strSearch.c_str());
-
-    m_pDS->query( strSQL.c_str() );
-
-    while (!m_pDS->eof())
-    {
-      if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-        if (!g_passwordManager.IsDatabasePathUnlocked(CStdString(m_pDS->fv("path.strPath").get_asString()),g_settings.m_videoSources))
-        {
-          m_pDS->next();
-          continue;
-        }
-
-      CStdString strDir;
-      strDir.Format("%ld/", m_pDS->fv("directorlinktvshow.idDirector").get_asInt());
-      CFileItemPtr pItem(new CFileItem(m_pDS->fv("actors.strActor").get_asString()));
-
-      pItem->SetPath("videodb://2/5/"+ strDir);
-      pItem->m_bIsFolder=true;
-      items.Add(pItem);
-      m_pDS->next();
-    }
-    m_pDS->close();
+    filter.fields += ", path.strPath";
+    filter.where += " and tvshowlinkpath.idPath = path.idPath and tvshowlinkpath.idShow = tvshow.idShow";
   }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
-  }
+
+  ContextMap context;
+  context["path"] = "videodb://2/5/";
+  context["directorlinktable"] = "directorlinktvshow";
+
+  GetItems(strSQL, &getDirectorsByName, items, filter, context);
 }
 
 void CVideoDatabase::GetMusicVideoDirectorsByName(const CStdString& strSearch, CFileItemList& items)
 {
-  CStdString strSQL;
+  CStdString strSQL = "select %s from musicvideo, actors, directorlinkmusicvideo ";
 
-  try
+  Filter filter;
+  filter.fields = "distinct directorlinkmusicvideo.idDirector, actors.strActor";
+  filter.where = PrepareSQL("directorlinkmusicvideo.idMVideo = musicvideo.idMVideo and directorlinkmusicvideo.idDirector = actors.idActor and actors.strActor like '%%%s%%'", strSearch.c_str());
+  
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
   {
-    if (NULL == m_pDB.get()) return;
-    if (NULL == m_pDS.get()) return;
+    strSQL += ", files, path";
 
-    if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-      strSQL = PrepareSQL("select distinct directorlinkmusicvideo.idDirector,actors.strActor,path.strPath from musicvideo,files,path,actors,directorlinkmusicvideo where files.idFile=musicvideo.idFile and files.idPath=path.idPath and directorlinkmusicvideo.idMVideo=musicvideo.idMVideo and directorlinkmusicvideo.idDirector=actors.idActor and actors.strActor like '%%%s%%'",strSearch.c_str());
-    else
-      strSQL = PrepareSQL("select distinct directorlinkmusicvideo.idDirector,actors.strActor from musicvideo,actors,directorlinkmusicvideo where directorlinkmusicvideo.idMVideo=musicvideo.idMVideo and directorlinkmusicvideo.idDirector=actors.idActor and actors.strActor like '%%%s%%'",strSearch.c_str());
-
-    m_pDS->query( strSQL.c_str() );
-
-    while (!m_pDS->eof())
-    {
-      if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-        if (!g_passwordManager.IsDatabasePathUnlocked(CStdString(m_pDS->fv("path.strPath").get_asString()),g_settings.m_videoSources))
-        {
-          m_pDS->next();
-          continue;
-        }
-
-      CStdString strDir;
-      strDir.Format("%ld/", m_pDS->fv("directorlinkmusicvideo.idDirector").get_asInt());
-      CFileItemPtr pItem(new CFileItem(m_pDS->fv("actors.strActor").get_asString()));
-
-      pItem->SetPath("videodb://3/5/"+ strDir);
-      pItem->m_bIsFolder=true;
-      items.Add(pItem);
-      m_pDS->next();
-    }
-    m_pDS->close();
+    filter.fields += ", path.strPath";
+    filter.where += " and files.idFile = musicvideo.idFile and files.idPath = path.idPath";
   }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
-  }
+
+  ContextMap context;
+  context["path"] = "videodb://3/5/";
+  context["directorlinktable"] = "directorlinkmusicvideo";
+
+  GetItems(strSQL, &getDirectorsByName, items, filter, context);
 }
 
 void CVideoDatabase::CleanDatabase(IVideoInfoScannerObserver* pObserver, const set<int>* paths)
@@ -8699,4 +8596,245 @@ bool CVideoDatabase::GetItemsForPath(const CStdString &content, const CStdString
   for (int i = 0; i < items.Size(); i++)
     items[i]->SetPath(items[i]->GetVideoInfoTag()->m_basePath);
   return items.Size() > 0;
+}
+
+bool CVideoDatabase::GetItems(const CStdString &strSQL, GetItemFromDataSet getMethod, CFileItemList &items, const Filter &filter /* = Filter() */, const ContextMap &context /* = ContextMap() */)
+{
+  if (m_pDB.get() == NULL)
+    return false;
+  if (m_pDS.get() == NULL)
+    return false;
+
+  if (strSQL.empty())
+    return false;
+
+  try
+  {
+    CStdString strSQLExtra;
+    if (!filter.join.empty())
+      strSQLExtra += " " + filter.join;
+    if (!filter.where.empty())
+      strSQLExtra += " WHERE " + filter.where;
+    if (!filter.group.empty())
+      strSQLExtra += " GROUP BY " + filter.group;
+    if (!filter.order.empty())
+      strSQLExtra += " ORDER BY " + filter.order;
+    if (!filter.limit.empty())
+      strSQLExtra += " LIMIT " + filter.limit;
+
+    CStdString sql = PrepareSQL(strSQL, !filter.fields.empty() ? filter.fields.c_str() : "*") + strSQLExtra;
+
+    int iRowsFound = RunQuery(sql);
+    if (iRowsFound <= 0)
+      return iRowsFound == 0;
+
+    // store the total value of items as a property
+    items.SetProperty("total", iRowsFound);
+
+    items.Reserve(iRowsFound);
+    while (!m_pDS->eof())
+    {
+      CFileItem *item = new CFileItem();
+      if (!getMethod(m_pDS, *item, context))
+        continue;
+
+      items.Add(CFileItemPtr(item));
+
+      m_pDS->next();
+    }
+    m_pDS->close();
+
+    return items.Size() > 0;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
+  }
+  return false;
+}
+
+bool CVideoDatabase::GetItems(const CStdString &strSQL, GetItemFromSqlRecord getMethod, CFileItemList &items, const Filter &filter /* = Filter() */, const ContextMap &context /* = ContextMap() */)
+{
+  if (m_pDB.get() == NULL)
+    return false;
+  if (m_pDS.get() == NULL)
+    return false;
+
+  if (strSQL.empty())
+    return false;
+
+  try
+  {
+    CStdString strSQLExtra;
+    if (!filter.join.empty())
+      strSQLExtra += " " + filter.join;
+    if (!filter.where.empty())
+      strSQLExtra += " WHERE " + filter.where;
+    if (!filter.group.empty())
+      strSQLExtra += " GROUP BY " + filter.group;
+    if (!filter.order.empty())
+      strSQLExtra += " ORDER BY " + filter.order;
+    if (!filter.limit.empty())
+      strSQLExtra += " LIMIT " + filter.limit;
+
+    CStdString sql = PrepareSQL(strSQL, !filter.fields.empty() ? filter.fields.c_str() : "*") + strSQLExtra;
+
+    int iRowsFound = RunQuery(sql);
+    if (iRowsFound <= 0)
+      return iRowsFound == 0;
+
+    // store the total value of items as a property
+    items.SetProperty("total", iRowsFound);
+
+    items.Reserve(iRowsFound);
+    const query_data &data = m_pDS->get_result_set().records;
+    for (int row = 0; row < iRowsFound; row++)
+    {
+      CFileItem *item = new CFileItem();
+      if (!getMethod(data.at(row), *item, context))
+        continue;
+
+      items.Add(CFileItemPtr(item));
+
+      m_pDS->next();
+    }
+    m_pDS->close();
+
+    return items.Size() > 0;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
+  }
+  return false;
+}
+
+bool CVideoDatabase::GetSortedItems(const CStdString &strSQL, GetItemFromSqlRecord getMethod, CFileItemList &items, const Filter &filter /* = Filter() */, const ContextMap &context /* = ContextMap() */, const SortDescription &sortDescription /* = SortDescription() */)
+{
+  if (m_pDB.get() == NULL)
+    return false;
+  if (m_pDS.get() == NULL)
+    return false;
+
+  if (strSQL.empty())
+    return false;
+
+  try
+  {
+    int total = -1;
+
+    CStdString strSQLExtra;
+    if (!filter.join.empty())
+      strSQLExtra += " " + filter.join;
+    if (!filter.where.empty())
+      strSQLExtra += " WHERE " + filter.where;
+    if (!filter.group.empty())
+      strSQLExtra += " GROUP BY " + filter.group;
+    if (!filter.order.empty())
+      strSQLExtra += " ORDER BY " + filter.order;
+    if (!filter.limit.empty())
+      strSQLExtra += " LIMIT " + filter.limit;
+    // Apply the limiting directly here if there's no special sorting but limiting
+    else if (sortDescription.sortBy == SortByNone &&
+            (sortDescription.limitStart > 0 || sortDescription.limitEnd > 0))
+    {
+      total = (int)strtol(GetSingleValue(PrepareSQL(strSQL, "COUNT(1)") + strSQLExtra, m_pDS).c_str(), NULL, 10);
+      strSQLExtra += DatabaseUtils::BuildLimitClause(sortDescription.limitEnd, sortDescription.limitStart);
+    }
+
+    CStdString sql = PrepareSQL(strSQL, !filter.fields.empty() ? filter.fields.c_str() : "*") + strSQLExtra;
+
+    int iRowsFound = RunQuery(sql);
+    if (iRowsFound <= 0)
+      return iRowsFound == 0;
+
+    // store the total value of items as a property
+    if (total < iRowsFound)
+      total = iRowsFound;
+    items.SetProperty("total", total);
+
+    DatabaseResults results;
+    results.reserve(iRowsFound);
+    if (!SortUtils::SortFromDataset(sortDescription, MediaTypeEpisode, m_pDS, results))
+      return false;
+
+    // get data from returned rows
+    items.Reserve(results.size());
+
+    const query_data &data = m_pDS->get_result_set().records;
+    for (DatabaseResults::const_iterator it = results.begin(); it != results.end(); it++)
+    {
+      unsigned int targetRow = (unsigned int)it->at(FieldRow).asInteger();
+
+      CFileItem *item = new CFileItem();
+      if (!getMethod(data.at(targetRow), *item, context))
+        continue;
+
+      items.Add(CFileItemPtr(item));
+    }
+    m_pDS->close();
+
+    return items.Size() > 0;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
+  }
+  return false;
+}
+
+bool CVideoDatabase::getDirectorsByName(const std::auto_ptr<dbiplus::Dataset> &dataset, CFileItem &item, const ContextMap &context)
+{
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser &&
+      !g_passwordManager.IsDatabasePathUnlocked(CStdString(dataset->fv("path.strPath").get_asString()), g_settings.m_videoSources))
+    return false;
+
+  item.SetLabel(dataset->fv("actors.strActor").get_asString());
+  item.m_bIsFolder = true;
+
+  CStdString strPath;
+  ContextMap::const_iterator it = context.find("path");
+  if (it != context.end())
+    strPath = it->second;
+
+  CStdString directorLinkTable;
+  it = context.find("directorlinktable");
+  if (it != context.end())
+    directorLinkTable = it->second;
+
+  CStdString strDir;
+  strDir.Format("%ld/", dataset->fv(directorLinkTable + ".idDirector").get_asInt());
+  item.SetPath(strPath + strDir);
+
+  return true;
+}
+
+bool CVideoDatabase::getMoviesByPlot(const std::auto_ptr<dbiplus::Dataset> &dataset, CFileItem &item, const ContextMap &context)
+{
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser &&
+      !g_passwordManager.IsDatabasePathUnlocked(CStdString(dataset->fv(2).get_asString()), g_settings.m_videoSources))
+    return false;
+
+  item.SetLabel(dataset->fv(1).get_asString());
+  item.m_bIsFolder = false;
+
+  CStdString path; path.Format("videodb://1/2/%ld", dataset->fv(0).get_asInt());
+  item.SetPath(path);
+
+  return true;
+}
+
+bool CVideoDatabase::getEpisodesByPlot(const std::auto_ptr<dbiplus::Dataset> &dataset, CFileItem &item, const ContextMap &context)
+{
+  if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser &&
+      !g_passwordManager.IsDatabasePathUnlocked(CStdString(dataset->fv("path.strPath").get_asString()),g_settings.m_videoSources))
+    return false;
+
+  item.SetLabel(dataset->fv(1).get_asString() + " (" + dataset->fv(4).get_asString() + ")");
+  item.m_bIsFolder = false;
+
+  CStdString path; path.Format("videodb://2/2/%ld/%ld/%ld", dataset->fv("episode.idShow").get_asInt(), dataset->fv(2).get_asInt(), dataset->fv(0).get_asInt());
+  item.SetPath(path);
+
+  return true;
 }

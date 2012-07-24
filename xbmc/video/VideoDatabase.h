@@ -25,6 +25,7 @@
 #include "Bookmark.h"
 #include "utils/SortUtils.h"
 
+#include <map>
 #include <memory>
 #include <set>
 
@@ -366,6 +367,14 @@ public:
 
   virtual bool Open();
   virtual bool CommitTransaction();
+
+  typedef std::map<std::string, std::string> ContextMap;
+  typedef bool (*GetItemFromDataSet)(const std::auto_ptr<dbiplus::Dataset> &dataset, CFileItem &item, const ContextMap &context);
+  typedef bool (*GetItemFromSqlRecord)(const dbiplus::sql_record* const record, CFileItem &item, const ContextMap &context);
+
+  bool GetItems(const CStdString &strSQL, GetItemFromDataSet getMethod, CFileItemList &items, const Filter &filter = Filter(), const ContextMap &context = ContextMap());
+  bool GetItems(const CStdString &strSQL, GetItemFromSqlRecord getMethod, CFileItemList &items, const Filter &filter = Filter(), const ContextMap &context = ContextMap());
+  bool GetSortedItems(const CStdString &strSQL, GetItemFromSqlRecord getMethod, CFileItemList &items, const Filter &filter = Filter(), const ContextMap &context = ContextMap(), const SortDescription &sortDescription = SortDescription());
 
   int AddMovie(const CStdString& strFilenameAndPath);
   int AddEpisode(int idShow, const CStdString& strFilenameAndPath);
@@ -827,4 +836,11 @@ private:
 
   void AnnounceRemove(std::string content, int id);
   void AnnounceUpdate(std::string content, int id);
+
+  // implementations of GetItemFromDataSet
+  static bool getDirectorsByName(const std::auto_ptr<dbiplus::Dataset> &dataset, CFileItem &item, const ContextMap &context);
+  static bool getMoviesByPlot(const std::auto_ptr<dbiplus::Dataset> &dataset, CFileItem &item, const ContextMap &context);
+  static bool getEpisodesByPlot(const std::auto_ptr<dbiplus::Dataset> &dataset, CFileItem &item, const ContextMap &context);
+
+  // implementations of GetItemFromSqlRecord
 };
