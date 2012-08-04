@@ -238,6 +238,9 @@
     <Filter Include="dbwrappers">
       <UniqueIdentifier>{5c7ad2df-b46d-4a29-ae17-3406fe73edde}</UniqueIdentifier>
     </Filter>
+    <Filter Include="interfaces\api">
+      <UniqueIdentifier>{675bcad3-46a6-4ab8-b8cf-cafa31a3044a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -1177,31 +1180,7 @@
     <ClCompile Include="..\..\xbmc\interfaces\http-api\XBMChttp.cpp">
       <Filter>interfaces\http-api</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\AudioLibrary.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\FileItemHandler.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\FileOperations.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\xbmc\interfaces\json-rpc\JSONRPC.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\PlayerOperations.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\PlaylistOperations.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\SystemOperations.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\VideoLibrary.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\XBMCOperations.cpp">
       <Filter>interfaces\json-rpc</Filter>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\interfaces\python\XBPython.cpp">
@@ -1942,9 +1921,6 @@
     <ClCompile Include="..\..\xbmc\win32\win32env.cpp">
       <Filter>win32</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\InputOperations.cpp">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\xbmc\input\XBMC_keytable.cpp">
       <Filter>input</Filter>
     </ClCompile>
@@ -1974,9 +1950,6 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\guilib\GUIAction.cpp">
       <Filter>guilib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ApplicationOperations.cpp">
-      <Filter>interfaces\json-rpc</Filter>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\guilib\JpegIO.cpp">
       <Filter>guilib</Filter>
@@ -2079,9 +2052,6 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\filesystem\windows\WINSMBDirectory.cpp">
       <Filter>filesystem\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\GUIOperations.cpp">
-      <Filter>interfaces\json-rpc</Filter>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\utils\Mime.cpp">
       <Filter>utils</Filter>
@@ -2589,6 +2559,39 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogKeyboardGeneric.cpp">
       <Filter>dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\ApplicationOperations.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\AudioLibrary.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\FileItemHandler.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\FileOperations.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\GUIOperations.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\InputOperations.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\PlayerOperations.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\PlaylistOperations.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\SystemOperations.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\VideoLibrary.cpp">
+      <Filter>interfaces\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\api\XBMCOperations.cpp">
+      <Filter>interfaces\api</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -3722,40 +3725,10 @@
     <ClInclude Include="..\..\xbmc\interfaces\http-api\XBMChttp.h">
       <Filter>interfaces\http-api</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\AudioLibrary.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\FileItemHandler.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\FileOperations.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\IClient.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ITransportLayer.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\JSONRPC.h">
       <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\JSONUtils.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\PlayerOperations.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\PlaylistOperations.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\SystemOperations.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\VideoLibrary.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\XBMCOperations.h">
       <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\interfaces\python\XBPython.h">
@@ -4508,9 +4481,6 @@
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ServiceDescription.h">
       <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\InputOperations.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\input\XBMC_keytable.h">
       <Filter>input</Filter>
     </ClInclude>
@@ -4546,9 +4516,6 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\guilib\GUIAction.h">
       <Filter>guilib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ApplicationOperations.h">
-      <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\guilib\JpegIO.h">
       <Filter>guilib</Filter>
@@ -4959,9 +4926,6 @@
     <ClInclude Include="..\..\xbmc\interfaces\json-rpc\IJSONRPCAnnouncer.h">
       <Filter>interfaces\json-rpc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\GUIOperations.h">
-      <Filter>interfaces\json-rpc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\utils\Mime.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -5223,6 +5187,48 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogKeyboardGeneric.h">
       <Filter>dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\ApplicationOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\AudioLibrary.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\FileItemHandler.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\FileOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\GUIOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\IClient.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\InputOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\ITransportLayer.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\PlayerOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\PlaylistOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\SystemOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\VideoLibrary.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\XBMCOperations.h">
+      <Filter>interfaces\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\api\APIUtils.h">
+      <Filter>interfaces\api</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
