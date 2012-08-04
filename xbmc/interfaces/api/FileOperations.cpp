@@ -32,12 +32,12 @@
 #include "URL.h"
 
 using namespace XFILE;
-using namespace JSONRPC;
+using namespace API;
 
 static const unsigned int SourcesSize = 5;
 static CStdString SourceNames[] = { "programs", "files", "video", "music", "pictures" };
 
-JSONRPC_STATUS CFileOperations::GetRootDirectory(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CFileOperations::GetRootDirectory(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CStdString media = parameterObject["media"].asString();
   media = media.ToLower();
@@ -71,10 +71,10 @@ JSONRPC_STATUS CFileOperations::GetRootDirectory(const CStdString &method, ITran
     HandleFileItemList(NULL, true, "sources", items, param, result);
   }
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CFileOperations::GetDirectory(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CFileOperations::GetDirectory(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CStdString media = parameterObject["media"].asString();
   media = media.ToLower();
@@ -90,7 +90,7 @@ JSONRPC_STATUS CFileOperations::GetDirectory(const CStdString &method, ITranspor
     sources = g_settings.GetSourcesFromType(SourceNames[index]);
     int sourceIndex = CUtil::GetMatchingSource(strPath, *sources, isSource);
     if (sourceIndex >= 0 && sourceIndex < (int)sources->size() && sources->at(sourceIndex).m_iHasLock == 2)
-      return InvalidParams;
+      return APIStatusInvalidParameters;
   }
 
   CStdStringArray regexps;
@@ -197,36 +197,36 @@ JSONRPC_STATUS CFileOperations::GetDirectory(const CStdString &method, ITranspor
     result["limits"]["end"] = count;
     result["limits"]["total"] = count;
 
-    return OK;
+    return APIStatusOK;
   }
 
-  return InvalidParams;
+  return APIStatusInvalidParameters;
 }
 
-JSONRPC_STATUS CFileOperations::PrepareDownload(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CFileOperations::PrepareDownload(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   std::string protocol;
   if (transport->PrepareDownload(parameterObject["path"].asString().c_str(), result["details"], protocol))
   {
     result["protocol"] = protocol;
 
-    if ((transport->GetCapabilities() & FileDownloadDirect) == FileDownloadDirect)
+    if ((transport->GetCapabilities() & TransportLayerCapabilityFileDownloadDirect) == TransportLayerCapabilityFileDownloadDirect)
       result["mode"] = "direct";
     else
       result["mode"] = "redirect";
 
-    return OK;
+    return APIStatusOK;
   }
   
-  return InvalidParams;
+  return APIStatusInvalidParameters;
 }
 
-JSONRPC_STATUS CFileOperations::Download(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CFileOperations::Download(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return transport->Download(parameterObject["path"].asString().c_str(), result) ? OK : InvalidParams;
+  return transport->Download(parameterObject["path"].asString().c_str(), result) ? APIStatusOK : APIStatusInvalidParameters;
 }
 
-bool CFileOperations::FillFileItem(const CFileItemPtr &originalItem, CFileItem &item, CStdString media /* = "" */)
+bool CFileOperations::FillFileItem(const CFileItemPtr &originalItem, CFileItem &item, const std::string &media /* = "" */)
 {
   if (originalItem.get() == NULL)
     return false;
@@ -235,9 +235,9 @@ bool CFileOperations::FillFileItem(const CFileItemPtr &originalItem, CFileItem &
   CStdString strFilename = originalItem->GetPath();
   if (!strFilename.empty() && (CDirectory::Exists(strFilename) || CFile::Exists(strFilename)))
   {
-    if (media.Equals("video"))
+    if (media.compare("video") == 0)
       status = CVideoLibrary::FillFileItem(strFilename, item);
-    else if (media.Equals("music"))
+    else if (media.compare("music") == 0)
       status = CAudioLibrary::FillFileItem(strFilename, item);
 
     if (!status)

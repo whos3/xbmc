@@ -200,7 +200,7 @@ void CMusicInfoScanner::Process()
   {
     CLog::Log(LOGERROR, "MusicInfoScanner: Exception while scanning.");
   }
-  ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AudioLibrary, "xbmc", "OnScanFinished");
+  ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AnnouncementFlagAudioLibrary, "xbmc", "OnScanFinished");
   m_bRunning = false;
   if (m_pObserver)
     m_pObserver->OnFinished();

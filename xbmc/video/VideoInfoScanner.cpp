@@ -127,7 +127,7 @@ namespace VIDEO
 
       tick = XbmcThreads::SystemClockMillis() - tick;
       CLog::Log(LOGNOTICE, "VideoInfoScanner: Finished scan. Scanning for video info took %s", StringUtils::SecondsToTimeString(tick / 1000).c_str());
-      ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::VideoLibrary, "xbmc", "OnScanFinished");
+      ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AnnouncementFlagVideoLibrary, "xbmc", "OnScanFinished");
       
       m_bRunning = false;
       if (m_pObserver)
@@ -1116,7 +1116,7 @@ namespace VIDEO
     // to make sure CAnnouncementManager provides the correct type for the item
     if (content == CONTENT_TVSHOWS && !pItem->m_bIsFolder && itemCopy->HasVideoInfoTag())
       itemCopy->GetVideoInfoTag()->m_strShowTitle = itemCopy->GetVideoInfoTag()->m_strTitle;
-    ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::VideoLibrary, "xbmc", "OnUpdate", itemCopy);
+    ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AnnouncementFlagVideoLibrary, "xbmc", "OnUpdate", itemCopy);
     return lResult;
   }
 

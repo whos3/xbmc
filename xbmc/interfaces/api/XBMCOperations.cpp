@@ -25,9 +25,9 @@
 #include "utils/Variant.h"
 #include "powermanagement/PowerManager.h"
 
-using namespace JSONRPC;
+using namespace API;
 
-JSONRPC_STATUS CXBMCOperations::GetInfoLabels(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CXBMCOperations::GetInfoLabels(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   std::vector<CStdString> info;
 
@@ -50,14 +50,14 @@ JSONRPC_STATUS CXBMCOperations::GetInfoLabels(const CStdString &method, ITranspo
     }
   }
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CXBMCOperations::GetInfoBooleans(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CXBMCOperations::GetInfoBooleans(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   std::vector<CStdString> info;
 
-  bool CanControlPower = (client->GetPermissionFlags() & ControlPower) > 0;
+  bool canControlPower = (client->GetPermissionFlags() & APIPermissionControlPower) > 0;
 
   for (unsigned int i = 0; i < parameterObject["booleans"].size(); i++)
   {
@@ -67,15 +67,15 @@ JSONRPC_STATUS CXBMCOperations::GetInfoBooleans(const CStdString &method, ITrans
     // Need to override power management of whats in infomanager since jsonrpc
     // have a security layer aswell.
     if (field.Equals("system.canshutdown"))
-      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanPowerdown() && CanControlPower);
+      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanPowerdown() && canControlPower);
     else if (field.Equals("system.canpowerdown"))
-      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanPowerdown() && CanControlPower);
+      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanPowerdown() && canControlPower);
     else if (field.Equals("system.cansuspend"))
-      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanSuspend() && CanControlPower);
+      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanSuspend() && canControlPower);
     else if (field.Equals("system.canhibernate"))
-      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanHibernate() && CanControlPower);
+      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanHibernate() && canControlPower);
     else if (field.Equals("system.canreboot"))
-      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanReboot() && CanControlPower);
+      result[parameterObject["booleans"][i].asString()] = (g_powerManager.CanReboot() && canControlPower);
     else
       info.push_back(parameterObject["booleans"][i].asString());
   }
@@ -91,5 +91,5 @@ JSONRPC_STATUS CXBMCOperations::GetInfoBooleans(const CStdString &method, ITrans
     }
   }
 
-  return OK;
+  return APIStatusOK;
 }

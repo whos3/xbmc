@@ -44,7 +44,7 @@ namespace JSONRPC
     JSONSchemaTypeDefinition();
     
     bool Parse(const CVariant &value, bool isParameter = false);
-    JSONRPC_STATUS Check(const CVariant &value, CVariant &outputValue, CVariant &errorData) const;
+    API::APIStatus Check(const CVariant &value, CVariant &outputValue, CVariant &errorData) const;
     void Print(bool isParameter, bool isGlobal, bool printDefault, bool printDescriptions, CVariant &output) const;
     
     std::string missingReference;
@@ -223,7 +223,7 @@ namespace JSONRPC
     JsonRpcMethod();
   
     bool Parse(const CVariant &value);
-    JSONRPC_STATUS Check(const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters) const;
+    API::APIStatus Check(const CVariant &requestParameters, API::ITransportLayer *transport, API::IClient *client, bool notification, API::APIMethod &methodCall, CVariant &outputParameters) const;
     
     std::string missingReference;    
     
@@ -235,17 +235,17 @@ namespace JSONRPC
      \brief Pointer tot he implementation
      of the represented method
      */
-    MethodCall method;
+    API::APIMethod method;
     /*!
      \brief Definition of the type of
      request/response
      */
-    TransportLayerCapability transportneed;
+    API::TransportLayerCapability transportneed;
     /*!
      \brief Definition of the permissions needed
      to execute the method
      */
-    OperationPermission permission;
+    API::APIPermission permission;
     /*!
      \brief Description of the method
      */
@@ -262,7 +262,7 @@ namespace JSONRPC
   private:
     bool parseParameter(const CVariant &value, JSONSchemaTypeDefinition &parameter);
     bool parseReturn(const CVariant &value);
-    static JSONRPC_STATUS checkParameter(const CVariant &requestParameters, const JSONSchemaTypeDefinition &type, unsigned int position, CVariant &outputParameters, unsigned int &handled, CVariant &errorData);
+    static API::APIStatus checkParameter(const CVariant &requestParameters, const JSONSchemaTypeDefinition &type, unsigned int position, CVariant &outputParameters, unsigned int &handled, CVariant &errorData);
   };
 
   /*! 
@@ -281,7 +281,7 @@ namespace JSONRPC
      implementation of the json rpc
      method.
      */
-    MethodCall method;
+    API::APIMethod method;
   } JsonRpcMethodMap;
 
   /*!
@@ -317,7 +317,7 @@ namespace JSONRPC
      \param method pointer to the implementation
      \return True if the json schema description has been parsed sucessfully otherwise false
      */
-    static bool AddMethod(const std::string &jsonMethod, MethodCall method);
+    static bool AddMethod(const std::string &jsonMethod, API::APIMethod method);
 
     /*!
      \brief Parses the given json schema description and evaluates
@@ -355,7 +355,7 @@ namespace JSONRPC
      \param printMetadata Whether to print XBMC specific data or not
      \param filterByTransport Whether to filter by transport or not
      */
-    static JSONRPC_STATUS Print(CVariant &result, ITransportLayer *transport, IClient *client, bool printDescriptions = true, bool printMetadata = false, bool filterByTransport = true, const std::string &filterByName = "", const std::string &filterByType = "", bool printReferences = true);
+    static API::APIStatus Print(CVariant &result, API::ITransportLayer *transport, API::IClient *client, bool printDescriptions = true, bool printMetadata = false, bool filterByTransport = true, const std::string &filterByName = "", const std::string &filterByType = "", bool printReferences = true);
 
     /*!
      \brief Checks the given parameters from the request against the
@@ -373,13 +373,13 @@ namespace JSONRPC
      actual C/C++ implementation of the method to the "methodCall" parameter and checks the
      given parameters from the request against the json schema description for the given method.
      */
-    static JSONRPC_STATUS CheckCall(const char* method, const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters);
+    static API::APIStatus CheckCall(const char* method, const CVariant &requestParameters, API::ITransportLayer *transport, API::IClient *client, bool notification, API::APIMethod &methodCall, CVariant &outputParameters);
     
     static JSONSchemaTypeDefinition* GetType(const std::string &identification);
 
   private:
     static bool prepareDescription(std::string &description, CVariant &descriptionObject, std::string &name);
-    static bool addMethod(const std::string &jsonMethod, MethodCall method);
+    static bool addMethod(const std::string &jsonMethod, API::APIMethod method);
     static void parseHeader(const CVariant &descriptionObject);
     static bool parseJSONSchemaType(const CVariant &value, std::vector<JSONSchemaTypeDefinition>& typeDefinitions, JSONSchemaType &schemaType, std::string &missingReference);
     static void addReferenceTypeDefinition(const JSONSchemaTypeDefinition &typeDefinition);
@@ -416,7 +416,7 @@ namespace JSONRPC
     {
       std::string Schema;
       SchemaDefinition Type;
-      MethodCall Method;
+      API::APIMethod Method;
     } IncompleteSchemaDefinition;
 
     typedef std::map<std::string, std::vector<IncompleteSchemaDefinition> > IncompleteSchemaDefinitionMap;

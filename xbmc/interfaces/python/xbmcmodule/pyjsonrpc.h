@@ -20,21 +20,21 @@
  *
  */
 #include "system.h"
-#include "interfaces/json-rpc/ITransportLayer.h"
-#include "interfaces/json-rpc/JSONRPC.h"
 
 #ifdef HAS_JSONRPC
-class CPythonTransport : public JSONRPC::ITransportLayer
+#include "interfaces/api/APIUtils.h"
+
+class CPythonTransport : public API::ITransportLayer
 {
 public:
   virtual bool PrepareDownload(const char *path, CVariant &details, std::string &protocol) { return false; }
   virtual bool Download(const char *path, CVariant &result) { return false; }
-  virtual int GetCapabilities() { return JSONRPC::Response; }
+  virtual int GetCapabilities() { return API::TransportLayerCapabilityResponse; }
 
-  class CPythonClient : public JSONRPC::IClient
+  class CPythonClient : public API::IClient
   {
   public:
-    virtual int  GetPermissionFlags() { return JSONRPC::OPERATION_PERMISSION_ALL; }
+    virtual int  GetPermissionFlags() { return API::APIPermissionAll; }
     virtual int  GetAnnouncementFlags() { return 0; }
     virtual bool SetAnnouncementFlags(int flags) { return true; }
   };

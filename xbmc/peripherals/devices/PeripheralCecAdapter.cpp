@@ -120,14 +120,14 @@ CPeripheralCecAdapter::~CPeripheralCecAdapter(void)
 
 void CPeripheralCecAdapter::Announce(AnnouncementFlag flag, const char *sender, const char *message, const CVariant &data)
 {
-  if (flag == System && !strcmp(sender, "xbmc") && !strcmp(message, "OnQuit") && m_bIsReady)
+  if (flag == AnnouncementFlagSystem && !strcmp(sender, "xbmc") && !strcmp(message, "OnQuit") && m_bIsReady)
   {
     CSingleLock lock(m_critSection);
     m_iExitCode = (int)data.asInteger(0);
     CAnnouncementManager::RemoveAnnouncer(this);
     StopThread(false);
   }
-  else if (flag == GUI && !strcmp(sender, "xbmc") && !strcmp(message, "OnScreensaverDeactivated") && m_bIsReady)
+  else if (flag == AnnouncementFlagGUI && !strcmp(sender, "xbmc") && !strcmp(message, "OnScreensaverDeactivated") && m_bIsReady)
   {
     bool bIgnoreDeactivate(false);
     if (data.isBoolean())
@@ -150,7 +150,7 @@ void CPeripheralCecAdapter::Announce(AnnouncementFlag flag, const char *sender, 
         m_cecAdapter->SetActiveSource();
     }
   }
-  else if (flag == GUI && !strcmp(sender, "xbmc") && !strcmp(message, "OnScreensaverActivated") && m_bIsReady)
+  else if (flag == AnnouncementFlagGUI && !strcmp(sender, "xbmc") && !strcmp(message, "OnScreensaverActivated") && m_bIsReady)
   {
     // Don't put devices to standby if application is currently playing
     if ((!g_application.IsPlaying() || g_application.IsPaused()) && m_configuration.bPowerOffScreensaver == 1)
@@ -161,7 +161,7 @@ void CPeripheralCecAdapter::Announce(AnnouncementFlag flag, const char *sender, 
         m_cecAdapter->StandbyDevices(CECDEVICE_BROADCAST);
     }
   }
-  else if (flag == System && !strcmp(sender, "xbmc") && !strcmp(message, "OnSleep"))
+  else if (flag == AnnouncementFlagSystem && !strcmp(sender, "xbmc") && !strcmp(message, "OnSleep"))
   {
     // this will also power off devices when we're the active source
     {
@@ -170,7 +170,7 @@ void CPeripheralCecAdapter::Announce(AnnouncementFlag flag, const char *sender, 
     }
     StopThread();
   }
-  else if (flag == System && !strcmp(sender, "xbmc") && !strcmp(message, "OnWake"))
+  else if (flag == AnnouncementFlagSystem && !strcmp(sender, "xbmc") && !strcmp(message, "OnWake"))
   {
     CLog::Log(LOGDEBUG, "%s - reconnecting to the CEC adapter after standby mode", __FUNCTION__);
     ReopenConnection();

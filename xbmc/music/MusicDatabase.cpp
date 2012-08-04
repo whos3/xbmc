@@ -4947,7 +4947,7 @@ void CMusicDatabase::AnnounceRemove(std::string content, int id)
   CVariant data;
   data["type"] = content;
   data["id"] = id;
-  ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AudioLibrary, "xbmc", "OnRemove", data);
+  ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AnnouncementFlagAudioLibrary, "xbmc", "OnRemove", data);
 }
 
 void CMusicDatabase::AnnounceUpdate(std::string content, int id)
@@ -4955,7 +4955,7 @@ void CMusicDatabase::AnnounceUpdate(std::string content, int id)
   CVariant data;
   data["type"] = content;
   data["id"] = id;
-  ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AudioLibrary, "xbmc", "OnUpdate", data);
+  ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AnnouncementFlagAudioLibrary, "xbmc", "OnUpdate", data);
 }
 
 void CMusicDatabase::SetArtForItem(int mediaId, const string &mediaType, const map<string, string> &art)

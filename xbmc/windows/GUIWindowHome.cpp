@@ -60,9 +60,9 @@ void CGUIWindowHome::Announce(AnnouncementFlag flag, const char *sender, const c
 {
   int ra_flag = 0;
 
-  CLog::Log(LOGDEBUG, "GOT ANNOUNCEMENT, type: %i, from %s, message %s",(int)flag, sender, message);
+  CLog::Log(LOGDEBUG, "GOT ANNOUNCEMENT, type: %i, from %s, message %s", (int)flag, sender, message);
 
-  if (flag & VideoLibrary)
+  if (flag & AnnouncementFlagVideoLibrary)
   {
     if ((strcmp(message, "OnUpdate") == 0) ||
         (strcmp(message, "OnRemove") == 0))
@@ -75,7 +75,7 @@ void CGUIWindowHome::Announce(AnnouncementFlag flag, const char *sender, const c
       ra_flag |= (Video | Totals);
     }
   }
-  else if (flag & AudioLibrary)
+  else if (flag & AnnouncementFlagAudioLibrary)
   {
     if ((strcmp(message, "OnUpdate") == 0) ||
         (strcmp(message, "OnRemove") == 0))

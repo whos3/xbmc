@@ -102,17 +102,17 @@ void XBPython::OnPlayBackEnded()
 
 void XBPython::Announce(AnnouncementFlag flag, const char *sender, const char *message, const CVariant &data)
 {
-  if (flag & VideoLibrary)
+  if (flag & AnnouncementFlagVideoLibrary)
   {
    if (strcmp(message, "OnScanFinished") == 0)
     OnDatabaseUpdated("video");
   }
-  else if (flag & AudioLibrary)
+  else if (flag & AnnouncementFlagAudioLibrary)
   {
    if (strcmp(message, "OnScanFinished") == 0)
     OnDatabaseUpdated("music");
   }
-  else if (flag & GUI)
+  else if (flag & AnnouncementFlagGUI)
   {
    if (strcmp(message, "OnScreensaverDeactivated") == 0)
      OnScreensaverDeactivated();   

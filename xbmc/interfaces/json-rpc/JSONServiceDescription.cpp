@@ -19,24 +19,25 @@
  *
  */
 
-#include "ServiceDescription.h"
+#include "JSONRPC.h"
 #include "JSONServiceDescription.h"
+#include "ServiceDescription.h"
+#include "interfaces/api/ApplicationOperations.h"
+#include "interfaces/api/AudioLibrary.h"
+#include "interfaces/api/FileOperations.h"
+#include "interfaces/api/GUIOperations.h"
+#include "interfaces/api/InputOperations.h"
+#include "interfaces/api/PlayerOperations.h"
+#include "interfaces/api/PlaylistOperations.h"
+#include "interfaces/api/SystemOperations.h"
+#include "interfaces/api/VideoLibrary.h"
+#include "interfaces/api/XBMCOperations.h"
+#include "utils/JSONVariantParser.h"
 #include "utils/log.h"
 #include "utils/StdString.h"
-#include "utils/JSONVariantParser.h"
-#include "JSONRPC.h"
-#include "PlayerOperations.h"
-#include "PlaylistOperations.h"
-#include "FileOperations.h"
-#include "AudioLibrary.h"
-#include "VideoLibrary.h"
-#include "GUIOperations.h"
-#include "SystemOperations.h"
-#include "InputOperations.h"
-#include "XBMCOperations.h"
-#include "ApplicationOperations.h"
 
 using namespace std;
+using namespace API;
 using namespace JSONRPC;
 
 std::map<std::string, CVariant> CJSONServiceDescription::m_notifications = std::map<std::string, CVariant>();
@@ -577,7 +578,7 @@ bool JSONSchemaTypeDefinition::Parse(const CVariant &value, bool isParameter /* 
   return true;
 }
 
-JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &outputValue, CVariant &errorData) const
+APIStatus JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &outputValue, CVariant &errorData) const
 {
   if (!name.empty())
     errorData["name"] = name;
@@ -590,13 +591,13 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
     CLog::Log(LOGDEBUG, "JSONRPC: Type mismatch in type %s", name.c_str());
     errorMessage.Format("Invalid type %s received", ValueTypeToString(value.type()));
     errorData["message"] = errorMessage.c_str();
-    return InvalidParams;
+    return APIStatusInvalidParameters;
   }
   else if (value.isNull() && !HasType(type, NullValue))
   {
     CLog::Log(LOGDEBUG, "JSONRPC: Value is NULL in type %s", name.c_str());
     errorData["message"] = "Received value is null";
-    return InvalidParams;
+    return APIStatusInvalidParameters;
   }
 
   // Let's check if we have to handle a union type
@@ -619,7 +620,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
     {
       CLog::Log(LOGDEBUG, "JSONRPC: Value in type %s does not match any of the union type definitions", name.c_str());
       errorData["message"] = "Received value does not match any of the union type definitions";
-      return InvalidParams;
+      return APIStatusInvalidParameters;
     }
   }
 
@@ -630,7 +631,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
   {
     for (unsigned int extendsIndex = 0; extendsIndex < extends.size(); extendsIndex++)
     {
-      JSONRPC_STATUS status = extends.at(extendsIndex).Check(value, outputValue, errorData);
+      APIStatus status = extends.at(extendsIndex).Check(value, outputValue, errorData);
 
       if (status != OK)
       {
@@ -659,7 +660,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
       else
         errorMessage.Format("Only %d array items expected but %d received", maxItems, value.size());
       errorData["message"] = errorMessage.c_str();
-      return InvalidParams;
+      return APIStatusInvalidParameters;
     }
 
     if (items.size() == 0)
@@ -672,7 +673,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
       for (unsigned int arrayIndex = 0; arrayIndex < value.size(); arrayIndex++)
       {
         CVariant temp;
-        JSONRPC_STATUS status = itemType.Check(value[arrayIndex], temp, errorData["property"]);
+        APIStatus status = itemType.Check(value[arrayIndex], temp, errorData["property"]);
         outputValue.push_back(temp);
         if (status != OK)
         {
@@ -699,7 +700,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
         CLog::Log(LOGDEBUG, "JSONRPC: One of the array elements does not match in type %s", name.c_str());
         errorMessage.Format("%d array elements expected but %d received", items.size(), value.size());
         errorData["message"] = errorMessage.c_str();
-        return InvalidParams;
+        return APIStatusInvalidParameters;
       }
 
       // Loop through all array elements until there
@@ -708,7 +709,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
       unsigned int arrayIndex;
       for (arrayIndex = 0; arrayIndex < min(items.size(), (size_t)value.size()); arrayIndex++)
       {
-        JSONRPC_STATUS status = items.at(arrayIndex).Check(value[arrayIndex], outputValue[arrayIndex], errorData["property"]);
+        APIStatus status = items.at(arrayIndex).Check(value[arrayIndex], outputValue[arrayIndex], errorData["property"]);
         if (status != OK)
         {
           CLog::Log(LOGDEBUG, "JSONRPC: Array element at index %u does not match with items schema in type %s", arrayIndex, name.c_str());
@@ -739,7 +740,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
             CLog::Log(LOGDEBUG, "JSONRPC: Array contains non-conforming additional items in type %s", name.c_str());
             errorMessage.Format("Array element at index %u does not match the \"additionalItems\" schema", arrayIndex);
             errorData["message"] = errorMessage.c_str();
-            return InvalidParams;
+            return APIStatusInvalidParameters;
           }
         }
       }
@@ -758,13 +759,13 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
             CLog::Log(LOGDEBUG, "JSONRPC: Not unique array element at index %u and %u in type %s", checkingIndex, checkedIndex, name.c_str());
             errorMessage.Format("Array element at index %u is not unique (same as array element at index %u)", checkingIndex, checkedIndex);
             errorData["message"] = errorMessage.c_str();
-            return InvalidParams;
+            return APIStatusInvalidParameters;
           }
         }
       }
     }
 
-    return OK;
+    return APIStatusOK;
   }
 
   // If it is an object we need to check every element
@@ -778,7 +779,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
     {
       if (value.isMember(propertiesIterator->second.name))
       {
-        JSONRPC_STATUS status = propertiesIterator->second.Check(value[propertiesIterator->second.name], outputValue[propertiesIterator->second.name], errorData["property"]);
+        APIStatus status = propertiesIterator->second.Check(value[propertiesIterator->second.name], outputValue[propertiesIterator->second.name], errorData["property"]);
         if (status != OK)
         {
           CLog::Log(LOGDEBUG, "JSONRPC: Invalid property \"%s\" in type %s", propertiesIterator->second.name.c_str(), name.c_str());
@@ -794,7 +795,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
         errorData["property"]["name"] = propertiesIterator->second.name.c_str();
         errorData["property"]["type"] = SchemaValueTypeToString(propertiesIterator->second.type);
         errorData["message"] = "Missing property";
-        return InvalidParams;
+        return APIStatusInvalidParameters;
       }
     }
 
@@ -821,7 +822,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
             continue;
           }
 
-          JSONRPC_STATUS status = additionalProperties->Check(value[iter->first], outputValue[iter->first], errorData["property"]);
+          APIStatus status = additionalProperties->Check(value[iter->first], outputValue[iter->first], errorData["property"]);
           if (status != OK)
           {
             CLog::Log(LOGDEBUG, "JSONRPC: Invalid additional property \"%s\" in type %s", iter->first.c_str(), name.c_str());
@@ -835,11 +836,11 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
       {
         errorData["message"] = "Unexpected additional properties received";
         errorData.erase("property");
-        return InvalidParams;
+        return APIStatusInvalidParameters;
       }
     }
 
-    return OK;
+    return APIStatusOK;
   }
 
   // It's neither an array nor an object
@@ -862,7 +863,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
     {
       CLog::Log(LOGDEBUG, "JSONRPC: Value does not match any of the enum values in type %s", name.c_str());
       errorData["message"] = "Received value does not match any of the defined enum values";
-      return InvalidParams;
+      return APIStatusInvalidParameters;
     }
   }
 
@@ -888,7 +889,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
         errorMessage.Format("Value between %d (%s) and %d (%s) expected but %d received", 
           (int)minimum, exclusiveMinimum ? "exclusive" : "inclusive", (int)maximum, exclusiveMaximum ? "exclusive" : "inclusive", (int)numberValue);
       errorData["message"] = errorMessage.c_str();
-      return InvalidParams;
+      return APIStatusInvalidParameters;
     }
     // Check divisibleBy
     if ((HasType(type, IntegerValue) && divisibleBy > 0 && ((int)numberValue % divisibleBy) != 0))
@@ -896,7 +897,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
       CLog::Log(LOGDEBUG, "JSONRPC: Value does not meet divisibleBy requirements in type %s", name.c_str());
       errorMessage.Format("Value should be divisible by %d but %d received", divisibleBy, (int)numberValue);
       errorData["message"] = errorMessage.c_str();
-      return InvalidParams;
+      return APIStatusInvalidParameters;
     }
   }
 
@@ -909,7 +910,7 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
       CLog::Log(LOGDEBUG, "JSONRPC: Value does not meet minLength requirements in type %s", name.c_str());
       errorMessage.Format("Value should have a minimum length of %d but has a length of %d", minLength, size);
       errorData["message"] = errorMessage.c_str();
-      return InvalidParams;
+      return APIStatusInvalidParameters;
     }
 
     if (maxLength >= 0 && size > maxLength)
@@ -917,13 +918,13 @@ JSONRPC_STATUS JSONSchemaTypeDefinition::Check(const CVariant &value, CVariant &
       CLog::Log(LOGDEBUG, "JSONRPC: Value does not meet maxLength requirements in type %s", name.c_str());
       errorMessage.Format("Value should have a maximum length of %d but has a length of %d", maxLength, size);
       errorData["message"] = errorMessage.c_str();
-      return InvalidParams;
+      return APIStatusInvalidParameters;
     }
   }
 
   // Otherwise it can have any value
   outputValue = value;
-  return OK;
+  return APIStatusOK;
 }
 
 void JSONSchemaTypeDefinition::Print(bool isParameter, bool isGlobal, bool printDefault, bool printDescriptions, CVariant &output) const
@@ -1127,23 +1128,23 @@ bool JsonRpcMethod::Parse(const CVariant &value)
   {
     int transport = 0;
     for (unsigned int index = 0; index < value["transport"].size(); index++)
-      transport |= StringToTransportLayer(value["transport"][index].asString());
+      transport |= ITransportLayer::StringToTransportLayer(value["transport"][index].asString());
 
     transportneed = (TransportLayerCapability)transport;
   }
   else
-    transportneed = StringToTransportLayer(value.isMember("transport") ? value["transport"].asString() : "");
+    transportneed = ITransportLayer::StringToTransportLayer(value.isMember("transport") ? value["transport"].asString() : "");
 
   if (value.isMember("permission") && value["permission"].isArray())
   {
     int permissions = 0;
     for (unsigned int index = 0; index < value["permission"].size(); index++)
-      permissions |= StringToPermission(value["permission"][index].asString());
+      permissions |= APIUtils::StringToPermission(value["permission"][index].asString());
 
-    permission = (OperationPermission)permissions;
+    permission = (APIPermission)permissions;
   }
   else
-    permission = StringToPermission(value.isMember("permission") ? value["permission"].asString() : "");
+    permission = APIUtils::StringToPermission(value.isMember("permission") ? value["permission"].asString() : "");
 
   description = GetString(value["description"], "");
 
@@ -1188,11 +1189,11 @@ bool JsonRpcMethod::Parse(const CVariant &value)
   return true;
 }
 
-JSONRPC_STATUS JsonRpcMethod::Check(const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters) const
+APIStatus JsonRpcMethod::Check(const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, APIMethod &methodCall, CVariant &outputParameters) const
 {
   if (transport != NULL && (transport->GetCapabilities() & transportneed) == transportneed)
   {
-    if (client != NULL && (client->GetPermissionFlags() & permission) == permission && (!notification || (permission & OPERATION_PERMISSION_NOTIFICATION) == permission))
+    if (client != NULL && (client->GetPermissionFlags() & permission) == permission && (!notification || (permission & APIPermissionAll) == permission))
     {
       methodCall = method;
 
@@ -1206,8 +1207,8 @@ JSONRPC_STATUS JsonRpcMethod::Check(const CVariant &requestParameters, ITranspor
       for (unsigned int i = 0; i < parameters.size(); i++)
       {
         // Evaluate the current parameter
-        JSONRPC_STATUS status = checkParameter(requestParameters, parameters.at(i), i, outputParameters, handled, errorData);
-        if (status != OK)
+        APIStatus status = checkParameter(requestParameters, parameters.at(i), i, outputParameters, handled, errorData);
+        if (status != APIStatusOK)
         {
           // Return the error data object in the outputParameters reference
           outputParameters = errorData;
@@ -1220,16 +1221,16 @@ JSONRPC_STATUS JsonRpcMethod::Check(const CVariant &requestParameters, ITranspor
       {
         errorData["message"] = "Too many parameters";
         outputParameters = errorData;
-        return InvalidParams;
+        return APIStatusInvalidParameters;
       }
 
-      return OK;
+      return APIStatusOK;
     }
     else
-      return BadPermission;
+      return APIStatusBadPermission;
   }
   
-  return MethodNotFound;
+  return APIStatusMethodNotFound;
 }
 
 bool JsonRpcMethod::parseParameter(const CVariant &value, JSONSchemaTypeDefinition &parameter)
@@ -1263,7 +1264,7 @@ bool JsonRpcMethod::parseReturn(const CVariant &value)
   return true;
 }
 
-JSONRPC_STATUS JsonRpcMethod::checkParameter(const CVariant &requestParameters, const JSONSchemaTypeDefinition &type, unsigned int position, CVariant &outputParameters, unsigned int &handled, CVariant &errorData)
+APIStatus JsonRpcMethod::checkParameter(const CVariant &requestParameters, const JSONSchemaTypeDefinition &type, unsigned int position, CVariant &outputParameters, unsigned int &handled, CVariant &errorData)
 {
   // Let's check if the parameter has been provided
   if (ParameterExists(requestParameters, type.name, position))
@@ -1272,8 +1273,8 @@ JSONRPC_STATUS JsonRpcMethod::checkParameter(const CVariant &requestParameters, 
     CVariant parameterValue = GetParameter(requestParameters, type.name, position);
 
     // Evaluate the type of the parameter
-    JSONRPC_STATUS status = type.Check(parameterValue, outputParameters[type.name], errorData["stack"]);
-    if (status != OK)
+    APIStatus status = type.Check(parameterValue, outputParameters[type.name], errorData["stack"]);
+    if (status != APIStatusOK)
       return status;
 
     // The parameter was present and valid
@@ -1289,10 +1290,10 @@ JSONRPC_STATUS JsonRpcMethod::checkParameter(const CVariant &requestParameters, 
     errorData["stack"]["name"] = type.name;
     SchemaValueTypeToJson(type.type, errorData["stack"]["type"]);
     errorData["stack"]["message"] = "Missing parameter";
-    return InvalidParams;
+    return APIStatusInvalidParameters;
   }
 
-  return OK;
+  return APIStatusOK;
 }
 
 bool CJSONServiceDescription::prepareDescription(std::string &description, CVariant &descriptionObject, std::string &name)
@@ -1333,7 +1334,7 @@ bool CJSONServiceDescription::prepareDescription(std::string &description, CVari
   return true;
 }
 
-bool CJSONServiceDescription::addMethod(const std::string &jsonMethod, MethodCall method)
+bool CJSONServiceDescription::addMethod(const std::string &jsonMethod, APIMethod method)
 {
   CVariant descriptionObject;
   std::string methodName;
@@ -1456,7 +1457,7 @@ bool CJSONServiceDescription::AddType(const std::string &jsonType)
   return true;
 }
 
-bool CJSONServiceDescription::AddMethod(const std::string &jsonMethod, MethodCall method)
+bool CJSONServiceDescription::AddMethod(const std::string &jsonMethod, APIMethod method)
 {
   if (method == NULL)
   {
@@ -1601,7 +1602,7 @@ int CJSONServiceDescription::GetVersion()
   return JSONRPC_SERVICE_VERSION;
 }
 
-JSONRPC_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer *transport, IClient *client,
+APIStatus CJSONServiceDescription::Print(CVariant &result, ITransportLayer *transport, IClient *client,
   bool printDescriptions /* = true */, bool printMetadata /* = false */, bool filterByTransport /* = true */,
   const std::string &filterByName /* = "" */, const std::string &filterByType /* = "" */, bool printReferences /* = true */)
 {
@@ -1625,7 +1626,7 @@ JSONRPC_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer 
          (clientPermissions & methodIterator->second.permission) == methodIterator->second.permission && ((transportCapabilities & methodIterator->second.transportneed) == methodIterator->second.transportneed || !filterByTransport))
         methods.add(methodIterator->second);
       else
-        return InvalidParams;
+        return APIStatusInvalidParameters;
     }
     else if (filterByType == "namespace")
     {
@@ -1643,7 +1644,7 @@ JSONRPC_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer 
       }
 
       if (methods.begin() == methods.end())
-        return InvalidParams;
+        return APIStatusInvalidParameters;
     }
     else if (filterByType == "type")
     {
@@ -1651,7 +1652,7 @@ JSONRPC_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer 
       if (typeIterator != m_types.end())
         types[typeIterator->first] = typeIterator->second;
       else
-        return InvalidParams;
+        return APIStatusInvalidParameters;
     }
     else if (filterByType == "notification")
     {
@@ -1659,10 +1660,10 @@ JSONRPC_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer 
       if (notificationIterator != m_notifications.end())
         notifications[notificationIterator->first] = notificationIterator->second;
       else
-        return InvalidParams;
+        return APIStatusInvalidParameters;
     }
     else
-      return InvalidParams;
+      return APIStatusInvalidParameters;
 
     // If we need to print all referenced types we have to go through all parameters etc
     if (printReferences)
@@ -1732,10 +1733,10 @@ JSONRPC_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer 
     if (printMetadata)
     {
       CVariant permissions(CVariant::VariantTypeArray);
-      for (int i = ReadData; i <= OPERATION_PERMISSION_ALL; i *= 2)
+      for (int i = APIPermissionReadData; i <= APIPermissionAll; i *= 2)
       {
         if ((methodIterator->second.permission & i) == i)
-          permissions.push_back(PermissionToString((OperationPermission)i));
+          permissions.push_back(APIUtils::PermissionToString((APIPermission)i));
       }
 
       if (permissions.size() == 1)
@@ -1763,16 +1764,16 @@ JSONRPC_STATUS CJSONServiceDescription::Print(CVariant &result, ITransportLayer 
   for (notificationIterator = notifications.begin(); notificationIterator != notificationIteratorEnd; notificationIterator++)
     result["notifications"][notificationIterator->first] = notificationIterator->second[notificationIterator->first];
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CJSONServiceDescription::CheckCall(const char* const method, const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, MethodCall &methodCall, CVariant &outputParameters)
+APIStatus CJSONServiceDescription::CheckCall(const char* const method, const CVariant &requestParameters, ITransportLayer *transport, IClient *client, bool notification, APIMethod &methodCall, CVariant &outputParameters)
 {
   CJsonRpcMethodMap::JsonRpcMethodIterator iter = m_actionMap.find(method);
   if (iter != m_actionMap.end())
     return iter->second.Check(requestParameters, transport, client, notification, methodCall, outputParameters);
 
-  return MethodNotFound;
+  return APIStatusMethodNotFound;
 }
 
 JSONSchemaTypeDefinition* CJSONServiceDescription::GetType(const std::string &identification)

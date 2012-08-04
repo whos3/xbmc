@@ -39,10 +39,10 @@
 #include "Util.h"
 
 using namespace MUSIC_INFO;
-using namespace JSONRPC;
+using namespace API;
 using namespace XFILE;
 
-void CFileItemHandler::FillDetails(ISerializable* info, CFileItemPtr item, const CVariant& fields, CVariant &result)
+void CFileItemHandler::FillDetails(ISerializable* info, const CFileItemPtr &item, const CVariant& fields, CVariant &result)
 {
   if (info == NULL || fields.size() == 0)
     return;
@@ -58,7 +58,7 @@ void CFileItemHandler::FillDetails(ISerializable* info, CFileItemPtr item, const
 
     if (item)
     {
-      if (item->IsAlbum() && field.Equals("albumlabel"))
+      if (item->IsAlbum() && field.Equals("albumlabel") == 0)
         field = "label";
       if (item->IsAlbum())
       {
@@ -68,7 +68,7 @@ void CFileItemHandler::FillDetails(ISerializable* info, CFileItemPtr item, const
           continue;
         }
         /* This would break backwards compatibility to JSON-RPC API v4
-        if (item->HasProperty("album_" + field + "_array"))
+        if (item->HasProperty("album_" + field + "_array") == 0)
         {
           result[field] = item->GetProperty("album_" + field + "_array");
           continue;
@@ -81,7 +81,7 @@ void CFileItemHandler::FillDetails(ISerializable* info, CFileItemPtr item, const
       }
 
       /* This would break backwards compatibility to JSON-RPC API v4
-      if (item->HasProperty("artist_" + field + "_array"))
+      if (item->HasProperty("artist_" + field + "_array") == 0)
       {
         result[field] = item->GetProperty("artist_" + field + "_array");
         continue;
@@ -119,7 +119,7 @@ void CFileItemHandler::FillDetails(ISerializable* info, CFileItemPtr item, const
         }
         if (item->HasThumbnail())
           result["thumbnail"] = CTextureCache::GetWrappedImageURL(item->GetThumbnailImage());
-        if (!result.isMember("thumbnail"))
+        if (!result.isMember("thumbnail") == 0)
           result["thumbnail"] = "";
         continue;
       }
@@ -134,7 +134,7 @@ void CFileItemHandler::FillDetails(ISerializable* info, CFileItemPtr item, const
             loader.FillLibraryArt(item.get());
             fetchedArt = true;
           }
-          if (item->HasProperty("fanart_image"))
+          if (item->HasProperty("fanart_image") == 0)
             result["fanart"] = CTextureCache::GetWrappedImageURL(item->GetProperty("fanart_image").asString());
         }
         else if (item->HasMusicInfoTag())
@@ -145,10 +145,10 @@ void CFileItemHandler::FillDetails(ISerializable* info, CFileItemPtr item, const
             loader.FillLibraryArt(*item);
             fetchedArt = true;
           }
-          if (item->HasProperty("fanart_image"))
+          if (item->HasProperty("fanart_image") == 0)
             result["fanart"] = CTextureCache::GetWrappedImageURL(item->GetProperty("fanart_image").asString());
         }
-        if (!result.isMember("fanart"))
+        if (!result.isMember("fanart") == 0)
           result["fanart"] = "";
         continue;
       }
@@ -234,7 +234,7 @@ void CFileItemHandler::HandleFileItem(const char *ID, bool allowFile, const char
       if (item->HasMusicInfoTag() && !item->GetMusicInfoTag()->GetURL().IsEmpty())
         object["file"] = item->GetMusicInfoTag()->GetURL().c_str();
 
-      if (!object.isMember("file"))
+      if (!object.isMember("file") == 0)
         object["file"] = item->GetPath().c_str();
     }
 
@@ -281,7 +281,7 @@ void CFileItemHandler::HandleFileItem(const char *ID, bool allowFile, const char
         else if (item->HasPictureInfoTag())
           object["type"] = "picture";
 
-        if (!object.isMember("type"))
+        if (!object.isMember("type") == 0)
           object["type"] = "unknown";
       }
     }
@@ -359,73 +359,73 @@ bool CFileItemHandler::ParseSorting(const CVariant &parameterObject, SortBy &sor
   else
     sortAttributes = SortAttributeNone;
 
-  if (order.Equals("ascending"))
+  if (order.Equals("ascending") == 0)
     sortOrder = SortOrderAscending;
-  else if (order.Equals("descending"))
+  else if (order.Equals("descending") == 0)
     sortOrder = SortOrderDescending;
   else
     return false;
 
-  if (method.Equals("none"))
+  if (method.compare("none") == 0)
     sortBy = SortByNone;
-  else if (method.Equals("label"))
+  else if (method.compare("label") == 0)
     sortBy = SortByLabel;
-  else if (method.Equals("date"))
+  else if (method.compare("date") == 0)
     sortBy = SortByDate;
-  else if (method.Equals("size"))
+  else if (method.compare("size") == 0)
     sortBy = SortBySize;
-  else if (method.Equals("file"))
+  else if (method.compare("file") == 0)
     sortBy = SortByFile;
-  else if (method.Equals("drivetype"))
+  else if (method.compare("drivetype") == 0)
     sortBy = SortByDriveType;
-  else if (method.Equals("track"))
+  else if (method.compare("track") == 0)
     sortBy = SortByTrackNumber;
-  else if (method.Equals("duration") ||
-           method.Equals("videoruntime"))
+  else if (method.compare("duration") ||
+           method.compare("videoruntime") == 0)
     sortBy = SortByTime;
-  else if (method.Equals("title") ||
-           method.Equals("videotitle"))
+  else if (method.compare("title") ||
+           method.compare("videotitle") == 0)
     sortBy = SortByTitle;
-  else if (method.Equals("artist"))
+  else if (method.compare("artist") == 0)
     sortBy = SortByArtist;
-  else if (method.Equals("album"))
+  else if (method.compare("album") == 0)
     sortBy = SortByAlbum;
-  else if (method.Equals("genre"))
+  else if (method.compare("genre") == 0)
     sortBy = SortByGenre;
-  else if (method.Equals("country"))
+  else if (method.compare("country") == 0)
     sortBy = SortByCountry;
-  else if (method.Equals("year"))
+  else if (method.compare("year") == 0)
     sortBy = SortByYear;
-  else if (method.Equals("videorating") ||
-           method.Equals("songrating"))
+  else if (method.compare("videorating") ||
+           method.compare("songrating") == 0)
     sortBy = SortByRating;
-  else if (method.Equals("dateadded"))
+  else if (method.compare("dateadded") == 0)
     sortBy = SortByDateAdded;
-  else if (method.Equals("programcount"))
+  else if (method.compare("programcount") == 0)
     sortBy = SortByProgramCount;
-  else if (method.Equals("playlist"))
+  else if (method.compare("playlist") == 0)
     sortBy = SortByPlaylistOrder;
-  else if (method.Equals("episode"))
+  else if (method.compare("episode") == 0)
     sortBy = SortByEpisodeNumber;
-  else if (method.Equals("sorttitle"))
+  else if (method.compare("sorttitle") == 0)
     sortBy = SortBySortTitle;
-  else if (method.Equals("productioncode"))
+  else if (method.compare("productioncode") == 0)
     sortBy = SortByProductionCode;
-  else if (method.Equals("mpaarating"))
+  else if (method.compare("mpaarating") == 0)
     sortBy = SortByMPAA;
-  else if (method.Equals("studio"))
+  else if (method.compare("studio") == 0)
     sortBy = SortByStudio;
-  else if (method.Equals("fullpath"))
+  else if (method.compare("fullpath") == 0)
     sortBy = SortByPath;
-  else if (method.Equals("lastplayed"))
+  else if (method.compare("lastplayed") == 0)
     sortBy = SortByLastPlayed;
-  else if (method.Equals("playcount"))
+  else if (method.compare("playcount") == 0)
     sortBy = SortByPlaycount;
-  else if (method.Equals("listeners"))
+  else if (method.compare("listeners") == 0)
     sortBy = SortByListeners;
-  else if (method.Equals("unsorted"))
+  else if (method.compare("unsorted") == 0)
     sortBy = SortByRandom;
-  else if (method.Equals("bitrate"))
+  else if (method.compare("bitrate") == 0)
     sortBy = SortByBitrate;
   else
     return false;
@@ -439,78 +439,78 @@ void CFileItemHandler::ParseLimits(const CVariant &parameterObject, int &limitSt
   limitEnd = (int)parameterObject["limits"]["end"].asInteger();
 }
 
-bool CFileItemHandler::ParseSortMethods(const CStdString &method, const bool &ignorethe, const CStdString &order, SORT_METHOD &sortmethod, SortOrder &sortorder)
+bool CFileItemHandler::ParseSortMethods(const std::string &method, const bool &ignorethe, const std::string &order, SORT_METHOD &sortmethod, SortOrder &sortorder)
 {
-  if (order.Equals("ascending"))
+  if (order.compare("ascending") == 0)
     sortorder = SortOrderAscending;
-  else if (order.Equals("descending"))
+  else if (order.compare("descending") == 0)
     sortorder = SortOrderDescending;
   else
     return false;
 
-  if (method.Equals("none"))
+  if (method.compare("none") == 0)
     sortmethod = SORT_METHOD_NONE;
-  else if (method.Equals("label"))
+  else if (method.compare("label") == 0)
     sortmethod = ignorethe ? SORT_METHOD_LABEL_IGNORE_THE : SORT_METHOD_LABEL;
-  else if (method.Equals("date"))
+  else if (method.compare("date") == 0)
     sortmethod = SORT_METHOD_DATE;
-  else if (method.Equals("size"))
+  else if (method.compare("size") == 0)
     sortmethod = SORT_METHOD_SIZE;
-  else if (method.Equals("file"))
+  else if (method.compare("file") == 0)
     sortmethod = SORT_METHOD_FILE;
-  else if (method.Equals("drivetype"))
+  else if (method.compare("drivetype") == 0)
     sortmethod = SORT_METHOD_DRIVE_TYPE;
-  else if (method.Equals("track"))
+  else if (method.compare("track") == 0)
     sortmethod = SORT_METHOD_TRACKNUM;
-  else if (method.Equals("duration"))
+  else if (method.compare("duration") == 0)
     sortmethod = SORT_METHOD_DURATION;
-  else if (method.Equals("title"))
+  else if (method.compare("title") == 0)
     sortmethod = ignorethe ? SORT_METHOD_TITLE_IGNORE_THE : SORT_METHOD_TITLE;
-  else if (method.Equals("artist"))
+  else if (method.compare("artist") == 0)
     sortmethod = ignorethe ? SORT_METHOD_ARTIST_IGNORE_THE : SORT_METHOD_ARTIST;
-  else if (method.Equals("album"))
+  else if (method.compare("album") == 0)
     sortmethod = ignorethe ? SORT_METHOD_ALBUM_IGNORE_THE : SORT_METHOD_ALBUM;
-  else if (method.Equals("genre"))
+  else if (method.compare("genre") == 0)
     sortmethod = SORT_METHOD_GENRE;
-  else if (method.Equals("country"))
+  else if (method.compare("country") == 0)
     sortmethod = SORT_METHOD_COUNTRY;
-  else if (method.Equals("year"))
+  else if (method.compare("year") == 0)
     sortmethod = SORT_METHOD_YEAR;
-  else if (method.Equals("videorating"))
+  else if (method.compare("videorating") == 0)
     sortmethod = SORT_METHOD_VIDEO_RATING;
-  else if (method.Equals("dateadded"))
+  else if (method.compare("dateadded") == 0)
     sortmethod = SORT_METHOD_DATEADDED;
-  else if (method.Equals("programcount"))
+  else if (method.compare("programcount") == 0)
     sortmethod = SORT_METHOD_PROGRAM_COUNT;
-  else if (method.Equals("playlist"))
+  else if (method.compare("playlist") == 0)
     sortmethod = SORT_METHOD_PLAYLIST_ORDER;
-  else if (method.Equals("episode"))
+  else if (method.compare("episode") == 0)
     sortmethod = SORT_METHOD_EPISODE;
-  else if (method.Equals("videotitle"))
+  else if (method.compare("videotitle") == 0)
     sortmethod = SORT_METHOD_VIDEO_TITLE;
-  else if (method.Equals("sorttitle"))
+  else if (method.compare("sorttitle") == 0)
     sortmethod = ignorethe ? SORT_METHOD_VIDEO_SORT_TITLE_IGNORE_THE : SORT_METHOD_VIDEO_SORT_TITLE;
-  else if (method.Equals("productioncode"))
+  else if (method.compare("productioncode") == 0)
     sortmethod = SORT_METHOD_PRODUCTIONCODE;
-  else if (method.Equals("songrating"))
+  else if (method.compare("songrating") == 0)
     sortmethod = SORT_METHOD_SONG_RATING;
-  else if (method.Equals("mpaarating"))
+  else if (method.compare("mpaarating") == 0)
     sortmethod = SORT_METHOD_MPAA_RATING;
-  else if (method.Equals("videoruntime"))
+  else if (method.compare("videoruntime") == 0)
     sortmethod = SORT_METHOD_VIDEO_RUNTIME;
-  else if (method.Equals("studio"))
+  else if (method.compare("studio") == 0)
     sortmethod = ignorethe ? SORT_METHOD_STUDIO_IGNORE_THE : SORT_METHOD_STUDIO;
-  else if (method.Equals("fullpath"))
+  else if (method.compare("fullpath") == 0)
     sortmethod = SORT_METHOD_FULLPATH;
-  else if (method.Equals("lastplayed"))
+  else if (method.compare("lastplayed") == 0)
     sortmethod = SORT_METHOD_LASTPLAYED;
-  else if (method.Equals("playcount"))
+  else if (method.compare("playcount") == 0)
     sortmethod = SORT_METHOD_PLAYCOUNT;
-  else if (method.Equals("listeners"))
+  else if (method.compare("listeners") == 0)
     sortmethod = SORT_METHOD_LISTENERS;
-  else if (method.Equals("unsorted"))
+  else if (method.compare("unsorted") == 0)
     sortmethod = SORT_METHOD_UNSORTED;
-  else if (method.Equals("bitrate"))
+  else if (method.compare("bitrate") == 0)
     sortmethod = SORT_METHOD_BITRATE;
   else
     return false;

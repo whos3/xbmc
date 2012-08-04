@@ -20,17 +20,15 @@
  *
  */
 
-#include "JSONRPC.h"
-#include "JSONUtils.h"
+#include "APIUtils.h"
 #include "FileItem.h"
-#include "utils/StdString.h"
 
-namespace JSONRPC
+namespace API
 {
-  class CFileItemHandler : public CJSONUtils
+  class CFileItemHandler : public APIUtils
   {
   protected:
-    static void FillDetails(ISerializable* info, CFileItemPtr item, const CVariant& fields, CVariant &result);
+    static void FillDetails(ISerializable* info, const CFileItemPtr &item, const CVariant& fields, CVariant &result);
     static void HandleFileItemList(const char *ID, bool allowFile, const char *resultname, CFileItemList &items, const CVariant &parameterObject, CVariant &result, bool sortLimit = true);
     static void HandleFileItemList(const char *ID, bool allowFile, const char *resultname, CFileItemList &items, const CVariant &parameterObject, CVariant &result, int size, bool sortLimit = true);
     static void HandleFileItem(const char *ID, bool allowFile, const char *resultname, CFileItemPtr item, const CVariant &parameterObject, const CVariant &validFields, CVariant &result, bool append = true);
@@ -40,7 +38,7 @@ namespace JSONRPC
     static bool ParseSorting(const CVariant &parameterObject, SortBy &sortBy, SortOrder &sortOrder, SortAttribute &sortAttributes);
     static void ParseLimits(const CVariant &parameterObject, int &limitStart, int &limitEnd);
   private:
-    static bool ParseSortMethods(const CStdString &method, const bool &ignorethe, const CStdString &order, SORT_METHOD &sortmethod, SortOrder &sortorder);
+    static bool ParseSortMethods(const std::string &method, const bool &ignorethe, const std::string &order, SORT_METHOD &sortmethod, SortOrder &sortorder);
     static void Sort(CFileItemList &items, const CVariant& parameterObject);
   };
 }

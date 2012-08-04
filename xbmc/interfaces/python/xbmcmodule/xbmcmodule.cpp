@@ -34,7 +34,10 @@
 #include "interfaces/http-api/XBMChttp.h"
 #include "interfaces/http-api/HttpApi.h"
 #endif
+#ifdef HAS_JSONRPC
 #include "pyjsonrpc.h"
+#include "interfaces/json-rpc/JSONRPC.h"
+#endif
 #include "GUIInfoManager.h"
 #include "guilib/GUIWindowManager.h"
 #include "guilib/GUIAudioManager.h"

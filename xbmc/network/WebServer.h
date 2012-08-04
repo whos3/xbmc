@@ -30,11 +30,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
-#include "interfaces/json-rpc/ITransportLayer.h"
+#include "interfaces/api/ITransportLayer.h"
 #include "threads/CriticalSection.h"
 #include "httprequesthandler/IHTTPRequestHandler.h"
 
-class CWebServer : public JSONRPC::ITransportLayer
+class CWebServer : public API::ITransportLayer
 {
 public:
   CWebServer();

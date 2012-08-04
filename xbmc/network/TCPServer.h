@@ -23,16 +23,16 @@
 #include <vector>
 #include <sys/socket.h>
 
-#include "interfaces/json-rpc/IClient.h"
+#include "interfaces/api/IClient.h"
+#include "interfaces/api/ITransportLayer.h"
 #include "interfaces/json-rpc/IJSONRPCAnnouncer.h"
-#include "interfaces/json-rpc/ITransportLayer.h"
 #include "threads/CriticalSection.h"
 #include "threads/Thread.h"
 #include "websocket/WebSocket.h"
 
 namespace JSONRPC
 {
-  class CTCPServer : public ITransportLayer, public JSONRPC::IJSONRPCAnnouncer, public CThread
+  class CTCPServer : public API::ITransportLayer, public JSONRPC::IJSONRPCAnnouncer, public CThread
   {
   public:
     static bool StartServer(int port, bool nonlocal);
@@ -52,7 +52,7 @@ namespace JSONRPC
     bool InitializeTCP();
     void Deinitialize();
 
-    class CTCPClient : public IClient
+    class CTCPClient : public API::IClient
     {
     public:
       CTCPClient();

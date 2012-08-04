@@ -41,7 +41,6 @@
 
 using namespace XFILE;
 using namespace std;
-using namespace JSONRPC;
 
 vector<IHTTPRequestHandler *> CWebServer::m_requestHandlers;
 
@@ -583,7 +582,7 @@ bool CWebServer::Download(const char *path, CVariant &result)
 
 int CWebServer::GetCapabilities()
 {
-  return Response | FileDownloadRedirect;
+  return API::TransportLayerCapabilityResponse | API::TransportLayerCapabilityFileDownloadRedirect;
 }
 
 void CWebServer::RegisterRequestHandler(IHTTPRequestHandler *handler)

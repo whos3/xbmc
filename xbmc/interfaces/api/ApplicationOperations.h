@@ -20,22 +20,21 @@
  *
  */
 
-#include "utils/StdString.h"
-#include "JSONRPC.h"
+#include "APIUtils.h"
 #include "FileItemHandler.h"
 
-namespace JSONRPC
+namespace API
 {
   class CApplicationOperations : CFileItemHandler
   {
   public:
-    static JSONRPC_STATUS GetProperties(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus GetProperties(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
 
-    static JSONRPC_STATUS SetVolume(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
-    static JSONRPC_STATUS SetMute(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus SetVolume(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus SetMute(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
 
-    static JSONRPC_STATUS Quit(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus Quit(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
   private:
-    static JSONRPC_STATUS GetPropertyValue(const CStdString &property, CVariant &result);
+    static APIStatus GetPropertyValue(const std::string &property, CVariant &result);
   };
 }

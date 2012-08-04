@@ -148,7 +148,7 @@ bool CPowerManager::Reboot()
   bool success = CanReboot() ? m_instance->Reboot() : false;
 
   if (success)
-    CAnnouncementManager::Announce(System, "xbmc", "OnRestart");
+    CAnnouncementManager::Announce(AnnouncementFlagSystem, "xbmc", "OnRestart");
 
   return success;
 }
@@ -180,7 +180,7 @@ void CPowerManager::ProcessEvents()
 
 void CPowerManager::OnSleep()
 {
-  CAnnouncementManager::Announce(System, "xbmc", "OnSleep");
+  CAnnouncementManager::Announce(AnnouncementFlagSystem, "xbmc", "OnSleep");
   CLog::Log(LOGNOTICE, "%s: Running sleep jobs", __FUNCTION__);
 
 #ifdef HAS_LCD
@@ -239,7 +239,7 @@ void CPowerManager::OnWake()
   g_application.UpdateLibraries();
   g_weatherManager.Refresh();
 
-  CAnnouncementManager::Announce(System, "xbmc", "OnWake");
+  CAnnouncementManager::Announce(AnnouncementFlagSystem, "xbmc", "OnWake");
 }
 
 void CPowerManager::OnLowBattery()
@@ -248,5 +248,5 @@ void CPowerManager::OnLowBattery()
 
   CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Warning, g_localizeStrings.Get(13050), "");
 
-  CAnnouncementManager::Announce(System, "xbmc", "OnLowBattery");
+  CAnnouncementManager::Announce(AnnouncementFlagSystem, "xbmc", "OnLowBattery");
 }

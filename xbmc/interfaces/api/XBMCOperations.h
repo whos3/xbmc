@@ -20,15 +20,14 @@
  *
  */
 
-#include "utils/StdString.h"
-#include "JSONRPC.h"
+#include "APIUtils.h"
 
-namespace JSONRPC
+namespace API
 {
   class CXBMCOperations
   {
   public:
-    static JSONRPC_STATUS GetInfoLabels(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
-    static JSONRPC_STATUS GetInfoBooleans(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus GetInfoLabels(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus GetInfoBooleans(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
   };
 }

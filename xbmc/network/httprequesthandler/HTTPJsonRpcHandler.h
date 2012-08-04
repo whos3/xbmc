@@ -21,7 +21,7 @@
  */
 
 #include "IHTTPRequestHandler.h"
-#include "interfaces/json-rpc/IClient.h"
+#include "interfaces/api/IClient.h"
 
 class CHTTPJsonRpcHandler : public IHTTPRequestHandler
 {
@@ -48,7 +48,7 @@ private:
   std::string m_request;
   std::string m_response;
 
-  class CHTTPClient : public JSONRPC::IClient
+  class CHTTPClient : public API::IClient
   {
   public:
     virtual int  GetPermissionFlags();

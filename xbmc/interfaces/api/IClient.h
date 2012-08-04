@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2012 Team XBMC
+ *      Copyright (C) 2005-2011 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -20,19 +20,15 @@
  *
  */
 
-#include "JSONRPC.h"
-#include "utils/StdString.h"
-
-namespace JSONRPC
+namespace API
 {
-  class CGUIOperations
+  class IClient
   {
   public:
-    static JSONRPC_STATUS GetProperties(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    virtual ~IClient() { };
 
-    static JSONRPC_STATUS ShowNotification(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
-    static JSONRPC_STATUS SetFullscreen(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
-  private:
-    static JSONRPC_STATUS GetPropertyValue(const CStdString &property, CVariant &result);
+    virtual int GetPermissionFlags() = 0;
+    virtual int GetAnnouncementFlags() = 0;
+    virtual bool SetAnnouncementFlags(int flags) = 0;
   };
 }

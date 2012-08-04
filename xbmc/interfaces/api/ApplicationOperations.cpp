@@ -24,22 +24,21 @@
 #include "Application.h"
 #include "ApplicationMessenger.h"
 #include "FileItem.h"
-#include "Util.h"
-#include "utils/log.h"
 #include "GUIInfoManager.h"
-#include "system.h"
+#include "Util.h"
+#include "utils/Variant.h"
 
-using namespace JSONRPC;
+using namespace API;
 
-JSONRPC_STATUS CApplicationOperations::GetProperties(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CApplicationOperations::GetProperties(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVariant properties = CVariant(CVariant::VariantTypeObject);
   for (unsigned int index = 0; index < parameterObject["properties"].size(); index++)
   {
     CStdString propertyName = parameterObject["properties"][index].asString();
     CVariant property;
-    JSONRPC_STATUS ret;
-    if ((ret = GetPropertyValue(propertyName, property)) != OK)
+    APIStatus ret;
+    if ((ret = GetPropertyValue(propertyName, property)) != APIStatusOK)
       return ret;
 
     properties[propertyName] = property;
@@ -47,10 +46,10 @@ JSONRPC_STATUS CApplicationOperations::GetProperties(const CStdString &method, I
 
   result = properties;
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CApplicationOperations::SetVolume(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CApplicationOperations::SetVolume(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   bool up = false;
   if (parameterObject["volume"].isInteger())
@@ -64,7 +63,7 @@ JSONRPC_STATUS CApplicationOperations::SetVolume(const CStdString &method, ITran
   }
   else if (parameterObject["volume"].isString())
   {
-    JSONRPC_STATUS ret;
+    APIStatus ret;
     std::string direction = parameterObject["volume"].asString();
     if (direction.compare("increment") == 0)
     {
@@ -77,45 +76,48 @@ JSONRPC_STATUS CApplicationOperations::SetVolume(const CStdString &method, ITran
       up = false;
     }
     else
-      return InvalidParams;
+      return APIStatusInvalidParameters;
 
-    if (ret != ACK && ret != OK)
+    if (ret != APIStatusOK)
       return ret;
   }
   else
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
   CApplicationMessenger::Get().ShowVolumeBar(up);
 
   return GetPropertyValue("volume", result);
 }
 
-JSONRPC_STATUS CApplicationOperations::SetMute(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CApplicationOperations::SetMute(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   if ((parameterObject["mute"].isString() && parameterObject["mute"].asString().compare("toggle") == 0) ||
       (parameterObject["mute"].isBoolean() && parameterObject["mute"].asBoolean() != g_application.IsMuted()))
     CApplicationMessenger::Get().SendAction(CAction(ACTION_MUTE));
   else if (!parameterObject["mute"].isBoolean() && !parameterObject["mute"].isString())
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
   return GetPropertyValue("muted", result);
 }
 
-JSONRPC_STATUS CApplicationOperations::Quit(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CApplicationOperations::Quit(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CApplicationMessenger::Get().Quit();
-  return ACK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CApplicationOperations::GetPropertyValue(const CStdString &property, CVariant &result)
+APIStatus CApplicationOperations::GetPropertyValue(const std::string &property, CVariant &result)
 {
-  if (property.Equals("volume"))
+  std::string prop;
+  std::transform(property.begin(), property.end(), prop.begin(), ::tolower);
+
+  if (prop.compare("volume") == 0)
     result = g_application.GetVolume();
-  else if (property.Equals("muted"))
+  else if (prop.compare("muted") == 0)
     result = g_application.IsMuted();
-  else if (property.Equals("name"))
+  else if (prop.compare("name") == 0)
     result = "XBMC";
-  else if (property.Equals("version"))
+  else if (prop.compare("version") == 0)
   {
     result = CVariant(CVariant::VariantTypeObject);
     result["major"] = VERSION_MAJOR;
@@ -136,7 +138,7 @@ JSONRPC_STATUS CApplicationOperations::GetPropertyValue(const CStdString &proper
       result["tag"] = "prealpha";
   }
   else
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
-  return OK;
+  return APIStatusOK;
 }

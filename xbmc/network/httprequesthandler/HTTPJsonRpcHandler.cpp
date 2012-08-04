@@ -84,7 +84,7 @@ bool CHTTPJsonRpcHandler::appendPostData(const char *data, unsigned int size)
 
 int CHTTPJsonRpcHandler::CHTTPClient::GetPermissionFlags()
 {
-  return OPERATION_PERMISSION_ALL;
+  return API::APIPermissionAll;
 }
 
 int CHTTPJsonRpcHandler::CHTTPClient::GetAnnouncementFlags()

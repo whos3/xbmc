@@ -1,16 +1,5 @@
-SRCS=ApplicationOperations.cpp \
-     AudioLibrary.cpp \
-     FileItemHandler.cpp \
-     FileOperations.cpp \
-     GUIOperations.cpp \
-     InputOperations.cpp \
-     JSONRPC.cpp \
+SRCS=JSONRPC.cpp \
      JSONServiceDescription.cpp \
-     PlayerOperations.cpp \
-     PlaylistOperations.cpp \
-     SystemOperations.cpp \
-     VideoLibrary.cpp \
-     XBMCOperations.cpp \
 
 LIB=json-rpc.a
 

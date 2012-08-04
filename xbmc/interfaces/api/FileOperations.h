@@ -20,22 +20,21 @@
  *
  */
 
-#include "utils/StdString.h"
-#include "JSONRPC.h"
+#include "APIUtils.h"
 #include "FileItemHandler.h"
 
-namespace JSONRPC
+namespace API
 {
   class CFileOperations : public CFileItemHandler
   {
   public:
-    static JSONRPC_STATUS GetRootDirectory(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
-    static JSONRPC_STATUS GetDirectory(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus GetRootDirectory(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus GetDirectory(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
     
-    static JSONRPC_STATUS PrepareDownload(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
-    static JSONRPC_STATUS Download(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus PrepareDownload(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus Download(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
 
-    static bool FillFileItem(const CFileItemPtr &originalItem, CFileItem &item, CStdString media = "");
+    static bool FillFileItem(const CFileItemPtr &originalItem, CFileItem &item, const std::string &media = "");
     static bool FillFileItemList(const CVariant &parameterObject, CFileItemList &list);
   };
 }

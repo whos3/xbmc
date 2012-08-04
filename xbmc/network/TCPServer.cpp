@@ -204,7 +204,7 @@ bool CTCPServer::Download(const char *path, CVariant &result)
 
 int CTCPServer::GetCapabilities()
 {
-  return Response | Announcing;
+  return API::TransportLayerCapabilityResponse | API::TransportLayerCapabilityAnnouncing;
 }
 
 void CTCPServer::Announce(AnnouncementFlag flag, const char *sender, const char *message, const CVariant &data)
@@ -488,7 +488,7 @@ void CTCPServer::Deinitialize()
 CTCPServer::CTCPClient::CTCPClient()
 {
   m_new = true;
-  m_announcementflags = ANNOUNCE_ALL;
+  m_announcementflags = AnnouncementFlagAll;
   m_socket = INVALID_SOCKET;
   m_beginBrackets = 0;
   m_endBrackets = 0;
@@ -511,7 +511,7 @@ CTCPServer::CTCPClient& CTCPServer::CTCPClient::operator=(const CTCPClient& clie
 
 int CTCPServer::CTCPClient::GetPermissionFlags()
 {
-  return OPERATION_PERMISSION_ALL;
+  return API::APIPermissionAll;
 }
 
 int CTCPServer::CTCPClient::GetAnnouncementFlags()

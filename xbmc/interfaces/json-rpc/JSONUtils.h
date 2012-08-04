@@ -25,6 +25,7 @@
 
 #include "JSONRPCUtils.h"
 #include "interfaces/IAnnouncer.h"
+#include "interfaces/api/APIUtils.h"
 #include "utils/JSONVariantWriter.h"
 #include "utils/JSONVariantParser.h"
 
@@ -51,24 +52,6 @@ namespace JSONRPC
    json rpc method calls.*/
   class CJSONUtils
   {
-  public:
-    static void MillisecondsToTimeObject(int time, CVariant &result)
-    {
-      int ms = time % 1000;
-      result["milliseconds"] = ms;
-      time = (time - ms) / 1000;
-
-      int s = time % 60;
-      result["seconds"] = s;
-      time = (time - s) / 60;
-
-      int m = time % 60;
-      result["minutes"] = m;
-      time = (time -m) / 60;
-
-      result["hours"] = time;
-    }
-
   protected:
     /*!
      \brief Checks if the given object contains a parameter
@@ -140,24 +123,6 @@ namespace JSONRPC
       }
 
       return str;
-    }
-
-    /*!
-     \brief Returns a TransportLayerCapability value of the
-     given string representation
-     \param transport String representation of the TransportLayerCapability
-     \return TransportLayerCapability value of the given string representation
-     */
-    static inline TransportLayerCapability StringToTransportLayer(std::string transport)
-    {
-      if (transport.compare("Announcing") == 0)
-        return Announcing;
-      if (transport.compare("FileDownloadDirect") == 0)
-        return FileDownloadDirect;
-      if (transport.compare("FileDownloadRedirect") == 0)
-        return FileDownloadRedirect;
-
-      return Response;
     }
 
     /*!
@@ -326,7 +291,7 @@ namespace JSONRPC
         return true;
       if (HasType(valueType, StringValue) && value.isString())
         return true;
-      if (HasType(valueType, NumberValue) && (value.isInteger() || value.isUnsignedInteger() || value.isDouble()))
+      if (HasType(valueType, NumberValue) && value.isNumber())
         return true;
       if (HasType(valueType, IntegerValue) && (value.isInteger() || value.isUnsignedInteger()))
         return true;
@@ -374,23 +339,5 @@ namespace JSONRPC
     }
 
     static inline bool HasType(JSONSchemaType typeObject, JSONSchemaType type) { return (typeObject & type) == type; }
-
-    static inline bool ParameterNotNull(const CVariant &parameterObject, std::string key) { return parameterObject.isMember(key) && !parameterObject[key].isNull(); }
-
-    /*!
-     \brief Copies the values from the jsonStringArray to the stringArray.
-     stringArray is cleared.
-     \param jsonStringArray JSON object representing a string array
-     \param stringArray String array where the values are copied into (cleared)
-     */
-    static void CopyStringArray(const CVariant &jsonStringArray, std::vector<std::string> &stringArray)
-    {
-      if (!jsonStringArray.isArray())
-        return;
-
-      stringArray.clear();
-      for (CVariant::const_iterator_array it = jsonStringArray.begin_array(); it != jsonStringArray.end_array(); it++)
-        stringArray.push_back(it->asString());
-    }
   };
 }

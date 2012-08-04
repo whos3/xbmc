@@ -20,20 +20,21 @@
  */
 
 #include "PlaylistOperations.h"
-#include "playlists/PlayList.h"
+#include "ApplicationMessenger.h"
+#include "GUIUserMessages.h"
 #include "PlayListPlayer.h"
 #include "Util.h"
 #include "guilib/GUIWindowManager.h"
-#include "GUIUserMessages.h"
-#include "ApplicationMessenger.h"
 #include "pictures/GUIWindowSlideShow.h"
 #include "pictures/PictureInfoTag.h"
+#include "playlists/PlayList.h"
+#include "utils/Variant.h"
 
-using namespace JSONRPC;
+using namespace API;
 using namespace PLAYLIST;
 using namespace std;
 
-JSONRPC_STATUS CPlaylistOperations::GetPlaylists(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::GetPlaylists(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   result = CVariant(CVariant::VariantTypeArray);
   CVariant playlist = CVariant(CVariant::VariantTypeObject);
@@ -50,27 +51,27 @@ JSONRPC_STATUS CPlaylistOperations::GetPlaylists(const CStdString &method, ITran
   playlist["type"] = "picture";
   result.append(playlist);
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CPlaylistOperations::GetProperties(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::GetProperties(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int playlist = GetPlaylist(parameterObject["playlistid"]);
   for (unsigned int index = 0; index < parameterObject["properties"].size(); index++)
   {
     CStdString propertyName = parameterObject["properties"][index].asString();
     CVariant property;
-    JSONRPC_STATUS ret;
-    if ((ret = GetPropertyValue(playlist, propertyName, property)) != OK)
+    APIStatus ret;
+    if ((ret = GetPropertyValue(playlist, propertyName, property)) != APIStatusOK)
       return ret;
 
     result[propertyName] = property;
   }
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CPlaylistOperations::GetItems(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::GetItems(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CFileItemList list;
   int playlist = GetPlaylist(parameterObject["playlistid"]);
@@ -92,10 +93,10 @@ JSONRPC_STATUS CPlaylistOperations::GetItems(const CStdString &method, ITranspor
 
   HandleFileItemList("id", true, "items", list, parameterObject, result);
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CPlaylistOperations::Add(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::Add(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int playlist = GetPlaylist(parameterObject["playlistid"]);
   CFileItemList list;
@@ -111,10 +112,10 @@ JSONRPC_STATUS CPlaylistOperations::Add(const CStdString &method, ITransportLaye
       else if (playlist == PLAYLIST_MUSIC)
         params["item"]["media"] = "music";
       else
-        return FailedToExecute;
+        return APIStatusFailedToExecute;
 
       if (!FillFileItemList(params["item"], list))
-        return InvalidParams;
+        return APIStatusInvalidParameters;
 
       CApplicationMessenger::Get().PlayListPlayerAdd(playlist, list);
 
@@ -123,11 +124,11 @@ JSONRPC_STATUS CPlaylistOperations::Add(const CStdString &method, ITransportLaye
     case PLAYLIST_PICTURE:
       slideshow = (CGUIWindowSlideShow*)g_windowManager.GetWindow(WINDOW_SLIDESHOW);
       if (!slideshow)
-        return FailedToExecute;
+        return APIStatusFailedToExecute;
       
       params["item"]["media"] = "pictures";
       if (!FillFileItemList(params["item"], list))
-        return InvalidParams;
+        return APIStatusInvalidParameters;
 
       for (int index = 0; index < list.Size(); index++)
       {
@@ -142,14 +143,14 @@ JSONRPC_STATUS CPlaylistOperations::Add(const CStdString &method, ITransportLaye
   }
   
   NotifyAll();
-  return ACK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CPlaylistOperations::Insert(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::Insert(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int playlist = GetPlaylist(parameterObject["playlistid"]);
   if (playlist == PLAYLIST_PICTURE)
-    return FailedToExecute;
+    return APIStatusFailedToExecute;
 
   CFileItemList list;
   CVariant params = parameterObject;
@@ -158,34 +159,34 @@ JSONRPC_STATUS CPlaylistOperations::Insert(const CStdString &method, ITransportL
   else if (playlist == PLAYLIST_MUSIC)
     params["item"]["media"] = "music";
   else
-    return FailedToExecute;
+    return APIStatusFailedToExecute;
 
   if (!FillFileItemList(params["item"], list))
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
   CApplicationMessenger::Get().PlayListPlayerInsert(GetPlaylist(parameterObject["playlistid"]), list, (int)parameterObject["position"].asInteger());
 
   NotifyAll();
-  return ACK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CPlaylistOperations::Remove(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::Remove(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int playlist = GetPlaylist(parameterObject["playlistid"]);
   if (playlist == PLAYLIST_PICTURE)
-    return FailedToExecute;
+    return APIStatusFailedToExecute;
   
   int position = (int)parameterObject["position"].asInteger();
   if (g_playlistPlayer.GetCurrentPlaylist() == playlist && g_playlistPlayer.GetCurrentSong() == position)
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
   CApplicationMessenger::Get().PlayListPlayerRemove(playlist, position);
 
   NotifyAll();
-  return ACK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CPlaylistOperations::Clear(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::Clear(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int playlist = GetPlaylist(parameterObject["playlistid"]);
   CGUIWindowSlideShow *slideshow = NULL;
@@ -199,26 +200,26 @@ JSONRPC_STATUS CPlaylistOperations::Clear(const CStdString &method, ITransportLa
     case PLAYLIST_PICTURE:
        slideshow = (CGUIWindowSlideShow*)g_windowManager.GetWindow(WINDOW_SLIDESHOW);
        if (!slideshow)
-         return FailedToExecute;
+         return APIStatusFailedToExecute;
        CApplicationMessenger::Get().SendAction(CAction(ACTION_STOP), WINDOW_SLIDESHOW);
        slideshow->Reset();
        break;
   }
 
   NotifyAll();
-  return ACK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CPlaylistOperations::Swap(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CPlaylistOperations::Swap(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   int playlist = GetPlaylist(parameterObject["playlistid"]);
   if (playlist == PLAYLIST_PICTURE)
-    return FailedToExecute;
+    return APIStatusFailedToExecute;
 
   CApplicationMessenger::Get().PlayListPlayerSwap(playlist, (int)parameterObject["position1"].asInteger(), (int)parameterObject["position2"].asInteger());
 
   NotifyAll();
-  return ACK;
+  return APIStatusOK;
 }
 
 int CPlaylistOperations::GetPlaylist(const CVariant &playlist)
@@ -236,9 +237,12 @@ void CPlaylistOperations::NotifyAll()
   g_windowManager.SendThreadMessage(msg);
 }
 
-JSONRPC_STATUS CPlaylistOperations::GetPropertyValue(int playlist, const CStdString &property, CVariant &result)
+APIStatus CPlaylistOperations::GetPropertyValue(int playlist, const std::string &property, CVariant &result)
 {
-  if (property.Equals("type"))
+  std::string prop;
+  std::transform(property.begin(), property.end(), prop.begin(), ::tolower);
+
+  if (prop.compare("type") == 0)
   {
     switch (playlist)
     {
@@ -259,7 +263,7 @@ JSONRPC_STATUS CPlaylistOperations::GetPropertyValue(int playlist, const CStdStr
         break;
     }
   }
-  else if (property.Equals("size"))
+  else if (prop.compare("size") == 0)
   {
     CFileItemList list;
     CGUIWindowSlideShow *slideshow = NULL;
@@ -285,7 +289,7 @@ JSONRPC_STATUS CPlaylistOperations::GetPropertyValue(int playlist, const CStdStr
     }
   }
   else
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
-  return OK;
+  return APIStatusOK;
 }

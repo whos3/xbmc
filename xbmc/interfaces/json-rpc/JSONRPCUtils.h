@@ -20,17 +20,11 @@
  *
  */
 
-#include "IClient.h"
-#include "ITransportLayer.h"
-#include "interfaces/IAnnouncer.h"
-#include "utils/StdString.h"
-#include "utils/Variant.h"
-
 namespace JSONRPC
 {
   /*!
    \ingroup jsonrpc
-   \brief Possible statuc codes of a response
+   \brief Possible status codes of a response
    to a JSON-RPC request
    */
   enum JSONRPC_STATUS
@@ -46,104 +40,4 @@ namespace JSONRPC
     BadPermission = -32099,
     FailedToExecute = -32100
   };
-
-  /*!
-   \brief Function pointer for JSON-RPC methods
-   */
-  typedef JSONRPC_STATUS (*MethodCall) (const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result);
-
-  /*!
-   \ingroup jsonrpc
-   \brief Permission categories for json rpc methods
-   
-   A JSON-RPC method will only be called if the caller 
-   has the correct permissions to exectue the method.
-   The method call needs to be perfectly threadsafe.
-  */
-  enum OperationPermission
-  {
-    ReadData        =   0x1,
-    ControlPlayback =   0x2,
-    ControlNotify   =   0x4,
-    ControlPower    =   0x8,
-    UpdateData      =  0x10,
-    RemoveData      =  0x20,
-    Navigate        =  0x40,
-    WriteFile       =  0x80,
-    ControlSystem   = 0x100,
-    ControlGUI      = 0x200
-  };
-
-  const int OPERATION_PERMISSION_ALL = (ReadData | ControlPlayback | ControlNotify | ControlPower |
-                                        UpdateData | RemoveData | Navigate | WriteFile |
-                                        ControlSystem | ControlGUI);
-
-  const int OPERATION_PERMISSION_NOTIFICATION = (ControlPlayback | ControlNotify | ControlPower | UpdateData |
-                                                 RemoveData | Navigate | WriteFile | ControlSystem |
-                                                 ControlGUI);
-
-  /*!
-    \brief Returns a string representation for the 
-    given OperationPermission
-    \param permission Specific OperationPermission
-    \return String representation of the given OperationPermission
-    */
-  inline const char *PermissionToString(const OperationPermission &permission)
-  {
-    switch (permission)
-    {
-    case ReadData:
-      return "ReadData";
-    case ControlPlayback:
-      return "ControlPlayback";
-    case ControlNotify:
-      return "ControlNotify";
-    case ControlPower:
-      return "ControlPower";
-    case UpdateData:
-      return "UpdateData";
-    case RemoveData:
-      return "RemoveData";
-    case Navigate:
-      return "Navigate";
-    case WriteFile:
-      return "WriteFile";
-    case ControlSystem:
-      return "ControlSystem";
-    case ControlGUI:
-      return "ControlGUI";
-    default:
-      return "Unknown";
-    }
-  }
-
-  /*!
-    \brief Returns a OperationPermission value for the given
-    string representation
-    \param permission String representation of the OperationPermission
-    \return OperationPermission value of the given string representation
-    */
-  inline OperationPermission StringToPermission(std::string permission)
-  {
-    if (permission.compare("ControlPlayback") == 0)
-      return ControlPlayback;
-    if (permission.compare("ControlNotify") == 0)
-      return ControlNotify;
-    if (permission.compare("ControlPower") == 0)
-      return ControlPower;
-    if (permission.compare("UpdateData") == 0)
-      return UpdateData;
-    if (permission.compare("RemoveData") == 0)
-      return RemoveData;
-    if (permission.compare("Navigate") == 0)
-      return Navigate;
-    if (permission.compare("WriteFile") == 0)
-      return WriteFile;
-    if (permission.compare("ControlSystem") == 0)
-      return ControlSystem;
-    if (permission.compare("ControlGUI") == 0)
-      return ControlGUI;
-
-    return ReadData;
-  }
 }

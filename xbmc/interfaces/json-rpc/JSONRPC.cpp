@@ -30,6 +30,7 @@
 #include "utils/Variant.h"
 
 using namespace ANNOUNCEMENT;
+using namespace API;
 using namespace JSONRPC;
 using namespace std;
 
@@ -64,48 +65,47 @@ void CJSONRPC::Initialize()
   CLog::Log(LOGINFO, "JSONRPC: Successfully initialized");
 }
 
-JSONRPC_STATUS CJSONRPC::Introspect(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+APIStatus CJSONRPC::Introspect(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
   return CJSONServiceDescription::Print(result, transport, client,
     parameterObject["getdescriptions"].asBoolean(), parameterObject["getmetadata"].asBoolean(), parameterObject["filterbytransport"].asBoolean(),
     parameterObject["filter"]["id"].asString(), parameterObject["filter"]["type"].asString(), parameterObject["filter"]["getreferences"].asBoolean());
 }
 
-JSONRPC_STATUS CJSONRPC::Version(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+APIStatus CJSONRPC::Version(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
   result["version"] = CJSONServiceDescription::GetVersion();
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CJSONRPC::Permission(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+APIStatus CJSONRPC::Permission(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
   int flags = client->GetPermissionFlags();
 
-  for (int i = 1; i <= OPERATION_PERMISSION_ALL; i *= 2)
-    result[PermissionToString((OperationPermission)i)] = (flags & i) == i;
+  for (int i = 1; i <= APIPermissionAll; i *= 2)
+    result[APIUtils::PermissionToString((APIPermission)i)] = (flags & i) == i;
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CJSONRPC::Ping(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+APIStatus CJSONRPC::Ping(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
-  CVariant temp = "pong";
-  result.swap(temp);
-  return OK;
+  result = "pong";
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CJSONRPC::GetConfiguration(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+APIStatus CJSONRPC::GetConfiguration(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
   int flags = client->GetAnnouncementFlags();
 
-  for (int i = 1; i <= ANNOUNCE_ALL; i *= 2)
-    result["notifications"][AnnouncementFlagToString((AnnouncementFlag)i)] = (flags & i) == i;
+  for (int i = 1; i <= AnnouncementFlagAll; i *= 2)
+    result["notifications"][IAnnouncer::AnnouncementFlagToString((AnnouncementFlag)i)] = (flags & i) == i;
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CJSONRPC::SetConfiguration(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+APIStatus CJSONRPC::SetConfiguration(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
   int flags = 0;
   int oldFlags = client->GetAnnouncementFlags();
@@ -113,51 +113,51 @@ JSONRPC_STATUS CJSONRPC::SetConfiguration(const CStdString &method, ITransportLa
   if (parameterObject.isMember("notifications"))
   {
     CVariant notifications = parameterObject["notifications"];
-    if ((notifications["Player"].isNull() && (oldFlags & Player)) ||
+    if ((notifications["Player"].isNull() && (oldFlags & AnnouncementFlagPlayer)) ||
         (notifications["Player"].isBoolean() && notifications["Player"].asBoolean()))
-      flags |= Player;
-    if ((notifications["GUI"].isNull() && (oldFlags & GUI)) ||
+      flags |= AnnouncementFlagPlayer;
+    if ((notifications["GUI"].isNull() && (oldFlags & AnnouncementFlagGUI)) ||
         (notifications["GUI"].isBoolean() && notifications["GUI"].asBoolean()))
-      flags |= GUI;
-    if ((notifications["System"].isNull() && (oldFlags & System)) ||
+      flags |= AnnouncementFlagGUI;
+    if ((notifications["System"].isNull() && (oldFlags & AnnouncementFlagSystem)) ||
         (notifications["System"].isBoolean() && notifications["System"].asBoolean()))
-      flags |= System;
-    if ((notifications["VideoLibrary"].isNull() && (oldFlags & VideoLibrary)) ||
+      flags |= AnnouncementFlagSystem;
+    if ((notifications["VideoLibrary"].isNull() && (oldFlags & AnnouncementFlagVideoLibrary)) ||
         (notifications["VideoLibrary"].isBoolean() && notifications["VideoLibrary"].asBoolean()))
-      flags |= VideoLibrary;
-    if ((notifications["AudioLibrary"].isNull() && (oldFlags & AudioLibrary)) ||
+      flags |= AnnouncementFlagVideoLibrary;
+    if ((notifications["AudioLibrary"].isNull() && (oldFlags & AnnouncementFlagAudioLibrary)) ||
         (notifications["AudioLibrary"].isBoolean() && notifications["AudioLibrary"].asBoolean()))
-      flags |= AudioLibrary;
-    if ((notifications["Application"].isNull() && (oldFlags & Other)) ||
+      flags |= AnnouncementFlagAudioLibrary;
+    if ((notifications["Application"].isNull() && (oldFlags & AnnouncementFlagOther)) ||
         (notifications["Application"].isBoolean() && notifications["Application"].asBoolean()))
-      flags |= Application;
-    if ((notifications["Other"].isNull() && (oldFlags & Other)) ||
+      flags |= AnnouncementFlagApplication;
+    if ((notifications["Other"].isNull() && (oldFlags & AnnouncementFlagOther)) ||
         (notifications["Other"].isBoolean() && notifications["Other"].asBoolean()))
-      flags |= Other;
+      flags |= AnnouncementFlagOther;
   }
 
   if (!client->SetAnnouncementFlags(flags))
-    return BadPermission;
+    return APIStatusBadPermission;
 
   return GetConfiguration(method, transport, client, parameterObject, result);
 }
 
-JSONRPC_STATUS CJSONRPC::NotifyAll(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
+APIStatus CJSONRPC::NotifyAll(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant& parameterObject, CVariant &result)
 {
   if (parameterObject["data"].isNull())
-    CAnnouncementManager::Announce(Other, parameterObject["sender"].asString().c_str(),  
+    CAnnouncementManager::Announce(AnnouncementFlagOther, parameterObject["sender"].asString().c_str(),  
       parameterObject["message"].asString().c_str());
   else
   {
     CVariant data = parameterObject["data"];
-    CAnnouncementManager::Announce(Other, parameterObject["sender"].asString().c_str(),  
+    CAnnouncementManager::Announce(AnnouncementFlagOther, parameterObject["sender"].asString().c_str(),  
       parameterObject["message"].asString().c_str(), data);
   }
 
-  return ACK;
+  return APIStatusOK;
 }
 
-CStdString CJSONRPC::MethodCall(const CStdString &inputString, ITransportLayer *transport, IClient *client)
+std::string CJSONRPC::MethodCall(const std::string &inputString, ITransportLayer *transport, IClient *client)
 {
   CVariant inputroot, outputroot, result;
   bool hasResponse = false;
@@ -214,14 +214,47 @@ bool CJSONRPC::HandleMethodCall(const CVariant& request, CVariant& response, ITr
     CStdString methodName = request["method"].asString();
     methodName = methodName.ToLower();
 
-    JSONRPC::MethodCall method;
+    API::APIMethod method;
     CVariant params;
 
     CLog::Log(LOGDEBUG, "JSONRPC: Calling %s", methodName.c_str());
-    if ((errorCode = CJSONServiceDescription::CheckCall(methodName, request["params"], transport, client, isNotification, method, params)) == OK)
-      errorCode = method(methodName, transport, client, params, result);
+    APIStatus status;
+    if ((status = CJSONServiceDescription::CheckCall(methodName, request["params"], transport, client, isNotification, method, params)) == OK)
+      status = method(methodName, transport, client, params, result);
     else
       result = params;
+
+    // convert APIStatus to JSONRPC_STATUS
+    switch (status)
+    {
+    case APIStatusOK:
+      if (result.isNull())
+        errorCode = ACK;
+      else
+        errorCode = OK;
+      break;
+
+    case APIStatusMethodNotFound:
+      errorCode = MethodNotFound;
+      break;
+
+    case APIStatusInvalidParameters:
+      errorCode = InvalidParams;
+      break;
+
+    case APIStatusBadPermission:
+      errorCode = BadPermission;
+      break;
+
+    case APIStatusFailedToExecute:
+      errorCode = FailedToExecute;
+      break;
+
+    case APIStatusInternalError:
+    default:
+      errorCode = InternalError;
+      break;
+    }
   }
   else
   {

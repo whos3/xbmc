@@ -23,50 +23,21 @@
 class CVariant;
 namespace ANNOUNCEMENT
 {
-  enum AnnouncementFlag
+  typedef enum
   {
-    Player        = 0x01,
-    GUI           = 0x02,
-    System        = 0x04,
-    VideoLibrary  = 0x08,
-    AudioLibrary  = 0x10,
-    Application   = 0x20,
-    Input         = 0x40,
-    Other         = 0x80
-  };
+    AnnouncementFlagPlayer        = 0x01,
+    AnnouncementFlagGUI           = 0x02,
+    AnnouncementFlagSystem        = 0x04,
+    AnnouncementFlagVideoLibrary  = 0x08,
+    AnnouncementFlagAudioLibrary  = 0x10,
+    AnnouncementFlagApplication   = 0x20,
+    AnnouncementFlagInput         = 0x40,
+    AnnouncementFlagOther         = 0x80
+  } AnnouncementFlag;
 
-  #define ANNOUNCE_ALL (Player | GUI | System | VideoLibrary | AudioLibrary | Application | Input | Other)
-
-  /*!
-    \brief Returns a string representation for the 
-    given AnnouncementFlag
-    \param notification Specific AnnouncementFlag
-    \return String representation of the given AnnouncementFlag
-    */
-  inline const char *AnnouncementFlagToString(const AnnouncementFlag &notification)
-  {
-    switch (notification)
-    {
-    case Player:
-      return "Player";
-    case GUI:
-      return "GUI";
-    case System:
-      return "System";
-    case VideoLibrary:
-      return "VideoLibrary";
-    case AudioLibrary:
-      return "AudioLibrary";
-    case Application:
-      return "Application";
-    case Input:
-      return "Input";
-    case Other:
-      return "Other";
-    default:
-      return "Unknown";
-    }
-  }
+  const int AnnouncementFlagAll = (AnnouncementFlagPlayer | AnnouncementFlagGUI | AnnouncementFlagSystem |
+                                   AnnouncementFlagVideoLibrary | AnnouncementFlagAudioLibrary | AnnouncementFlagApplication |
+                                   AnnouncementFlagInput | AnnouncementFlagOther);
 
   class IAnnouncer
   {
@@ -74,5 +45,36 @@ namespace ANNOUNCEMENT
     IAnnouncer() { };
     virtual ~IAnnouncer() { };
     virtual void Announce(AnnouncementFlag flag, const char *sender, const char *message, const CVariant &data) = 0;
+
+    /*!
+      \brief Returns a string representation for the 
+      given AnnouncementFlag
+      \param notification Specific AnnouncementFlag
+      \return String representation of the given AnnouncementFlag
+      */
+    static inline const char *AnnouncementFlagToString(AnnouncementFlag notification)
+    {
+      switch (notification)
+      {
+      case AnnouncementFlagPlayer:
+        return "Player";
+      case AnnouncementFlagGUI:
+        return "GUI";
+      case AnnouncementFlagSystem:
+        return "System";
+      case AnnouncementFlagVideoLibrary:
+        return "VideoLibrary";
+      case AnnouncementFlagAudioLibrary:
+        return "AudioLibrary";
+      case AnnouncementFlagApplication:
+        return "Application";
+      case AnnouncementFlagInput:
+        return "Input";
+      case AnnouncementFlagOther:
+        return "Other";
+      default:
+        return "Unknown";
+      }
+    }
   };
 }

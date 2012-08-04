@@ -30,18 +30,18 @@
 #include "utils/Variant.h"
 
 using namespace std;
-using namespace JSONRPC;
+using namespace API;
 using namespace ADDON;
 
-JSONRPC_STATUS CGUIOperations::GetProperties(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CGUIOperations::GetProperties(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   CVariant properties = CVariant(CVariant::VariantTypeObject);
   for (unsigned int index = 0; index < parameterObject["properties"].size(); index++)
   {
     CStdString propertyName = parameterObject["properties"][index].asString();
     CVariant property;
-    JSONRPC_STATUS ret;
-    if ((ret = GetPropertyValue(propertyName, property)) != OK)
+    APIStatus ret;
+    if ((ret = GetPropertyValue(propertyName, property)) != APIStatusOK)
       return ret;
 
     properties[propertyName] = property;
@@ -49,10 +49,10 @@ JSONRPC_STATUS CGUIOperations::GetProperties(const CStdString &method, ITranspor
 
   result = properties;
 
-  return OK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CGUIOperations::ShowNotification(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CGUIOperations::ShowNotification(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   string image = parameterObject["image"].asString();
   string title = parameterObject["title"].asString();
@@ -68,10 +68,10 @@ JSONRPC_STATUS CGUIOperations::ShowNotification(const CStdString &method, ITrans
   else
     CGUIDialogKaiToast::QueueNotification(image, title, message, displaytime);
 
-  return ACK;
+  return APIStatusOK;
 }
 
-JSONRPC_STATUS CGUIOperations::SetFullscreen(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
+APIStatus CGUIOperations::SetFullscreen(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
   if ((parameterObject["fullscreen"].isString() &&
        parameterObject["fullscreen"].asString().compare("toggle") == 0) ||
@@ -79,21 +79,24 @@ JSONRPC_STATUS CGUIOperations::SetFullscreen(const CStdString &method, ITranspor
        parameterObject["fullscreen"].asBoolean() != g_application.IsFullScreen()))
     CApplicationMessenger::Get().SendAction(CAction(ACTION_SHOW_GUI));
   else if (!parameterObject["fullscreen"].isBoolean() && !parameterObject["fullscreen"].isString())
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
   return GetPropertyValue("fullscreen", result);
 }
 
-JSONRPC_STATUS CGUIOperations::GetPropertyValue(const CStdString &property, CVariant &result)
+APIStatus CGUIOperations::GetPropertyValue(const std::string &property, CVariant &result)
 {
-  if (property.Equals("currentwindow"))
+  std::string prop;
+  std::transform(property.begin(), property.end(), prop.begin(), ::tolower);
+
+  if (prop.compare("currentwindow") == 0)
   {
     result["label"] = g_infoManager.GetLabel(g_infoManager.TranslateString("System.CurrentWindow"));
     result["id"] = g_windowManager.GetFocusedWindow();
   }
-  else if (property.Equals("currentcontrol"))
+  else if (prop.compare("currentcontrol") == 0)
     result["label"] = g_infoManager.GetLabel(g_infoManager.TranslateString("System.CurrentControl"));
-  else if (property.Equals("skin"))
+  else if (prop.compare("skin") == 0)
   {
     CStdString skinId = g_guiSettings.GetString("lookandfeel.skin");
     AddonPtr addon;
@@ -103,10 +106,10 @@ JSONRPC_STATUS CGUIOperations::GetPropertyValue(const CStdString &property, CVar
     if (addon.get())
       result["name"] = addon->Name();
   }
-  else if (property.Equals("fullscreen"))
+  else if (prop.compare("fullscreen") == 0)
     result = g_application.IsFullScreen();
   else
-    return InvalidParams;
+    return APIStatusInvalidParameters;
 
-  return OK;
+  return APIStatusOK;
 }

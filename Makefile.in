@@ -49,6 +49,7 @@ DIRECTORY_ARCHIVES=$(DVDPLAYER_ARCHIVES) \
                    xbmc/interfaces/http-api/http-api.a \
                    xbmc/interfaces/info/info.a \
                    xbmc/interfaces/interfaces.a \
+                   xbmc/interfaces/api/generic-api.a \
                    xbmc/interfaces/json-rpc/json-rpc.a \
                    xbmc/interfaces/python/python.a \
                    xbmc/interfaces/python/xbmcmodule/xbmcmodule.a \

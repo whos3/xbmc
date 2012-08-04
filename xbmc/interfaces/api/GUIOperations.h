@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2005-2012 Team XBMC
+ *      Copyright (C) 2012 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -20,28 +20,18 @@
  *
  */
 
-#include <string>
+#include "APIUtils.h"
 
-class CVariant;
-
-namespace JSONRPC
+namespace API
 {
-  enum TransportLayerCapability
-  {
-    Response = 0x1,
-    Announcing = 0x2,
-    FileDownloadRedirect = 0x4,
-    FileDownloadDirect = 0x8
-  };
-
-  #define TRANSPORT_LAYER_CAPABILITY_ALL (Response | Announcing | FileDownloadRedirect | FileDownloadDirect)
-
-  class ITransportLayer
+  class CGUIOperations
   {
   public:
-    virtual ~ITransportLayer() { };
-    virtual bool PrepareDownload(const char *path, CVariant &details, std::string &protocol) = 0;
-    virtual bool Download(const char *path, CVariant &result) = 0;
-    virtual int GetCapabilities() = 0;
+    static APIStatus GetProperties(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+
+    static APIStatus ShowNotification(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+    static APIStatus SetFullscreen(const std::string &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result);
+  private:
+    static APIStatus GetPropertyValue(const std::string &property, CVariant &result);
   };
 }
