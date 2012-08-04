@@ -303,6 +303,11 @@ bool CVariant::isNull() const
   return m_type == VariantTypeNull || m_type == VariantTypeConstNull;
 }
 
+bool CVariant::isNumber() const
+{
+  return m_type == VariantTypeInteger || m_type == VariantTypeUnsignedInteger || m_type == VariantTypeDouble;
+}
+
 CVariant::VariantType CVariant::type() const
 {
   return m_type;

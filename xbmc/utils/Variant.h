@@ -76,6 +76,7 @@ public:
   bool isArray() const;
   bool isObject() const;
   bool isNull() const;
+  bool isNumber() const;
 
   VariantType type() const;
 
