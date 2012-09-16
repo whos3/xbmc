@@ -13,7 +13,7 @@ GENERATED = $(patsubst %.i,$(GENDIR)/%.cpp,$(INTERFACES))
 GENERATOR=@abs_top_srcdir@/tools/codegenerator
 
 SRCS=	CallbackHandler.cpp LanguageHook.cpp \
-	XBPyThread.cpp XBPython.cpp swig.cpp \
+	PythonInvoker.cpp XBPython.cpp swig.cpp \
 	$(GENERATED)
 
 SWIG_INTERFACE_DIR=../swig

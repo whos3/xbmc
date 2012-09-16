@@ -44,6 +44,8 @@
 
 #include "interfaces/legacy/Monitor.h"
 
+#include "interfaces/python/PythonInvoker.h"
+
 using namespace ANNOUNCEMENT;
 
 namespace PythonBindings {
@@ -488,7 +490,7 @@ void XBPython::DeInitializeInterpreter()
 /**
 * Should be called before executing a script
 */
-void XBPython::Initialize()
+bool XBPython::Initialize()
 {
   CLog::Log(LOGINFO, "initializing python engine. ");
   CSingleLock lock(m_critSection);
@@ -506,7 +508,7 @@ void XBPython::Initialize()
       {
         CLog::Log(LOGERROR, "Python: Missing files, unable to execute script");
         Finalize();
-        return;
+        return false;
       }
 #endif
 
@@ -575,6 +577,8 @@ void XBPython::Initialize()
 
       m_bInitialized = true;
   }
+
+  return m_bInitialized;
 }
 
 /**
@@ -725,17 +729,21 @@ int XBPython::evalFile(const CStdString &src, const std::vector<CStdString> &arg
   if (!m_bInitialized) return -1;
 
   m_nextid++;
-  XBPyThread *pyThread = new XBPyThread(this, m_nextid);
-  pyThread->setArgv(argv);
-  pyThread->setAddon(addon);
-  pyThread->evalFile(src);
+  CPythonInvoker *invoker = new CPythonInvoker();
   PyElem inf;
   inf.id        = m_nextid;
   inf.bDone     = false;
   inf.strFile   = src;
-  inf.pyThread  = pyThread;
-
+  inf.pyThread  = new CLanguageInvokerThread(invoker);
   m_vecPyList.push_back(inf);
+
+  inf.pyThread->SetId(m_nextid);
+  inf.pyThread->SetAddon(addon);
+
+  std::vector<std::string> args;
+  for (unsigned int i = 0; i < argv.size(); i++)
+    args.push_back(argv.at(i));
+  inf.pyThread->Execute(src, args);
 
   return m_nextid;
 }
@@ -748,7 +756,7 @@ void XBPython::setDone(int id)
   {
     if (it->id == id)
     {
-      if (it->pyThread->isStopping())
+      if (it->pyThread->IsStopping())
         CLog::Log(LOGINFO, "Python script interrupted by user");
       else
         CLog::Log(LOGINFO, "Python script stopped");
@@ -767,7 +775,7 @@ void XBPython::stopScript(int id)
   {
     if (it->id == id) {
       CLog::Log(LOGINFO, "Stopping script with id: %i", id);
-      it->pyThread->stop();
+      it->pyThread->Stop();
       return;
     }
     ++it;
@@ -845,7 +853,7 @@ bool XBPython::isStopping(int scriptId)
   while (it != m_vecPyList.end())
   {
     if (it->id == scriptId)
-      bStopping = it->pyThread->isStopping();
+      bStopping = it->pyThread->IsStopping();
     ++it;
   }
 
@@ -869,35 +877,4 @@ void XBPython::WaitForEvent(CEvent& hEvent)
   XbmcThreads::CEventGroup eventGroup(&hEvent, &m_globalEvent, NULL);
   eventGroup.wait();
   m_globalEvent.Reset();
-}
-
-// execute script, returns -1 if script doesn't exist
-int XBPython::evalString(const CStdString &src, const std::vector<CStdString> &argv)
-{
-  CLog::Log(LOGDEBUG, "XBPython::evalString (python)");
-  CSingleLock lock(m_critSection);
-
-  Initialize();
-
-  if (!m_bInitialized)
-  {
-    CLog::Log(LOGERROR, "XBPython::evalString, python not initialized (python)");
-    return -1;
-  }
-
-  // Previous implementation would create a new thread for every script
-  m_nextid++;
-  XBPyThread *pyThread = new XBPyThread(this, m_nextid);
-  pyThread->setArgv(argv);
-  pyThread->evalString(src);
-
-  PyElem inf;
-  inf.id        = m_nextid;
-  inf.bDone     = false;
-  inf.strFile   = "<string>";
-  inf.pyThread  = pyThread;
-
-  m_vecPyList.push_back(inf);
-
-  return m_nextid;
 }

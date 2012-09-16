@@ -21,11 +21,12 @@
  *
  */
 
-#include "XBPyThread.h"
 #include "cores/IPlayer.h"
 #include "threads/CriticalSection.h"
 #include "interfaces/IAnnouncer.h"
 #include "addons/IAddon.h"
+
+#include "interfaces/generic/LanguageInvokerThread.h"
 
 #include <vector>
 
@@ -33,7 +34,7 @@ typedef struct {
   int id;
   bool bDone;
   std::string strFile;
-  XBPyThread *pyThread;
+  CLanguageInvokerThread *pyThread;
 }PyElem;
 
 class LibraryLoader;
@@ -78,7 +79,7 @@ public:
   void OnScreensaverDeactivated();
   void OnDatabaseUpdated(const std::string &database);
   void OnAbortRequested(const CStdString &ID="");
-  void Initialize();
+  bool Initialize();
   void Finalize();
   void FinalizeScript();
   void FreeResources();
@@ -91,7 +92,6 @@ public:
   int GetPythonScriptId(int scriptPosition);
   int evalFile(const CStdString &src, ADDON::AddonPtr addon);
   int evalFile(const CStdString &src, const std::vector<CStdString> &argv, ADDON::AddonPtr addon);
-  int evalString(const CStdString &src, const std::vector<CStdString> &argv);
 
   bool isRunning(int scriptId);
   bool isStopping(int scriptId);
