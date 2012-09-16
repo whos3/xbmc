@@ -63,6 +63,7 @@
 #ifdef HAS_PYTHON
 #include "interfaces/python/XBPython.h"
 #endif
+#include "interfaces/generic/ScriptInvocationManager.h"
 #include "input/ButtonTranslator.h"
 #include "guilib/GUIAudioManager.h"
 #include "network/libscrobbler/lastfmscrobbler.h"
@@ -1420,6 +1421,12 @@ bool CApplication::Initialize()
 #ifdef HAS_SDL_JOYSTICK
   g_Joystick.SetEnabled(g_guiSettings.GetBool("input.enablejoystick"));
 #endif
+
+  AddonPtr addon;
+  CAddonMgr::Get().GetAddon("webinterface.default", addon);
+  int jsId = ScriptInvocationManager::Get().Execute("special://masterprofile/test.js", addon);
+  Sleep(10000);
+  ScriptInvocationManager::Get().Stop(jsId);
 
   return true;
 }
