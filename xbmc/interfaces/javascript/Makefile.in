@@ -1,6 +1,6 @@
 INCLUDES=-I../../.. -I. -I../../ -I../../linux -I../../../guilib -I.
 
-#INTERFACES = AddonModuleXbmc.i
+INTERFACES = AddonModuleXbmc.i
 #INTERFACES += AddonModuleXbmcgui.i
 #INTERFACES += AddonModuleXbmcplugin.i
 #INTERFACES += AddonModuleXbmcaddon.i
