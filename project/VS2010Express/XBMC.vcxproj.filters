@@ -280,6 +280,15 @@
     <Filter Include="interfaces\python\generated">
       <UniqueIdentifier>{4cc89394-6b5b-44db-86a2-8b71b65e85a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="interfaces\generic">
+      <UniqueIdentifier>{ce865596-6a73-4838-8028-796c8fcfd558}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interfaces\javascript">
+      <UniqueIdentifier>{ba414f2e-45a2-42d4-9a2a-5712a45f4339}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interfaces\javascript\generated">
+      <UniqueIdentifier>{c7ec1350-dbd7-4358-a2cc-8ac1f72f6c55}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -2897,9 +2906,6 @@
     <ClCompile Include="..\..\xbmc\interfaces\python\XBPython.cpp">
       <Filter>interfaces\python</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\python\XBPyThread.cpp">
-      <Filter>interfaces\python</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\xbmc\interfaces\python\generated\AddonModuleXbmc.cpp">
       <Filter>interfaces\python\generated</Filter>
     </ClCompile>
@@ -2923,6 +2929,30 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\music\tags\MusicInfoTagLoaderWav.cpp">
       <Filter>music\tags</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\generic\LanguageInvokerThread.cpp">
+      <Filter>interfaces\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\javascript\JavaScriptInvoker.cpp">
+      <Filter>interfaces\javascript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\generic\ScriptInvocationManager.cpp">
+      <Filter>interfaces\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\python\PythonInvoker.cpp">
+      <Filter>interfaces\python</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\javascript\generated\AddonModuleXbmc.cpp">
+      <Filter>interfaces\javascript\generated</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\javascript\LanguageHook.cpp">
+      <Filter>interfaces\javascript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\javascript\JavaScriptDebugger.cpp">
+      <Filter>interfaces\javascript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\javascript\swig.cpp">
+      <Filter>interfaces\javascript</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -5722,9 +5752,6 @@
     <ClInclude Include="..\..\xbmc\interfaces\python\XBPython.h">
       <Filter>interfaces\python</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\python\XBPyThread.h">
-      <Filter>interfaces\python</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\music\tags\TagLibVFSStream.h">
       <Filter>music\tags</Filter>
     </ClInclude>
@@ -5735,6 +5762,36 @@
       <Filter>music\tags</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\music\tags\MusicInfoTagLoaderWav.h" />
+    <ClInclude Include="..\..\xbmc\music\tags\MusicInfoTagLoaderWav.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\generic\ILanguageInvoker.h">
+      <Filter>interfaces\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\generic\LanguageInvokerThread.h">
+      <Filter>interfaces\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\javascript\JavaScriptInvoker.h">
+      <Filter>interfaces\javascript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\generic\ScriptInvocationManager.h">
+      <Filter>interfaces\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\python\PythonInvoker.h">
+      <Filter>interfaces\python</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\music\tags\MusicInfoTagLoaderWav.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\javascript\generated\AddonModuleXbmc.h">
+      <Filter>interfaces\javascript\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\javascript\LanguageHook.h">
+      <Filter>interfaces\javascript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\music\tags\MusicInfoTagLoaderWav.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\javascript\JavaScriptDebugger.h">
+      <Filter>interfaces\javascript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\javascript\swig.h">
+      <Filter>interfaces\javascript</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">
