@@ -1,0 +1,55 @@
+<%
+/*
+ *      Copyright (C) 2012 Team XBMC
+ *      http://www.xbmc.org
+ *
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
+ */
+%>
+<%
+    matcher = ltype =~ /std::vector<\((.*)\)>/
+    vectype = matcher[0][1]
+    boolean ispointer = swigTypeParser.SwigType_ispointer(type)
+    String accessor = ispointer ? '->' : '.'
+    int seq = sequence.increment()
+%>
+    {
+      bool isTuple = ${slarg}->IsObject();
+      if (!isTuple && !${slarg}->IsArray())
+      {
+        // TODO: PyErr_SetString(PyExc_TypeError, "the parameter \"${api}\" must be either a Tuple or a List.");
+        return Handle<Value>(); // short circuit the rest of this python method
+      }
+
+      <%  if (ispointer) print("${api} = new std::vector<${swigTypeParser.SwigType_str(vectype)}>();") %>
+      Handle<Value> jsentry${seq};
+      int vecSize = (isTuple ? ${slarg}->GetPropertyNames()->Length() : ${slarg}->Length());
+      for (int i = 0; i < vecSize; i++)
+      {
+        if (isTuple)
+          jsentry${seq} = ${slarg}->Get(${slarg}->GetPropertyNames()->Get(Integer::New(i)));
+        else
+          jsentry${seq} = ${slarg}->Get(Integer::New(i));
+        
+        ${swigTypeParser.SwigType_str(swigTypeParser.SwigType_ltype(vectype))} entry${seq};
+        ${helper.getInConversion(vectype, 'entry' + seq, 'jsentry' + seq, method,
+                                 [ 'type' : vectype,
+                                   'ltype' : swigTypeParser.SwigType_ltype(vectype),
+                                   'sequence' : sequence
+                                   ])}
+        ${api}${accessor}push_back(entry${seq});
+      }
+    }

@@ -1,0 +1,55 @@
+<%
+/*
+ *      Copyright (C) 2012 Team XBMC
+ *      http://www.xbmc.org
+ *
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
+ */
+%>
+<%
+    matcher = type =~ /Tuple<\((.*)\)>/
+    vectype = '(' + matcher[0][1] + ')'
+    boolean ispointer = swigTypeParser.SwigType_ispointer(type)
+    int seq = sequence.increment()
+    String accessor = ispointer ? '->' : '.'
+    tupleAccess = [ 'first', 'second', 'third', 'fourth' ]
+%>
+
+    int vecSize = ${api}${accessor}GetNumValuesSet();
+    ${result} = Object::New()
+<%
+    if (ispointer)
+    {
+%>
+    if (${api} != NULL)
+<%  }  // this ends the if (ispointer)
+%>    {
+        Handle<Value> jsentry${seq}; <%
+        swigTypeParser.SwigType_parmlist(vectype).eachWithIndex { curType, entryIndex ->
+%>
+
+        if (vecSize > ${entryIndex})
+        {
+          const ${swigTypeParser.SwigType_str(swigTypeParser.SwigType_ltype(curType))}& entry${seq} = ${api}${accessor}${tupleAccess[entryIndex]}();
+          {
+            ${helper.getOutConversion(curType,'result',method,[ 'result' : 'jsentry' + seq, 'api' : 'entry' + seq, 'sequence' : sequence ])}
+          }
+          ${result}->Set(${entryIndex}, jsentry${seq});
+        }
+<%
+        }
+%>
+      }

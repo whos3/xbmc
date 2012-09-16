@@ -1,0 +1,56 @@
+<%
+/*
+ *      Copyright (C) 2012 Team XBMC
+ *      http://www.xbmc.org
+ *
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
+ */
+%>
+<%
+    matcher = ltype =~ /Tuple<\((.*)\)>/
+    vectype = '(' + matcher[0][1] + ')'
+    boolean ispointer = swigTypeParser.SwigType_ispointer(type)
+    String accessor = ispointer ? '->' : '.'
+    int seq = sequence.increment()
+    tupleAccess = [ 'first', 'second', 'third', 'fourth' ]
+%>
+    {
+      bool isTuple = !${slarg}.IsEmpty() && ${slarg}->IsObject();
+      if (!isTuple)
+      {
+        // TODO: PyErr_SetString(PyExc_TypeError, "the parameter \"${api}\" must be either a Tuple or a List.");
+        return Handle<Value>(); // short circuit the rest of this javascript method
+      }
+
+      int vecSize = ${slarg}->GetPropertyNames()->Length();
+<%
+      swigTypeParser.SwigType_parmlist(vectype).eachWithIndex { curType, entryIndex -> 
+%>
+        if (vecSize > ${entryIndex})
+        {
+          Handle<Value> jsentry${entryIndex}_${seq} = ${slarg}->Get(${entryIndex});
+          ${swigTypeParser.SwigType_str(swigTypeParser.SwigType_ltype(curType))} entry${entryIndex}_${seq};
+          ${helper.getInConversion(curType, 'entry' + entryIndex + '_' + seq, 'jsentry' + entryIndex + '_' + seq, method,
+                                  [ 'type' : vectype,
+                                    'ltype' : swigTypeParser.SwigType_ltype(curType),
+                                    'sequence' : sequence
+                                  ])}
+          ${api}${accessor}${tupleAccess[entryIndex]}() = entry${entryIndex}_${seq};
+        }
+<%
+      }
+%>
+    }
