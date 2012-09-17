@@ -13,6 +13,7 @@ GENERATED = $(patsubst %.i,$(GENDIR)/%.cpp,$(INTERFACES))
 GENERATOR=@abs_top_srcdir@/tools/codegenerator
 
 SRCS=	LanguageHook.cpp \
+  JavaScriptDebugger.cpp \
 	JavaScriptInvoker.cpp \
   swig.cpp \
 	$(GENERATED)
