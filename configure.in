@@ -944,6 +944,7 @@ if test "$target_platform" = "target_android" ; then
   AC_CHECK_LIB([python$PYTHON_VERSION],      [main],, AC_MSG_ERROR($missing_library))
   AC_CHECK_LIB([android],     [main],, AC_MSG_ERROR($missing_library))
 fi
+AC_CHECK_LIB([v8],          [main],, AC_MSG_ERROR($missing_library))
 PKG_CHECK_MODULES([FRIBIDI],    [fribidi],
   [INCLUDES="$INCLUDES $FRIBIDI_CFLAGS"; LIBS="$LIBS $FRIBIDI_LIBS"],
   AC_MSG_ERROR($missing_library))
@@ -2338,7 +2339,8 @@ OUTPUT_FILES="$OUTPUT_FILES addons/skin.touched/media/Makefile"
 fi
 
 OUTPUT_FILES="$OUTPUT_FILES \
-  xbmc/interfaces/python/Makefile"
+  xbmc/interfaces/python/Makefile \
+  xbmc/interfaces/javascript/Makefile"
 
 # Line below is used so we can use AM_INIT_AUTOMAKE. The corresponding
 # .dummy.am does nothing.

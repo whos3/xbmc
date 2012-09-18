@@ -1153,6 +1153,7 @@ lib/cmyth/Makefile
 
 # /xbmc/interfaces/
 /xbmc/interfaces/Makefile
+/xbmc/interfaces/javascript/Makefile
 /xbmc/interfaces/python/Makefile
 /xbmc/interfaces/python/generated/
 
