@@ -66,19 +66,22 @@ namespace JavaScriptBindings
           {
             Local<StackFrame> frame = stackTrace->GetFrame(i);
             if (frame.IsEmpty())
+            {
+              msg += "     at unknown location\n";
               continue;
+            }
 
             if (frame->IsEval())
-              msg.AppendFormat("eval(");
+              msg += "eval ";
+            else
+              msg += "     ";
+
+            msg += "at ";
+
             if (frame->IsConstructor())
-              msg.AppendFormat("new ");
+              msg += "new ";
 
-            msg.AppendFormat("%s%s(%s:%d)", *String::Utf8Value(frame->GetFunctionName()), *String::Utf8Value(frame->GetScriptName()), frame->GetLineNumber());
-
-            if (frame->IsEval())
-              msg.AppendFormat(")");
-
-            msg += "\n";
+            msg.AppendFormat("%s (%s:%d:%d)\n", *String::Utf8Value(frame->GetFunctionName()), *String::Utf8Value(frame->GetScriptName()), frame->GetLineNumber(), frame->GetColumn());
           }
         }
       }
