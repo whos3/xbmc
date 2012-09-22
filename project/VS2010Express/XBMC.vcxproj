@@ -1026,6 +1026,7 @@
     <ClInclude Include="..\..\xbmc\interfaces\javascript\JavaScriptInvoker.h" />
     <ClInclude Include="..\..\xbmc\interfaces\javascript\LanguageHook.h" />
     <ClInclude Include="..\..\xbmc\interfaces\javascript\swig.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\javascript\v8internal.h" />
     <ClInclude Include="..\..\xbmc\interfaces\legacy\Addon.h" />
     <ClInclude Include="..\..\xbmc\interfaces\legacy\AddonCallback.h" />
     <ClInclude Include="..\..\xbmc\interfaces\legacy\AddonClass.h" />

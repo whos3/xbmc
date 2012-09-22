@@ -5792,6 +5792,10 @@
     <ClInclude Include="..\..\xbmc\interfaces\javascript\swig.h">
       <Filter>interfaces\javascript</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\music\tags\MusicInfoTagLoaderWav.h" />
+    <ClInclude Include="..\..\xbmc\interfaces\javascript\v8internal.h">
+      <Filter>interfaces\javascript</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">
