@@ -22,6 +22,12 @@
 #include <v8.h>
 
 #define V8_STR(str)           v8::String::New(str)
+
 #define V8_GETTER(method)     v8::Handle<v8::Value> method(v8::Local<v8::String> property, const v8::AccessorInfo& info)
 #define V8_SETTER(method)     void method(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
 #define V8_FUNCTION(method)   v8::Handle<v8::Value> method(const v8::Arguments& args)
+#define V8_CTOR(classname)    V8_FUNCTION(classname_ctor)
+#define V8_DTOR(classname)    void classname_dtor(v8::Handle<v8::Object> obj)
+
+#define V8_THROW(msg)         v8::ThrowException(V8_STR("..."));
+#define V8_ERROR(msg)         v8::ThrowException(v8::Exception::Error(V8_STR("...")));

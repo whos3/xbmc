@@ -48,8 +48,8 @@ public class JavaScriptTools
 
       return (clazz == null) ? method.@sym_name :
       (
-      // TODO: (methodType == MethodType.constructor) ? (clazz + "_New") :
-      // TODO: (methodType == MethodType.destructor ? (clazz + "_Dealloc") : clazz + "_" + method.@sym_name)
+      (methodType == MethodType.constructor) ? clazz :
+      (methodType == MethodType.destructor ? ("~" + clazz) : method.@sym_name)
       )
    }
 
