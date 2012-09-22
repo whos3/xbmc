@@ -19,7 +19,7 @@
  *
  */
 
-#include <v8.h>
+#include "v8internal.h"
 
 #include "interfaces/legacy/Exception.h"
 

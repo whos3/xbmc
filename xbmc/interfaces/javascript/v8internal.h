@@ -19,28 +19,9 @@
  *
  */
 
-#include "v8internal.h"
-#include "interfaces/generic/ILanguageInvoker.h"
-#include "threads/Event.h"
+#include <v8.h>
 
-class CJavaScriptInvoker : public ILanguageInvoker
-{
-public:
-  CJavaScriptInvoker();
-  virtual ~CJavaScriptInvoker();
-
-  virtual bool Execute(const std::string &script, const std::vector<std::string> &arguments = std::vector<std::string>());
-  virtual bool Stop(bool wait = false);
-
-private:
-  bool initializeBridge();
-
-  static V8_GETTER(getAbortRequested);
-
-  v8::Handle<v8::ObjectTemplate> m_tmplGlobal;
-  v8::Persistent<v8::Context> m_context;
-  v8::Isolate *m_isolate;
-
-  bool m_stop;
-  CEvent m_stoppedEvent;
-};
+#define V8_STR(str)           v8::String::New(str)
+#define V8_GETTER(method)     v8::Handle<v8::Value> method(v8::Local<v8::String> property, const v8::AccessorInfo& info)
+#define V8_SETTER(method)     void method(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+#define V8_FUNCTION(method)   v8::Handle<v8::Value> method(const v8::Arguments& args)

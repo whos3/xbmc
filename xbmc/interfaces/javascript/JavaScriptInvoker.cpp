@@ -80,7 +80,7 @@ bool CJavaScriptInvoker::Execute(const std::string &script, const std::vector<st
     // Create a new global object
     m_tmplGlobal = ObjectTemplate::New();
     m_tmplGlobal->SetInternalFieldCount(1);
-    m_tmplGlobal->SetAccessor(String::New("abortRequested"), getAbortRequested);
+    m_tmplGlobal->SetAccessor(V8_STR("abortRequested"), getAbortRequested);
 
     // Create a new context.
     m_context = Context::New(NULL, m_tmplGlobal);
@@ -101,7 +101,7 @@ bool CJavaScriptInvoker::Execute(const std::string &script, const std::vector<st
       setState(InvokerStateInitialized);
     
       // make the code available for v8
-      Handle<String> source = String::New(code.c_str());
+      Handle<String> source = V8_STR(code.c_str());
 
       // Compile the source code.
       TryCatch tryCatch;
@@ -204,7 +204,7 @@ bool CJavaScriptInvoker::initializeBridge()
   return true;
 }
 
-Handle<Value> CJavaScriptInvoker::getAbortRequested(Local<String> property, const AccessorInfo& info)
+V8_GETTER(CJavaScriptInvoker::getAbortRequested)
 {
   Local<Object> self = info.Holder();
   Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
