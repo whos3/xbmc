@@ -19,7 +19,7 @@
  *
  */
 
-#include <v8.h>
+#include "interfaces/javascript/v8internal.h"
 
 #include "addons/IAddon.h"
 
@@ -32,10 +32,10 @@ namespace JavaScriptBindings
     static v8::Handle<v8::FunctionTemplate> Init(v8::Isolate *isolate);
 
   private:
-    static v8::Handle<v8::Value> log(const v8::Arguments& args);
+    static V8_FUNCTION(log);
 
-    static v8::Handle<v8::Value> getAddonId(v8::Local<v8::String> property, const v8::AccessorInfo& info);
-    static v8::Handle<v8::Value> getApiVersion(v8::Local<v8::String> property, const v8::AccessorInfo& info);
+    static V8_GETTER(getAddonId);
+    static V8_GETTER(getApiVersion);
 
     ADDON::AddonPtr m_addon;
   };

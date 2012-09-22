@@ -57,7 +57,7 @@ namespace JavaScriptBindings
     return handle_scope.Close(tmplXbmc);
   }
 
-  Handle<Value> Xbmc::log(const Arguments& args)
+  V8_FUNCTION(Xbmc::log)
   {
     if (args.Length() > 0 && args[0]->IsString())
     {
@@ -88,7 +88,7 @@ namespace JavaScriptBindings
     return Handle<Value>();
   }
 
-  Handle<Value> Xbmc::getAddonId(Local<String> property, const AccessorInfo& info)
+  V8_GETTER(Xbmc::getAddonId)
   {
     Local<Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
@@ -97,7 +97,7 @@ namespace JavaScriptBindings
     return String::New(static_cast<Xbmc*>(ptr)->m_addon->ID().c_str());
   }
 
-  Handle<Value> Xbmc::getApiVersion(Local<String> property, const AccessorInfo& info)
+  V8_GETTER(Xbmc::getApiVersion)
   {
     Local<Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
