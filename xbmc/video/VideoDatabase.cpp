@@ -3397,12 +3397,12 @@ void CVideoDatabase::GetCast(const CStdString &table, const CStdString &table_id
     CStdString sql = PrepareSQL("SELECT actors.strActor,"
                                 "  actorlink%s.strRole,"
                                 "  actors.strThumb,"
-                                "  art.url "
+                                "  art.artwork_object "
                                 "FROM actorlink%s"
                                 "  JOIN actors ON"
                                 "    actorlink%s.idActor=actors.idActor"
                                 "  LEFT JOIN art ON"
-                                "    art.media_id=actors.idActor AND art.media_type='actor' AND art.type='thumb' "
+                                "    art.media_id=actors.idActor AND art.media_type='actor' "
                                 "WHERE actorlink%s.%s=%i "
                                 "ORDER BY actorlink%s.iOrder",table.c_str(), table.c_str(), table.c_str(), table.c_str(), table_id.c_str(), type_id, table.c_str());
     m_pDS2->query(sql.c_str());
@@ -3423,7 +3423,10 @@ void CVideoDatabase::GetCast(const CStdString &table, const CStdString &table_id
       {
         info.strRole = m_pDS2->fv(1).get_asString();
         info.thumbUrl.ParseString(m_pDS2->fv(2).get_asString());
-        info.thumb = m_pDS2->fv(3).get_asString();
+
+        CVariant art = GetVariantObject(m_pDS2, 3);
+        if (art.isObject() && art.isMember("thumb"))
+          info.thumb = art["thumb"].asString();
         cast.push_back(info);
       }
       m_pDS2->next();
@@ -3559,37 +3562,25 @@ void CVideoDatabase::SetVideoSettings(const CStdString& strFilenameAndPath, cons
 
 void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const map<string, string> &art)
 {
+  if (mediaId < 0 || mediaType.empty() || art.empty())
+    return;
+
+  CVariant artObj(CVariant::VariantTypeObject);
   for (map<string, string>::const_iterator i = art.begin(); i != art.end(); ++i)
-    SetArtForItem(mediaId, mediaType, i->first, i->second);
+    artObj[i->first] = i->second;
+
+  SetArtForItem(mediaId, mediaType, artObj);
 }
 
 void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const string &artType, const string &url)
 {
-  try
-  {
-    if (NULL == m_pDB.get()) return;
-    if (NULL == m_pDS.get()) return;
+  if (mediaId < 0 || mediaType.empty() || artType.empty() || url.empty())
+    return;
 
-    CStdString sql = PrepareSQL("SELECT art_id FROM art WHERE media_id=%i AND media_type='%s' AND type='%s'", mediaId, mediaType.c_str(), artType.c_str());
-    m_pDS->query(sql.c_str());
-    if (!m_pDS->eof())
-    { // update
-      int artId = m_pDS->fv(0).get_asInt();
-      m_pDS->close();
-      sql = PrepareSQL("UPDATE art SET url='%s' where art_id=%d", url.c_str(), artId);
-      m_pDS->exec(sql.c_str());
-    }
-    else
-    { // insert
-      m_pDS->close();
-      sql = PrepareSQL("INSERT INTO art(media_id, media_type, type, url) VALUES (%d, '%s', '%s', '%s')", mediaId, mediaType.c_str(), artType.c_str(), url.c_str());
-      m_pDS->exec(sql.c_str());
-    }
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s(%d, '%s', '%s', '%s') failed", __FUNCTION__, mediaId, mediaType.c_str(), artType.c_str(), url.c_str());
-  }
+  CVariant artObj(CVariant::VariantTypeObject);
+  artObj[artType] = url;
+
+  SetArtForItem(mediaId, mediaType, artObj);
 }
 
 bool CVideoDatabase::GetArtForItem(int mediaId, const string &mediaType, map<string, string> &art)
@@ -3599,12 +3590,13 @@ bool CVideoDatabase::GetArtForItem(int mediaId, const string &mediaType, map<str
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS2.get()) return false; // using dataset 2 as we're likely called in loops on dataset 1
 
-    CStdString sql = PrepareSQL("SELECT type,url FROM art WHERE media_id=%i AND media_type='%s'", mediaId, mediaType.c_str());
+    CStdString sql = PrepareSQL("SELECT artwork_object FROM art WHERE media_id=%i AND media_type='%s'", mediaId, mediaType.c_str());
     m_pDS2->query(sql.c_str());
-    while (!m_pDS2->eof())
+    if (!m_pDS2->eof())
     {
-      art.insert(make_pair(m_pDS2->fv(0).get_asString(), m_pDS2->fv(1).get_asString()));
-      m_pDS2->next();
+      CVariant artObj = GetVariantObject(m_pDS2, 0);
+      for (CVariant::const_iterator_map artIt = artObj.begin_map(); artIt != artObj.end_map(); artIt++)
+        art.insert(make_pair(artIt->first, artIt->second.asString()));
     }
     m_pDS2->close();
     return !art.empty();
@@ -3618,8 +3610,16 @@ bool CVideoDatabase::GetArtForItem(int mediaId, const string &mediaType, map<str
 
 string CVideoDatabase::GetArtForItem(int mediaId, const string &mediaType, const string &artType)
 {
-  std::string query = PrepareSQL("SELECT url FROM art WHERE media_id=%i AND media_type='%s' AND type='%s'", mediaId, mediaType.c_str(), artType.c_str());
-  return GetSingleValue(query, m_pDS2);
+  std::string query = PrepareSQL("SELECT artwork_object FROM art WHERE media_id=%i AND media_type='%s'", mediaId, mediaType.c_str());
+  m_pDS2->query(query.c_str());
+  if (m_pDS2->eof())
+    return "";
+
+  CVariant artObj = GetVariantObject(m_pDS2, 0);
+  if (!artObj.isObject() || !artObj.isMember(artType))
+    return "";
+
+  return artObj[artType].asString();
 }
 
 bool CVideoDatabase::GetTvShowSeasonArt(int showId, map<int, string> &seasonArt)
@@ -9365,4 +9365,77 @@ bool CVideoDatabase::GetFilter(const CDbUrl &videoUrl, Filter &filter)
   }
 
   return true;
+}
+
+void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const CVariant &art)
+{
+  if (art.isNull() || art.empty())
+    return;
+
+  try
+  {
+    if (NULL == m_pDB.get()) return;
+    if (NULL == m_pDS.get()) return;
+
+    CStdString sql = PrepareSQL("SELECT art_id, artwork_object FROM art WHERE media_id=%i AND media_type='%s'", mediaId, mediaType.c_str());
+    m_pDS->query(sql.c_str());
+    if (!m_pDS->eof())
+    { // update
+      int artId = m_pDS->fv(0).get_asInt();
+      CVariant artObj = GetVariantObject(m_pDS, 1);
+
+      for (CVariant::const_iterator_map artIt = art.begin_map(); artIt != art.end_map(); artIt++)
+        artObj[artIt->first] = artIt->second;
+
+      m_pDS->close();
+      sql = PrepareSQL("UPDATE art SET artwork_object='%s' where art_id=%d", CJSONVariantWriter::Write(artObj, true).c_str(), artId);
+      m_pDS->exec(sql.c_str());
+    }
+    else
+    { // insert
+      m_pDS->close();
+
+      sql = PrepareSQL("INSERT INTO art(media_id, media_type, artwork_object) VALUES (%d, '%s', '%s')", mediaId, mediaType.c_str(), CJSONVariantWriter::Write(art, true).c_str());
+      m_pDS->exec(sql.c_str());
+    }
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s(%d, '%s', '%s', '%s') failed", __FUNCTION__, mediaId, mediaType.c_str());
+  }
+}
+
+void CVideoDatabase::GetArtForItem(std::auto_ptr<dbiplus::Dataset> &pDS, size_t index, std::map<std::string, std::string> &artwork)
+{
+  if (pDS.get() == NULL)
+    return;
+
+  return GetArtForItem(pDS->get_sql_record(), index, artwork);
+}
+
+void CVideoDatabase::GetArtForItem(const dbiplus::sql_record* const record, size_t index, std::map<std::string, std::string> &artwork)
+{
+  CVariant artObj = GetVariantObject(record, index);
+  for (CVariant::const_iterator_map artIt = artObj.begin_map(); artIt != artObj.end_map(); artIt++)
+    artwork.insert(make_pair(artIt->first, artIt->second.asString()));
+}
+
+CVariant CVideoDatabase::GetVariantObject(std::auto_ptr<dbiplus::Dataset> &pDS, size_t index)
+{
+  if (pDS.get() == NULL)
+    return CVariant::ConstNullVariant;
+
+  return GetVariantObject(pDS->get_sql_record(), index);
+}
+
+CVariant CVideoDatabase::GetVariantObject(const dbiplus::sql_record* const record, size_t index)
+{
+  if (record == NULL || index >= record->size())
+    return CVariant::ConstNullVariant;
+
+  string strObj = record->at(index).get_asString();
+  if (strObj.empty())
+    return CVariant::ConstNullVariant;
+
+  return CJSONVariantParser::Parse((const unsigned char*)strObj.c_str(), strObj.size());
 }

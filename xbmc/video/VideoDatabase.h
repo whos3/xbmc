@@ -824,4 +824,11 @@ private:
 
   void AnnounceRemove(std::string content, int id);
   void AnnounceUpdate(std::string content, int id);
+
+  void SetArtForItem(int mediaId, const std::string &mediaType, const CVariant &art);
+  void GetArtForItem(std::auto_ptr<dbiplus::Dataset> &pDS, size_t index, std::map<std::string, std::string> &artwork);
+  void GetArtForItem(const dbiplus::sql_record* const record, size_t index, std::map<std::string, std::string> &artwork);
+
+  CVariant GetVariantObject(std::auto_ptr<dbiplus::Dataset> &pDS, size_t index);
+  CVariant GetVariantObject(const dbiplus::sql_record* const record, size_t index);
 };
