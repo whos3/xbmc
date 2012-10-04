@@ -361,7 +361,8 @@ void CVideoDatabase::CreateViews()
                                       "  tvshow.c%02d AS strShowPath, "
                                       "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
                                       "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
-                                      "  seasons.idSeason AS idSeason "
+                                      "  seasons.idSeason AS idSeason, "
+                                      "  art.artwork_object AS artwork "
                                       "FROM episode"
                                       "  JOIN files ON"
                                       "    files.idFile=episode.idFile"
@@ -372,7 +373,10 @@ void CVideoDatabase::CreateViews()
                                       "  JOIN path ON"
                                       "    files.idPath=path.idPath"
                                       "  LEFT JOIN bookmark ON"
-                                      "    bookmark.idFile=episode.idFile AND bookmark.type=1", VIDEODB_ID_TV_TITLE, VIDEODB_ID_TV_STUDIOS, VIDEODB_ID_TV_PREMIERED, VIDEODB_ID_TV_MPAA, VIDEODB_ID_TV_BASEPATH, VIDEODB_ID_EPISODE_SEASON);
+                                      "    bookmark.idFile=episode.idFile AND bookmark.type=1"
+                                      "  LEFT JOIN art ON"
+                                      "    art.media_id = episode.idEpisode AND art.media_type = 'episode'",
+                                      VIDEODB_ID_TV_TITLE, VIDEODB_ID_TV_STUDIOS, VIDEODB_ID_TV_PREMIERED, VIDEODB_ID_TV_MPAA, VIDEODB_ID_TV_BASEPATH, VIDEODB_ID_EPISODE_SEASON);
   m_pDS->exec(episodeview.c_str());
 
   CLog::Log(LOGINFO, "create tvshowview");
@@ -384,7 +388,8 @@ void CVideoDatabase::CreateViews()
                                      "  MAX(files.lastPlayed) AS lastPlayed,"
                                      "  NULLIF(COUNT(episode.c12), 0) AS totalCount,"
                                      "  COUNT(files.playCount) AS watchedcount,"
-                                     "  NULLIF(COUNT(DISTINCT(episode.c12)), 0) AS totalSeasons "
+                                     "  NULLIF(COUNT(DISTINCT(episode.c12)), 0) AS totalSeasons, "
+                                     "  art.artwork_object AS artwork "
                                      "FROM tvshow"
                                      "  LEFT JOIN tvshowlinkpath ON"
                                      "    tvshowlinkpath.idShow=tvshow.idShow"
@@ -394,6 +399,8 @@ void CVideoDatabase::CreateViews()
                                      "    episode.idShow=tvshow.idShow"
                                      "  LEFT JOIN files ON"
                                      "    files.idFile=episode.idFile "
+                                     "  LEFT JOIN art ON"
+                                     "    art.media_id = tvshow.idShow AND art.media_type = 'tvshow' "
                                      "GROUP BY tvshow.idShow;");
   m_pDS->exec(tvshowview.c_str());
 
@@ -407,14 +414,17 @@ void CVideoDatabase::CreateViews()
               "  files.lastPlayed as lastPlayed,"
               "  files.dateAdded as dateAdded, "
               "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
-              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds "
+              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
+              "  art.artwork_object AS artwork "
               "FROM musicvideo"
               "  JOIN files ON"
               "    files.idFile=musicvideo.idFile"
               "  JOIN path ON"
               "    path.idPath=files.idPath"
               "  LEFT JOIN bookmark ON"
-              "    bookmark.idFile=musicvideo.idFile AND bookmark.type=1");
+              "    bookmark.idFile=musicvideo.idFile AND bookmark.type=1"
+              "  LEFT JOIN art ON"
+              "    art.media_id = musicvideo.idMVideo AND art.media_type = 'musicvideo'");
 
   CLog::Log(LOGINFO, "create movieview");
   m_pDS->exec("DROP VIEW IF EXISTS movieview");
@@ -427,7 +437,8 @@ void CVideoDatabase::CreateViews()
               "  files.lastPlayed AS lastPlayed, "
               "  files.dateAdded AS dateAdded, "
               "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
-              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds "
+              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
+              "  art.artwork_object AS artwork "
               "FROM movie"
               "  LEFT JOIN sets ON"
               "    sets.idSet = movie.idSet"
@@ -436,7 +447,9 @@ void CVideoDatabase::CreateViews()
               "  JOIN path ON"
               "    path.idPath=files.idPath"
               "  LEFT JOIN bookmark ON"
-              "    bookmark.idFile=movie.idFile AND bookmark.type=1");
+              "    bookmark.idFile=movie.idFile AND bookmark.type=1"
+              "  LEFT JOIN art ON"
+              "    art.media_id = movie.idMovie AND art.media_type = 'movie'");
 }
 
 //********************************************************************************************************************************
@@ -5755,6 +5768,11 @@ bool CVideoDatabase::GetMoviesByWhere(const CStdString& strBaseDir, const Filter
         itemUrl.AppendPath(path);
         pItem->SetPath(itemUrl.ToString());
 
+        // retrieve and set artwork
+        map<string, string> art;
+        GetArtForItem(record, VIDEODB_DETAILS_MOVIE_ARTWORK, art);
+        pItem->SetArt(art);
+
         pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED,movie.m_playCount > 0);
         items.Add(pItem);
       }
@@ -5859,6 +5877,11 @@ bool CVideoDatabase::GetTvShowsByWhere(const CStdString& strBaseDir, const Filte
         CStdString path; path.Format("%ld/", record->at(0).get_asInt());
         itemUrl.AppendPath(path);
         pItem->SetPath(itemUrl.ToString());
+
+        // retrieve and set artwork
+        map<string, string> art;
+        GetArtForItem(record, VIDEODB_DETAILS_TVSHOW_ARTWORK, art);
+        pItem->SetArt(art);
 
         pItem->m_dateTime = movie.m_premiered;
         pItem->GetVideoInfoTag()->m_iYear = pItem->m_dateTime.GetYear();
@@ -6177,6 +6200,11 @@ bool CVideoDatabase::GetEpisodesByWhere(const CStdString& strBaseDir, const Filt
           path.Format("%ld", idEpisode);
         itemUrl.AppendPath(path);
         pItem->SetPath(itemUrl.ToString());
+
+        // retrieve and set artwork
+        map<string, string> art;
+        GetArtForItem(record, VIDEODB_DETAILS_EPISODE_ARTWORK, art);
+        pItem->SetArt(art);
 
         pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, movie.m_playCount > 0);
         pItem->m_dateTime = movie.m_firstAired;
@@ -7019,6 +7047,11 @@ bool CVideoDatabase::GetMusicVideosByWhere(const CStdString &baseDir, const Filt
         CStdString path; path.Format("%ld", record->at(0).get_asInt());
         itemUrl.AppendPath(path);
         item->SetPath(itemUrl.ToString());
+
+        // retrieve and set artwork
+        map<string, string> art;
+        GetArtForItem(record, VIDEODB_DETAILS_MUSICVIDEO_ARTWORK, art);
+        item->SetArt(art);
 
         item->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, musicvideo.m_playCount > 0);
         items.Add(item);
@@ -8067,8 +8100,10 @@ void CVideoDatabase::ExportToXML(const CStdString &path, bool singleFiles /* = f
       // strip paths to make them relative
       if (movie.m_strTrailer.Mid(0,movie.m_strPath.size()).Equals(movie.m_strPath))
         movie.m_strTrailer = movie.m_strTrailer.Mid(movie.m_strPath.size());
+
       map<string, string> artwork;
-      if (GetArtForItem(movie.m_iDbId, movie.m_type, artwork) && !singleFiles)
+      GetArtForItem(pDS, VIDEODB_DETAILS_EPISODE_ARTWORK, artwork);
+      if (!artwork.empty() && !singleFiles)
       {
         TiXmlElement additionalNode("art");
         for (map<string, string>::const_iterator i = artwork.begin(); i != artwork.end(); ++i)
@@ -8167,7 +8202,8 @@ void CVideoDatabase::ExportToXML(const CStdString &path, bool singleFiles /* = f
     {
       CVideoInfoTag movie = GetDetailsForMusicVideo(m_pDS);
       map<string, string> artwork;
-      if (GetArtForItem(movie.m_iDbId, movie.m_type, artwork) && !singleFiles)
+      GetArtForItem(m_pDS, VIDEODB_DETAILS_MUSICVIDEO_ARTWORK, artwork);
+      if (!artwork.empty() && !singleFiles)
       {
         TiXmlElement additionalNode("art");
         for (map<string, string>::const_iterator i = artwork.begin(); i != artwork.end(); ++i)
@@ -8256,7 +8292,8 @@ void CVideoDatabase::ExportToXML(const CStdString &path, bool singleFiles /* = f
       GetTvShowSeasonArt(tvshow.m_iDbId, seasonArt);
 
       map<string, string> artwork;
-      if (GetArtForItem(tvshow.m_iDbId, tvshow.m_type, artwork) && !singleFiles)
+      GetArtForItem(m_pDS, VIDEODB_DETAILS_TVSHOW_ARTWORK, artwork);
+      if ((!artwork.empty() || !seasonArt.empty()) && !singleFiles)
       {
         TiXmlElement additionalNode("art");
         for (map<string, string>::const_iterator i = artwork.begin(); i != artwork.end(); ++i)
@@ -8366,7 +8403,8 @@ void CVideoDatabase::ExportToXML(const CStdString &path, bool singleFiles /* = f
       {
         CVideoInfoTag episode = GetDetailsForEpisode(pDS, true);
         map<string, string> artwork;
-        if (GetArtForItem(episode.m_iDbId, "episode", artwork) && !singleFiles)
+        GetArtForItem(pDS, VIDEODB_DETAILS_EPISODE_ARTWORK, artwork);
+        if (!artwork.empty() && !singleFiles)
         {
           TiXmlElement additionalNode("art");
           for (map<string, string>::const_iterator i = artwork.begin(); i != artwork.end(); ++i)
