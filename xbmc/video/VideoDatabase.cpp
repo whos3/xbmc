@@ -45,6 +45,8 @@
 #include "guilib/LocalizeStrings.h"
 #include "utils/TimeUtils.h"
 #include "utils/log.h"
+#include "utils/JSONVariantParser.h"
+#include "utils/JSONVariantWriter.h"
 #include "TextureCache.h"
 #include "addons/AddonInstaller.h"
 #include "interfaces/AnnouncementManager.h"
@@ -308,8 +310,8 @@ bool CVideoDatabase::CreateTables()
     m_pDS->exec("CREATE INDEX ix_seasons ON seasons (idShow, season)");
 
     CLog::Log(LOGINFO, "create art table and triggers");
-    m_pDS->exec("CREATE TABLE art(art_id INTEGER PRIMARY KEY, media_id INTEGER, media_type TEXT, type TEXT, url TEXT)");
-    m_pDS->exec("CREATE INDEX ix_art ON art(media_id, media_type(20), type(20))");
+    m_pDS->exec("CREATE TABLE art(art_id INTEGER PRIMARY KEY, media_id INTEGER, media_type TEXT, artwork_object TEXT)");
+    m_pDS->exec("CREATE INDEX ix_art ON art(media_id, media_type(20))");
     m_pDS->exec("CREATE TRIGGER delete_movie AFTER DELETE ON movie FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idMovie AND media_type='movie'; END");
     m_pDS->exec("CREATE TRIGGER delete_tvshow AFTER DELETE ON tvshow FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idShow AND media_type='tvshow'; END");
     m_pDS->exec("CREATE TRIGGER delete_musicvideo AFTER DELETE ON musicvideo FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idMVideo AND media_type='musicvideo'; END");
@@ -4100,6 +4102,70 @@ bool CVideoDatabase::UpdateOldVersion(int iVersion)
       m_pDS->next();
     }
     m_pDS->exec("DROP TABLE IF EXISTS setlinkmovie");
+  }
+  if (iVersion < 70)
+  {
+    // retrieve the information from the art table
+    m_pDS->query("SELECT media_id, media_type, type, url FROM art");
+    map<pair<int, string>, CVariant> artwork;
+    while (!m_pDS->eof())
+    {
+      int mediaId = m_pDS->fv(0).get_asInt();
+      // get rid of invalid entries
+      if (mediaId >= 0)
+      {
+        pair<int, string> item(mediaId, m_pDS->fv(1).get_asString());
+        string type = m_pDS->fv(2).get_asString();
+        string url = m_pDS->fv(3).get_asString();
+
+        // don't store empty URLs
+        if (!url.empty())
+        {
+          map<pair<int, string>, CVariant>::iterator art = artwork.find(item);
+          if (art == artwork.end())
+          {
+            CVariant obj(CVariant::VariantTypeObject);
+            obj[type] = url;
+
+            artwork[item] = obj;
+          }
+          else
+            art->second[type] = url;
+        }
+      }
+
+      m_pDS->next();
+    }
+    m_pDS->close();
+
+    // delete the existing art table
+    m_pDS->exec("DROP TABLE IF EXISTS art");
+    m_pDS->exec("DROP INDEX IF EXISTS ix_art");
+    m_pDS->exec("DROP TRIGGER IF EXISTS delete_movie");
+    m_pDS->exec("DROP TRIGGER IF EXISTS delete_tvshow");
+    m_pDS->exec("DROP TRIGGER IF EXISTS delete_musicvideo");
+    m_pDS->exec("DROP TRIGGER IF EXISTS delete_episode");
+    m_pDS->exec("DROP TRIGGER IF EXISTS delete_season");
+    m_pDS->exec("DROP TRIGGER IF EXISTS delete_set");
+    m_pDS->exec("DROP TRIGGER IF EXISTS delete_person");
+    
+    // create the new art table
+    m_pDS->exec("CREATE TABLE art(art_id INTEGER PRIMARY KEY, media_id INTEGER, media_type TEXT, artwork_object TEXT)");
+    m_pDS->exec("CREATE INDEX ix_art ON art(media_id, media_type(20))");
+    m_pDS->exec("CREATE TRIGGER delete_movie AFTER DELETE ON movie FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idMovie AND media_type='movie'; END");
+    m_pDS->exec("CREATE TRIGGER delete_tvshow AFTER DELETE ON tvshow FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idShow AND media_type='tvshow'; END");
+    m_pDS->exec("CREATE TRIGGER delete_musicvideo AFTER DELETE ON musicvideo FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idMVideo AND media_type='musicvideo'; END");
+    m_pDS->exec("CREATE TRIGGER delete_episode AFTER DELETE ON episode FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idEpisode AND media_type='episode'; END");
+    m_pDS->exec("CREATE TRIGGER delete_season AFTER DELETE ON seasons FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idSeason AND media_type='season'; END");
+    m_pDS->exec("CREATE TRIGGER delete_set AFTER DELETE ON sets FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idSet AND media_type='set'; END");
+    m_pDS->exec("CREATE TRIGGER delete_person AFTER DELETE ON actors FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idActor AND media_type IN ('actor','artist','writer','director'); END");
+
+    // insert the content extracted from the old art table
+    for (map<pair<int, string>, CVariant>::const_iterator art = artwork.begin(); art != artwork.end(); art++)
+    {
+      string sql = PrepareSQL("INSERT INTO art(media_id, media_type, artwork_object) VALUES (%d, '%s', '%s')", art->first.first, art->first.second.c_str(), CJSONVariantWriter::Write(art->second, true).c_str());
+      m_pDS->exec(sql.c_str());
+    }
   }
   // always recreate the view after any table change
   CreateViews();
