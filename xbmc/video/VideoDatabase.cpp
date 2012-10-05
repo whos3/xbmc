@@ -3575,9 +3575,6 @@ void CVideoDatabase::SetVideoSettings(const CStdString& strFilenameAndPath, cons
 
 void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const map<string, string> &art)
 {
-  if (mediaId < 0 || mediaType.empty() || art.empty())
-    return;
-
   CVariant artObj(CVariant::VariantTypeObject);
   for (map<string, string>::const_iterator i = art.begin(); i != art.end(); ++i)
     artObj[i->first] = i->second;
@@ -3587,7 +3584,7 @@ void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const m
 
 void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const string &artType, const string &url)
 {
-  if (mediaId < 0 || mediaType.empty() || artType.empty() || url.empty())
+  if (artType.empty())
     return;
 
   CVariant artObj(CVariant::VariantTypeObject);
@@ -3598,6 +3595,9 @@ void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const s
 
 bool CVideoDatabase::GetArtForItem(int mediaId, const string &mediaType, map<string, string> &art)
 {
+  if (mediaId < 0 || mediaType.empty())
+    return false;
+  
   try
   {
     if (NULL == m_pDB.get()) return false;
@@ -3623,6 +3623,9 @@ bool CVideoDatabase::GetArtForItem(int mediaId, const string &mediaType, map<str
 
 string CVideoDatabase::GetArtForItem(int mediaId, const string &mediaType, const string &artType)
 {
+  if (mediaId < 0 || mediaType.empty() || artType.empty())
+    return false;
+  
   std::string query = PrepareSQL("SELECT artwork_object FROM art WHERE media_id=%i AND media_type='%s'", mediaId, mediaType.c_str());
   m_pDS2->query(query.c_str());
   if (m_pDS2->eof())
@@ -4131,20 +4134,16 @@ bool CVideoDatabase::UpdateOldVersion(int iVersion)
         string type = m_pDS->fv(2).get_asString();
         string url = m_pDS->fv(3).get_asString();
 
-        // don't store empty URLs
-        if (!url.empty())
+        map<pair<int, string>, CVariant>::iterator art = artwork.find(item);
+        if (art == artwork.end())
         {
-          map<pair<int, string>, CVariant>::iterator art = artwork.find(item);
-          if (art == artwork.end())
-          {
-            CVariant obj(CVariant::VariantTypeObject);
-            obj[type] = url;
+          CVariant obj(CVariant::VariantTypeObject);
+          obj[type] = url;
 
-            artwork[item] = obj;
-          }
-          else
-            art->second[type] = url;
+          artwork[item] = obj;
         }
+        else
+          art->second[type] = url;
       }
 
       m_pDS->next();
@@ -4175,10 +4174,7 @@ bool CVideoDatabase::UpdateOldVersion(int iVersion)
 
     // insert the content extracted from the old art table
     for (map<pair<int, string>, CVariant>::const_iterator art = artwork.begin(); art != artwork.end(); art++)
-    {
-      string sql = PrepareSQL("INSERT INTO art(media_id, media_type, artwork_object) VALUES (%d, '%s', '%s')", art->first.first, art->first.second.c_str(), CJSONVariantWriter::Write(art->second, true).c_str());
-      m_pDS->exec(sql.c_str());
-    }
+      SetArtForItem(art->first.first, art->first.second, art->second);
   }
   // always recreate the view after any table change
   CreateViews();
@@ -9407,7 +9403,7 @@ bool CVideoDatabase::GetFilter(const CDbUrl &videoUrl, Filter &filter)
 
 void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const CVariant &art)
 {
-  if (art.isNull() || art.empty())
+  if (mediaId < 0 || mediaType.empty() || art.isNull())
     return;
 
   try
@@ -9439,7 +9435,7 @@ void CVideoDatabase::SetArtForItem(int mediaId, const string &mediaType, const C
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "%s(%d, '%s', '%s', '%s') failed", __FUNCTION__, mediaId, mediaType.c_str());
+    CLog::Log(LOGERROR, "%s(%d, '%s') failed", __FUNCTION__, mediaId, mediaType.c_str());
   }
 }
 
