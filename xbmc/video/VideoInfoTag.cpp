@@ -90,7 +90,7 @@ HandledProperty handledProperties[] = {
 
 CVideoInfoTag::CVideoInfoTag()
 {
-  IPropertyHandler::SetHandledPropertyMap(handledProperties);
+  IPropertyHandler::SetHandledPropertyMap(handledProperties, sizeof(handledProperties) / sizeof(HandledProperty));
   Reset();
 }
 
