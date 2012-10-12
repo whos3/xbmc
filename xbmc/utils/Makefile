@@ -29,6 +29,7 @@ SRCS=AlarmClock.cpp \
      HttpResponse.cpp \
      InfoLoader.cpp \
      IPropertyHandler.cpp \
+     IUpdatable.cpp \
      JobManager.cpp \
      JSONVariantParser.cpp \
      JSONVariantWriter.cpp \
