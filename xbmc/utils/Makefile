@@ -27,6 +27,8 @@ SRCS=AlarmClock.cpp \
      HttpHeader.cpp \
      HttpParser.cpp \
      HttpResponse.cpp \
+     IHandledSerializable.cpp \
+     IHandledSortable.cpp \
      InfoLoader.cpp \
      IPropertyHandler.cpp \
      IUpdatable.cpp \
