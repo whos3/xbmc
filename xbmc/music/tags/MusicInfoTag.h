@@ -165,7 +165,7 @@ public:
 
   virtual void Archive(CArchive& ar);
   virtual void Serialize(CVariant& ar) const;
-  virtual void ToSortable(SortItem& sortable);
+  virtual void ToSortable(SortItem& sortable) const;
 
   void Clear();
 protected:

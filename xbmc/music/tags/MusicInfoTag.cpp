@@ -585,7 +585,7 @@ void CMusicInfoTag::Serialize(CVariant& value) const
   value["albumid"] = m_iAlbumId;
 }
 
-void CMusicInfoTag::ToSortable(SortItem& sortable)
+void CMusicInfoTag::ToSortable(SortItem& sortable) const
 {
   sortable[FieldTitle] = m_strTitle;
   sortable[FieldArtist] = m_artist;

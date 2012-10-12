@@ -100,7 +100,7 @@ public:
   const CFileItem& operator=(const CFileItem& item);
   virtual void Archive(CArchive& ar);
   virtual void Serialize(CVariant& value) const;
-  virtual void ToSortable(SortItem &sortable);
+  virtual void ToSortable(SortItem &sortable) const;
   virtual bool IsFileItem() const { return true; };
 
   bool Exists(bool bUseCache = true) const;

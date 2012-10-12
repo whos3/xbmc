@@ -250,7 +250,7 @@ void CPictureInfoTag::Serialize(CVariant& value) const
   value["transmissionreference"] = CStdString(m_iptcInfo.TransmissionReference);
 }
 
-void CPictureInfoTag::ToSortable(SortItem& sortable)
+void CPictureInfoTag::ToSortable(SortItem& sortable) const
 {
   
 }

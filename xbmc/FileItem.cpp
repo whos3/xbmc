@@ -702,7 +702,7 @@ void CFileItem::Serialize(CVariant& value) const
     (*m_pictureInfoTag).Serialize(value["pictureInfoTag"]);
 }
 
-void CFileItem::ToSortable(SortItem &sortable)
+void CFileItem::ToSortable(SortItem &sortable) const
 {
   sortable[FieldPath] = m_strPath;
   sortable[FieldDate] = (m_dateTime.IsValid()) ? m_dateTime.GetAsDBDateTime() : "";

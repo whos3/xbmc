@@ -486,7 +486,7 @@ void CVideoInfoTag::Serialize(CVariant& value) const
   value["seasonid"] = m_iIdSeason;
 }
 
-void CVideoInfoTag::ToSortable(SortItem& sortable)
+void CVideoInfoTag::ToSortable(SortItem& sortable) const
 {
   sortable[FieldDirector] = m_director;
   sortable[FieldWriter] = m_writingCredits;
