@@ -24,7 +24,8 @@
 #include "XBDateTime.h"
 #include "utils/ScraperUrl.h"
 #include "utils/Fanart.h"
-#include "utils/ISortable.h"
+#include "utils/IHandledSerializable.h"
+#include "utils/IHandledSortable.h"
 #include "utils/StreamDetails.h"
 #include "video/Bookmark.h"
 #include "XBDateTime.h"
@@ -41,10 +42,12 @@ struct SActorInfo
   CStdString thumb;
 };
 
-class CVideoInfoTag : public IArchivable, public ISerializable, public ISortable
+class CVideoInfoTag : public IArchivable, public IHandledSerializable, public IHandledSortable
 {
 public:
-  CVideoInfoTag() { Reset(); };
+  CVideoInfoTag();
+  ~CVideoInfoTag() { }
+  
   void Reset();
   /* \brief Load information to a videoinfotag from an XML element
    There are three types of tags supported:

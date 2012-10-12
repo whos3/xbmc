@@ -32,7 +32,67 @@
 
 #include <sstream>
 
+#define loffsetof(MEMBER) my_offsetof(CVideoInfoTag, MEMBER)
+
 using namespace std;
+
+HandledProperty handledProperties[] = {
+  { FieldDirector,                  "director",           HandledPropertyTypeArrayString, loffsetof(m_director) },
+  { FieldWriter,                    "writer",             HandledPropertyTypeArrayString, loffsetof(m_writingCredits) },
+  { FieldGenre,                     "genre",              HandledPropertyTypeArrayString, loffsetof(m_genre) },
+  { FieldCountry,                   "country",            HandledPropertyTypeArrayString, loffsetof(m_country) },
+  { FieldTagline,                   "tagline",            HandledPropertyTypeString,      loffsetof(m_strTagLine) },
+  { FieldPlotOutline,               "plotoutline",        HandledPropertyTypeString,      loffsetof(m_strPlotOutline) },
+  { FieldTrailer,                   "trailer",            HandledPropertyTypeString,      loffsetof(m_strTrailer) },
+  { FieldPlot,                      "plot",               HandledPropertyTypeString,      loffsetof(m_strPlot) },
+  { FieldTitle,                     "title",              HandledPropertyTypeString,      loffsetof(m_strTitle) },
+  { FieldSortTitle,                 "sorttitle",          HandledPropertyTypeString,      loffsetof(m_strSortTitle) },
+  { FieldVotes,                     "votes",              HandledPropertyTypeString,      loffsetof(m_strVotes) },
+  { FieldArtist,                    "artist",             HandledPropertyTypeArrayString, loffsetof(m_artist) },
+  { FieldSet,                       "set",                HandledPropertyTypeString,      loffsetof(m_strSet) },
+  { FieldNone,                      "setid",              HandledPropertyTypeInt32,       loffsetof(m_iSetId) },
+  { FieldTag,                       "tag",                HandledPropertyTypeArrayString, loffsetof(m_tags) },
+  { FieldTime,                      "runtime",            HandledPropertyTypeString,      loffsetof(m_strRuntime) },
+  { FieldFilename,                  "file",               HandledPropertyTypeString,      loffsetof(m_strFile) },
+  { FieldPath,                      "path",               HandledPropertyTypeString,      loffsetof(m_strPath) },
+  { FieldNone,                      "imdbnumber",         HandledPropertyTypeString,      loffsetof(m_strIMDBNumber) },
+  { FieldMPAA,                      "mpaa",               HandledPropertyTypeString,      loffsetof(m_strMPAARating) },
+  { FieldNone,                      "filenameandpath",    HandledPropertyTypeString,      loffsetof(m_strFileNameAndPath) },
+  { FieldNone,                      "originaltitle",      HandledPropertyTypeString,      loffsetof(m_strOriginalTitle) },
+  { FieldNone,                      "episodeguide",       HandledPropertyTypeString,      loffsetof(m_strEpisodeGuide) },
+  { FieldNone,                      "premiered",          HandledPropertyTypeDate,        loffsetof(m_premiered) },
+  { FieldTvShowStatus,              "status",             HandledPropertyTypeString,      loffsetof(m_strStatus) },
+  { FieldProductionCode,            "productioncode",     HandledPropertyTypeString,      loffsetof(m_strProductionCode) },
+  { FieldAirDate,                   "firstaired",         HandledPropertyTypeDate,        loffsetof(m_firstAired) },
+  { FieldTvShowTitle,               "showtitle",          HandledPropertyTypeString,      loffsetof(m_strShowTitle) },
+  { FieldStudio,                    "studio",             HandledPropertyTypeArrayString, loffsetof(m_studio) },
+  { FieldAlbum,                     "album",              HandledPropertyTypeString,      loffsetof(m_strAlbum) },
+  { FieldLastPlayed,                "lastplayed",         HandledPropertyTypeDateTime,    loffsetof(m_lastPlayed) },
+  { FieldNone,                      "showlink",           HandledPropertyTypeArrayString, loffsetof(m_showLink) },
+  { FieldNone,                      "tvshowpath",         HandledPropertyTypeString,      loffsetof(m_strShowPath) },
+  { FieldPlaycount,                 "playcount",          HandledPropertyTypeInt32,       loffsetof(m_playCount) },
+  { FieldTop250,                    "top250",             HandledPropertyTypeInt32,       loffsetof(m_iTop250) },
+  { FieldYear,                      "year",               HandledPropertyTypeInt32,       loffsetof(m_iYear) },
+  { FieldSeason,                    "season",             HandledPropertyTypeInt32,       loffsetof(m_iSeason) },
+  { FieldEpisodeNumber,             "episode",            HandledPropertyTypeInt32,       loffsetof(m_iEpisode) },
+  { FieldNone,                      "",                   HandledPropertyTypeString,      loffsetof(m_strUniqueId) },
+  { FieldId,                        "dbid",               HandledPropertyTypeInt32,       loffsetof(m_iDbId) },
+  { FieldNone,                      "fileid",             HandledPropertyTypeInt32,       loffsetof(m_iFileId) },
+  { FieldSeasonSpecialSort,         "specialsortseason",  HandledPropertyTypeInt32,       loffsetof(m_iSpecialSortSeason) },
+  { FieldEpisodeNumberSpecialSort,  "specialsortepisode", HandledPropertyTypeInt32,       loffsetof(m_iSpecialSortEpisode) },
+  { FieldTrackNumber,               "track",              HandledPropertyTypeInt32,       loffsetof(m_iTrack) },
+  { FieldRating,                    "rating",             HandledPropertyTypeFloat,       loffsetof(m_fRating) },
+  { FieldNone,                      "tvshowid",           HandledPropertyTypeInt32,       loffsetof(m_iIdShow) },
+  { FieldNone,                      "seasonid",           HandledPropertyTypeInt32,       loffsetof(m_iIdSeason) },
+  { FieldDateAdded,                 "dateadded",          HandledPropertyTypeDateTime,    loffsetof(m_dateAdded) },
+  { FieldMediaType,                 "type",               HandledPropertyTypeString,      loffsetof(m_type) }
+};
+
+CVideoInfoTag::CVideoInfoTag()
+{
+  IPropertyHandler::SetHandledPropertyMap(handledProperties);
+  Reset();
+}
 
 void CVideoInfoTag::Reset()
 {
@@ -422,17 +482,8 @@ void CVideoInfoTag::Archive(CArchive& ar)
 
 void CVideoInfoTag::Serialize(CVariant& value) const
 {
-  value["director"] = m_director;
-  value["writer"] = m_writingCredits;
-  value["genre"] = m_genre;
-  value["country"] = m_country;
-  value["tagline"] = m_strTagLine;
-  value["plotoutline"] = m_strPlotOutline;
-  value["plot"] = m_strPlot;
-  value["title"] = m_strTitle;
-  value["votes"] = m_strVotes;
-  value["studio"] = m_studio;
-  value["trailer"] = m_strTrailer;
+  IHandledSerializable::Serialize(value);
+  
   value["cast"] = CVariant(CVariant::VariantTypeArray);
   for (unsigned int i = 0; i < m_cast.size(); ++i)
   {
@@ -443,86 +494,19 @@ void CVideoInfoTag::Serialize(CVariant& value) const
       actor["thumbnail"] = CTextureCache::GetWrappedImageURL(m_cast[i].thumb);
     value["cast"].push_back(actor);
   }
-  value["set"] = m_strSet;
-  value["setid"] = m_iSetId;
-  value["tag"] = m_tags;
-  value["runtime"] = m_strRuntime;
-  value["file"] = m_strFile;
-  value["path"] = m_strPath;
-  value["imdbnumber"] = m_strIMDBNumber;
-  value["mpaa"] = m_strMPAARating;
-  value["filenameandpath"] = m_strFileNameAndPath;
-  value["originaltitle"] = m_strOriginalTitle;
-  value["sorttitle"] = m_strSortTitle;
-  value["episodeguide"] = m_strEpisodeGuide;
-  value["premiered"] = m_premiered.IsValid() ? m_premiered.GetAsDBDate() : StringUtils::EmptyString;
-  value["status"] = m_strStatus;
-  value["productioncode"] = m_strProductionCode;
-  value["firstaired"] = m_firstAired.IsValid() ? m_firstAired.GetAsDBDate() : StringUtils::EmptyString;
-  value["showtitle"] = m_strShowTitle;
-  value["album"] = m_strAlbum;
-  value["artist"] = m_artist;
-  value["playcount"] = m_playCount;
-  value["lastplayed"] = m_lastPlayed.IsValid() ? m_lastPlayed.GetAsDBDateTime() : StringUtils::EmptyString;
-  value["top250"] = m_iTop250;
-  value["year"] = m_iYear;
-  value["season"] = m_iSeason;
-  value["episode"] = m_iEpisode;
+  
   value["uniqueid"]["unknown"] = m_strUniqueId;
-  value["rating"] = m_fRating;
-  value["dbid"] = m_iDbId;
-  value["fileid"] = m_iFileId;
-  value["track"] = m_iTrack;
-  value["showlink"] = m_showLink;
+  
   m_streamDetails.Serialize(value["streamdetails"]);
   CVariant resume = CVariant(CVariant::VariantTypeObject);
   resume["position"] = (float)m_resumePoint.timeInSeconds;
   resume["total"] = (float)m_resumePoint.totalTimeInSeconds;
   value["resume"] = resume;
-  value["tvshowid"] = m_iIdShow;
-  value["tvshowpath"] = m_strShowPath;
-  value["dateadded"] = m_dateAdded.IsValid() ? m_dateAdded.GetAsDBDateTime() : StringUtils::EmptyString;
-  value["type"] = m_type;
-  value["seasonid"] = m_iIdSeason;
 }
 
 void CVideoInfoTag::ToSortable(SortItem& sortable) const
 {
-  sortable[FieldDirector] = m_director;
-  sortable[FieldWriter] = m_writingCredits;
-  sortable[FieldGenre] = m_genre;
-  sortable[FieldCountry] = m_country;
-  sortable[FieldTagline] = m_strTagLine;
-  sortable[FieldPlotOutline] = m_strPlotOutline;
-  sortable[FieldPlot] = m_strPlot;
-  sortable[FieldTitle] = m_strTitle;
-  sortable[FieldVotes] = m_strVotes;
-  sortable[FieldStudio] = m_studio;
-  sortable[FieldTrailer] = m_strTrailer;
-  sortable[FieldSet] = m_strSet;
-  sortable[FieldTime] = m_strRuntime;
-  sortable[FieldFilename] = m_strFile;
-  sortable[FieldMPAA] = m_strMPAARating;
-  sortable[FieldPath] = m_strFileNameAndPath;
-  sortable[FieldSortTitle] = m_strSortTitle;
-  sortable[FieldTvShowStatus] = m_strStatus;
-  sortable[FieldProductionCode] = m_strProductionCode;
-  sortable[FieldAirDate] = m_firstAired.IsValid() ? m_firstAired.GetAsDBDate() : (m_premiered.IsValid() ? m_premiered.GetAsDBDate() : StringUtils::EmptyString);
-  sortable[FieldTvShowTitle] = m_strShowTitle;
-  sortable[FieldAlbum] = m_strAlbum;
-  sortable[FieldArtist] = m_artist;
-  sortable[FieldPlaycount] = m_playCount;
-  sortable[FieldLastPlayed] = m_lastPlayed.IsValid() ? m_lastPlayed.GetAsDBDateTime() : StringUtils::EmptyString;
-  sortable[FieldTop250] = m_iTop250;
-  sortable[FieldYear] = m_iYear;
-  sortable[FieldSeason] = m_iSeason;
-  sortable[FieldEpisodeNumber] = m_iEpisode;
-  sortable[FieldEpisodeNumberSpecialSort] = m_iSpecialSortEpisode;
-  sortable[FieldSeasonSpecialSort] = m_iSpecialSortSeason;
-  sortable[FieldRating] = m_fRating;
-  sortable[FieldId] = m_iDbId;
-  sortable[FieldTrackNumber] = m_iTrack;
-  sortable[FieldTag] = m_tags;
+  IHandledSortable::ToSortable(sortable);
 
   if (m_streamDetails.HasItems() && m_streamDetails.GetVideoDuration() > 0)
     sortable[FieldTime] = m_streamDetails.GetVideoDuration();
@@ -537,8 +521,6 @@ void CVideoInfoTag::ToSortable(SortItem& sortable) const
   sortable[FieldSubtitleLanguage] = m_streamDetails.GetSubtitleLanguage();
 
   sortable[FieldInProgress] = m_resumePoint.IsPartWay();
-  sortable[FieldDateAdded] = m_dateAdded.IsValid() ? m_dateAdded.GetAsDBDateTime() : StringUtils::EmptyString;
-  sortable[FieldMediaType] = DatabaseUtils::MediaTypeFromString(m_type);
 }
 
 const CStdString CVideoInfoTag::GetCast(bool bIncludeRole /*= false*/) const
