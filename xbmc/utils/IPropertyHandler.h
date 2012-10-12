@@ -19,6 +19,7 @@
  *
  */
 
+#include <stddef.h>
 #include <map>
 #include <set>
 #include <string>
@@ -30,13 +31,13 @@
 #define my_offsetof(TYPE, MEMBER) offsetof(TYPE, MEMBER)
 #else
 /*
- C us*tom version of standard offsetof() macro which can be used to get
+ Custom version of standard offsetof() macro which can be used to get
  offsets of members in class for non-POD types (according to the current
  version of C++ standard offsetof() macro can't be used in such cases and
  attempt to do so causes warnings to be emitted, OTOH in many cases it is
  still OK to assume that all instances of the class has the same offsets
  for the same members).
-   */
+*/
 #define my_offsetof(TYPE, MEMBER) \
 ((size_t)((char *)&(((TYPE *)0x10)->MEMBER) - (char*)0x10))
 #endif
@@ -74,7 +75,7 @@ public:
   virtual ~IPropertyHandler();
 
 protected:
-  void SetHandledPropertyMap(HandledProperty propertyMap[]);
+  void SetHandledPropertyMap(HandledProperty propertyMap[], size_t size);
 
   std::set<Field> GetHandledPropertyFields() const;
   std::set<std::string> GetHandledPropertyNames() const;

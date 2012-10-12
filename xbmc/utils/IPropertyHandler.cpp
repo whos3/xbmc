@@ -21,6 +21,7 @@
 #include "IPropertyHandler.h"
 #include "Variant.h"
 #include "XBDateTime.h"
+#include "log.h"
 
 IPropertyHandler::~IPropertyHandler()
 {
@@ -28,14 +29,13 @@ IPropertyHandler::~IPropertyHandler()
   m_nameMap.clear();
 }
 
-void IPropertyHandler::SetHandledPropertyMap(HandledProperty propertyMap[])
+void IPropertyHandler::SetHandledPropertyMap(HandledProperty propertyMap[], size_t size)
 {
-  if (propertyMap == NULL)
+  if (propertyMap == NULL || size <= 0)
     return;
 
   m_propertyMap = propertyMap;
   
-  size_t size = sizeof(propertyMap);
   for (size_t i = 0; i < size; i++)
   {
     HandledProperty *prop = &propertyMap[i];
@@ -94,7 +94,10 @@ const HandledProperty* IPropertyHandler::getHandledProperty(Field propertyField)
   
   std::map<Field, HandledProperty*>::const_iterator it = m_fieldMap.find(propertyField);
   if (it == m_fieldMap.end())
+  {
+    CLog::Log(LOGDEBUG, "IPropertyHandler: unknown field-based property (%d)", propertyField);
     return NULL;
+  }
 
   return it->second;
 }
@@ -106,7 +109,10 @@ const HandledProperty* IPropertyHandler::getHandledProperty(const std::string &p
   
   std::map<std::string, HandledProperty*>::const_iterator it = m_nameMap.find(propertyName);
   if (it == m_nameMap.end())
+  {
+    CLog::Log(LOGDEBUG, "IPropertyHandler: unknown name-based property (%s)", propertyName.c_str());
     return NULL;
+  }
 
   return it->second;
 }
