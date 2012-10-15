@@ -69,12 +69,13 @@ typedef struct {
   size_t m_member;
 } HandledProperty;
 
-class IPropertyHandler
+class CPropertyHandler
 {
 public:
-  virtual ~IPropertyHandler();
+  CPropertyHandler();
+  virtual ~CPropertyHandler();
 
-protected:
+  bool SetObject(void *obj);
   void SetHandledPropertyMap(HandledProperty propertyMap[], size_t size);
 
   std::set<Field> GetHandledPropertyFields() const;
@@ -92,8 +93,29 @@ private:
   
   bool getHandledPropertyValue(const HandledProperty *prop, CVariant &value) const;
   bool setHandledPropertyValue(const HandledProperty *prop, const CVariant &value);
-  
+
+  void *m_object;
   HandledProperty *m_propertyMap;
   std::map<Field, HandledProperty*> m_fieldMap;
   std::map<std::string, HandledProperty*> m_nameMap;
+};
+
+class CPropertyHandlerUser
+{
+public:
+  CPropertyHandlerUser()
+  : m_propertyHandler(NULL)
+  { }
+  virtual ~CPropertyHandlerUser() { }
+  
+protected:
+  void setPropertyHandler(CPropertyHandler *propertyHandler)
+  {
+    if (propertyHandler == NULL)
+      return;
+
+    m_propertyHandler = propertyHandler;
+  }
+  
+  CPropertyHandler *m_propertyHandler;
 };

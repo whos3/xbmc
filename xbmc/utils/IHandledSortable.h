@@ -22,7 +22,7 @@
 #include "IPropertyHandler.h"
 #include "ISortable.h"
 
-class IHandledSortable : public ISortable, virtual protected IPropertyHandler
+class IHandledSortable : public ISortable, virtual protected CPropertyHandlerUser
 {
 public:
   virtual ~IHandledSortable() {}

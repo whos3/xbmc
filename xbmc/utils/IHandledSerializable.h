@@ -22,7 +22,7 @@
 #include "IPropertyHandler.h"
 #include "ISerializable.h"
 
-class IHandledSerializable : public ISerializable, virtual protected IPropertyHandler
+class IHandledSerializable : public ISerializable, virtual protected CPropertyHandlerUser
 {
 public:
   virtual ~IHandledSerializable() {}

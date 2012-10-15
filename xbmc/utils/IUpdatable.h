@@ -21,7 +21,7 @@
 
 #include "IPropertyHandler.h"
 
-class IUpdatable : virtual protected IPropertyHandler
+class IUpdatable : virtual protected CPropertyHandlerUser
 {
 public:
   virtual ~IUpdatable() { }

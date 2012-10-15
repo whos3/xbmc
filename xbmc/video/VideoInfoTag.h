@@ -26,6 +26,7 @@
 #include "utils/Fanart.h"
 #include "utils/IHandledSerializable.h"
 #include "utils/IHandledSortable.h"
+#include "utils/IPropertyHandler.h"
 #include "utils/StreamDetails.h"
 #include "video/Bookmark.h"
 #include "XBDateTime.h"
@@ -46,7 +47,7 @@ class CVideoInfoTag : public IArchivable, public IHandledSerializable, public IH
 {
 public:
   CVideoInfoTag();
-  ~CVideoInfoTag() { }
+  virtual ~CVideoInfoTag() { }
   
   void Reset();
   /* \brief Load information to a videoinfotag from an XML element
@@ -149,6 +150,8 @@ private:
    \sa Load
    */
   void ParseNative(const TiXmlElement* element, bool prioritise);
+
+  CPropertyHandler m_propertyHandler;
 };
 
 typedef std::vector<CVideoInfoTag> VECMOVIES;

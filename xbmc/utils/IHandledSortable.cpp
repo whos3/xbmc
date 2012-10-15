@@ -23,11 +23,14 @@
 
 void IHandledSortable::ToSortable(SortItem& sortable) const
 {
-  std::set<Field> fields = GetHandledPropertyFields();
+  if (m_propertyHandler == NULL)
+    return;
+  
+  std::set<Field> fields = m_propertyHandler->GetHandledPropertyFields();
   for (std::set<Field>::const_iterator field = fields.begin(); field != fields.end(); field++)
   {
-    CVariant obj;
-    if (GetHandledPropertyValue(*field, obj))
-      sortable[*field] = obj;
+    CVariant var;
+    if (m_propertyHandler->GetHandledPropertyValue(*field, var))
+      sortable[*field] = var;
   }
 }

@@ -23,13 +23,26 @@
 #include "XBDateTime.h"
 #include "log.h"
 
-IPropertyHandler::~IPropertyHandler()
+CPropertyHandler::CPropertyHandler()
+  : m_object(NULL)
+{ }
+
+CPropertyHandler::~CPropertyHandler()
 {
   m_fieldMap.clear();
   m_nameMap.clear();
 }
 
-void IPropertyHandler::SetHandledPropertyMap(HandledProperty propertyMap[], size_t size)
+bool CPropertyHandler::SetObject(void *obj)
+{
+  if (obj == NULL)
+    return false;
+
+  m_object = obj;
+  return true;
+}
+
+void CPropertyHandler::SetHandledPropertyMap(HandledProperty propertyMap[], size_t size)
 {
   if (propertyMap == NULL || size <= 0)
     return;
@@ -49,7 +62,7 @@ void IPropertyHandler::SetHandledPropertyMap(HandledProperty propertyMap[], size
   }
 }
 
-std::set<Field> IPropertyHandler::GetHandledPropertyFields() const
+std::set<Field> CPropertyHandler::GetHandledPropertyFields() const
 {
   std::set<Field> fields;
   for (std::map<Field, HandledProperty*>::const_iterator field = m_fieldMap.begin(); field != m_fieldMap.end(); field++)
@@ -58,7 +71,7 @@ std::set<Field> IPropertyHandler::GetHandledPropertyFields() const
   return fields;
 }
 
-std::set<std::string> IPropertyHandler::GetHandledPropertyNames() const
+std::set<std::string> CPropertyHandler::GetHandledPropertyNames() const
 {
   std::set<std::string> names;
   for (std::map<std::string, HandledProperty*>::const_iterator field = m_nameMap.begin(); field != m_nameMap.end(); field++)
@@ -67,59 +80,59 @@ std::set<std::string> IPropertyHandler::GetHandledPropertyNames() const
   return names;
 }
 
-bool IPropertyHandler::GetHandledPropertyValue(Field propertyField, CVariant &value) const
+bool CPropertyHandler::GetHandledPropertyValue(Field propertyField, CVariant &value) const
 {
   return getHandledPropertyValue(getHandledProperty(propertyField), value);
 }
 
-bool IPropertyHandler::GetHandledPropertyValue(const std::string &propertyName, CVariant &value) const
+bool CPropertyHandler::GetHandledPropertyValue(const std::string &propertyName, CVariant &value) const
 {
   return getHandledPropertyValue(getHandledProperty(propertyName), value);
 }
 
-bool IPropertyHandler::SetHandledPropertyValue(Field propertyField, const CVariant &value)
+bool CPropertyHandler::SetHandledPropertyValue(Field propertyField, const CVariant &value)
 {
   return setHandledPropertyValue(getHandledProperty(propertyField), value);
 }
 
-bool IPropertyHandler::SetHandledPropertyValue(const std::string &propertyName, const CVariant &value)
+bool CPropertyHandler::SetHandledPropertyValue(const std::string &propertyName, const CVariant &value)
 {
   return setHandledPropertyValue(getHandledProperty(propertyName), value);
 }
 
-const HandledProperty* IPropertyHandler::getHandledProperty(Field propertyField) const
+const HandledProperty* CPropertyHandler::getHandledProperty(Field propertyField) const
 {
-  if (propertyField == FieldNone)
+  if (propertyField == FieldNone || m_object == NULL)
     return NULL;
   
   std::map<Field, HandledProperty*>::const_iterator it = m_fieldMap.find(propertyField);
   if (it == m_fieldMap.end())
   {
-    CLog::Log(LOGDEBUG, "IPropertyHandler: unknown field-based property (%d)", propertyField);
+    CLog::Log(LOGDEBUG, "CPropertyHandler: unknown field-based property (%d)", propertyField);
     return NULL;
   }
 
   return it->second;
 }
 
-const HandledProperty* IPropertyHandler::getHandledProperty(const std::string &propertyName) const
+const HandledProperty* CPropertyHandler::getHandledProperty(const std::string &propertyName) const
 {
-  if (propertyName.empty())
+  if (propertyName.empty() || m_object == NULL)
     return NULL;
   
   std::map<std::string, HandledProperty*>::const_iterator it = m_nameMap.find(propertyName);
   if (it == m_nameMap.end())
   {
-    CLog::Log(LOGDEBUG, "IPropertyHandler: unknown name-based property (%s)", propertyName.c_str());
+    CLog::Log(LOGDEBUG, "CPropertyHandler: unknown name-based property (%s)", propertyName.c_str());
     return NULL;
   }
 
   return it->second;
 }
 
-bool IPropertyHandler::getHandledPropertyValue(const HandledProperty *prop, CVariant &value) const
+bool CPropertyHandler::getHandledPropertyValue(const HandledProperty *prop, CVariant &value) const
 {
-  if (prop == NULL || value == CVariant::ConstNullVariant)
+  if (prop == NULL || m_object == NULL || value == CVariant::ConstNullVariant)
     return false;
 
   if (!value.empty())
@@ -128,65 +141,65 @@ bool IPropertyHandler::getHandledPropertyValue(const HandledProperty *prop, CVar
   switch (prop->m_type)
   {
     case HandledPropertyTypeBool:
-      value = *(bool*)(((char*)this) + prop->m_member);
+      value = *(bool*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeInt32:
-      value = *(int32_t*)(((char*)this) + prop->m_member);
+      value = *(int32_t*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeUInt32:
-      value = *(uint32_t*)(((char*)this) + prop->m_member);
+      value = *(uint32_t*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeInt64:
-      value = *(int64_t*)(((char*)this) + prop->m_member);
+      value = *(int64_t*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeUInt64:
-      value = *(uint64_t*)(((char*)this) + prop->m_member);
+      value = *(uint64_t*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeFloat:
-      value = *(float*)(((char*)this) + prop->m_member);
+      value = *(float*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeDouble:
-      value = *(double*)(((char*)this) + prop->m_member);
+      value = *(double*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeString:
-      value = *(std::string*)(((char*)this) + prop->m_member);
+      value = *(std::string*)(((char*)m_object) + prop->m_member);
       break;
       
     case HandledPropertyTypeArrayString:
-      value = *(std::vector<std::string>*)(((char*)this) + prop->m_member);
+      value = *(std::vector<std::string>*)(((char*)m_object) + prop->m_member);
       break;
     
     case HandledPropertyTypeMapString:
-      value = *(std::map<std::string, std::string>*)(((char*)this) + prop->m_member);
+      value = *(std::map<std::string, std::string>*)(((char*)m_object) + prop->m_member);
       break;
     
     case HandledPropertyTypeMapVariant:
-      value = *(std::map<std::string, CVariant>*)(((char*)this) + prop->m_member);
+      value = *(std::map<std::string, CVariant>*)(((char*)m_object) + prop->m_member);
       break;
     
     case HandledPropertyTypeDate:
     {
-      CDateTime *date = (CDateTime*)(((char*)this) + prop->m_member);
+      CDateTime *date = (CDateTime*)(((char*)m_object) + prop->m_member);
       value = date->IsValid() ? date->GetAsDBDate() : "";
       break;
     }
       
     case HandledPropertyTypeDateTime:
     {
-      CDateTime *date = (CDateTime*)(((char*)this) + prop->m_member);
+      CDateTime *date = (CDateTime*)(((char*)m_object) + prop->m_member);
       value = date->IsValid() ? date->GetAsDBDateTime() : "";
       break;
     }
       
     case HandledPropertyTypeVariant:
-      value = *(CVariant*)(((char*)this) + prop->m_member);
+      value = *(CVariant*)(((char*)m_object) + prop->m_member);
       break;
       
     default:
@@ -196,9 +209,9 @@ bool IPropertyHandler::getHandledPropertyValue(const HandledProperty *prop, CVar
   return true;
 }
 
-bool IPropertyHandler::setHandledPropertyValue(const HandledProperty *prop, const CVariant &value)
+bool CPropertyHandler::setHandledPropertyValue(const HandledProperty *prop, const CVariant &value)
 {
-  if (prop == NULL)
+  if (prop == NULL || m_object == NULL)
     return false;
 
   switch (prop->m_type)
@@ -207,56 +220,56 @@ bool IPropertyHandler::setHandledPropertyValue(const HandledProperty *prop, cons
       if (!value.isBoolean())
         return false;
       
-      *(bool*)(((char*)this) + prop->m_member) = value.asBoolean();
+      *(bool*)(((char*)m_object) + prop->m_member) = value.asBoolean();
       break;
       
     case HandledPropertyTypeInt32:
       if (!value.isInteger())
         return false;
       
-      *(int32_t*)(((char*)this) + prop->m_member) = (int32_t)value.asInteger();
+      *(int32_t*)(((char*)m_object) + prop->m_member) = (int32_t)value.asInteger();
       break;
       
     case HandledPropertyTypeUInt32:
       if (!value.isUnsignedInteger())
         return false;
       
-      *(uint32_t*)(((char*)this) + prop->m_member) = (uint32_t)value.asUnsignedInteger();
+      *(uint32_t*)(((char*)m_object) + prop->m_member) = (uint32_t)value.asUnsignedInteger();
       break;
       
     case HandledPropertyTypeInt64:
       if (!value.isInteger())
         return false;
       
-      *(int64_t*)(((char*)this) + prop->m_member) = value.asInteger();
+      *(int64_t*)(((char*)m_object) + prop->m_member) = value.asInteger();
       break;
       
     case HandledPropertyTypeUInt64:
       if (!value.isUnsignedInteger())
         return false;
       
-      *(uint64_t*)(((char*)this) + prop->m_member) = value.asUnsignedInteger();
+      *(uint64_t*)(((char*)m_object) + prop->m_member) = value.asUnsignedInteger();
       break;
       
     case HandledPropertyTypeFloat:
       if (!value.isDouble())
         return false;
       
-      *(float*)(((char*)this) + prop->m_member) = value.asFloat();
+      *(float*)(((char*)m_object) + prop->m_member) = value.asFloat();
       break;
       
     case HandledPropertyTypeDouble:
       if (!value.isDouble())
         return false;
       
-      *(double*)(((char*)this) + prop->m_member) = value.asDouble();
+      *(double*)(((char*)m_object) + prop->m_member) = value.asDouble();
       break;
       
     case HandledPropertyTypeString:
       if (!value.isString())
         return false;
       
-      *(std::string*)(((char*)this) + prop->m_member) = value.asString();
+      *(std::string*)(((char*)m_object) + prop->m_member) = value.asString();
       break;
       
     case HandledPropertyTypeArrayString:
@@ -264,7 +277,7 @@ bool IPropertyHandler::setHandledPropertyValue(const HandledProperty *prop, cons
       if (!value.isArray())
         return false;
 
-      std::vector<std::string> *member = (std::vector<std::string>*)(((char*)this) + prop->m_member);
+      std::vector<std::string> *member = (std::vector<std::string>*)(((char*)m_object) + prop->m_member);
       member->clear();
       
       for (CVariant::const_iterator_array it = value.begin_array(); it != value.end_array(); it++)
@@ -285,7 +298,7 @@ bool IPropertyHandler::setHandledPropertyValue(const HandledProperty *prop, cons
       if (!value.isObject())
         return false;
       
-      std::map<std::string, std::string> *member = (std::map<std::string, std::string>*)(((char*)this) + prop->m_member);
+      std::map<std::string, std::string> *member = (std::map<std::string, std::string>*)(((char*)m_object) + prop->m_member);
       member->clear();
       
       for (CVariant::const_iterator_map it = value.begin_map(); it != value.end_map(); it++)
@@ -306,7 +319,7 @@ bool IPropertyHandler::setHandledPropertyValue(const HandledProperty *prop, cons
       if (!value.isObject())
         return false;
       
-      std::map<std::string, CVariant> *member = (std::map<std::string, CVariant>*)(((char*)this) + prop->m_member);
+      std::map<std::string, CVariant> *member = (std::map<std::string, CVariant>*)(((char*)m_object) + prop->m_member);
       member->clear();
       
       for (CVariant::const_iterator_map it = value.begin_map(); it != value.end_map(); it++)
@@ -319,18 +332,18 @@ bool IPropertyHandler::setHandledPropertyValue(const HandledProperty *prop, cons
       if (value.isString())
       {
         if (prop->m_type == HandledPropertyTypeDate)
-          ((CDateTime*)(((char*)this) + prop->m_member))->SetFromDBDate(value.asString());
+          ((CDateTime*)(((char*)m_object) + prop->m_member))->SetFromDBDate(value.asString());
         else
-          ((CDateTime*)(((char*)this) + prop->m_member))->SetFromDBDateTime(value.asString());
+          ((CDateTime*)(((char*)m_object) + prop->m_member))->SetFromDBDateTime(value.asString());
       }
       else if (value.isInteger())
-        ((CDateTime*)(((char*)this) + prop->m_member))->SetFromUTCDateTime((time_t)value.asInteger());
+        ((CDateTime*)(((char*)m_object) + prop->m_member))->SetFromUTCDateTime((time_t)value.asInteger());
       else
         return false;
       break;
       
     case HandledPropertyTypeVariant:
-      *(CVariant*)(((char*)this) + prop->m_member) = value;
+      *(CVariant*)(((char*)m_object) + prop->m_member) = value;
       break;
 
     default:

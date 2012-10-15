@@ -90,8 +90,11 @@ HandledProperty handledProperties[] = {
 
 CVideoInfoTag::CVideoInfoTag()
 {
-  IPropertyHandler::SetHandledPropertyMap(handledProperties, sizeof(handledProperties) / sizeof(HandledProperty));
   Reset();
+  
+  m_propertyHandler.SetObject(this);
+  m_propertyHandler.SetHandledPropertyMap(handledProperties, sizeof(handledProperties) / sizeof(HandledProperty));
+  CPropertyHandlerUser::setPropertyHandler(&m_propertyHandler);
 }
 
 void CVideoInfoTag::Reset()

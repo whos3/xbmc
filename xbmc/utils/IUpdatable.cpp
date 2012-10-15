@@ -24,11 +24,17 @@
 
 bool IUpdatable::Update(const std::string &propertyName, const CVariant &propertyValue)
 {
-  return SetHandledPropertyValue(propertyName, propertyValue);
+  if (m_propertyHandler == NULL)
+    return false;
+  
+  return m_propertyHandler->SetHandledPropertyValue(propertyName, propertyValue);
 }
 
 bool IUpdatable::Update(const std::map<std::string, CVariant> &properties)
 {
+  if (m_propertyHandler == NULL)
+    return false;
+  
   bool ret = true;
   for (std::map<std::string, CVariant>::const_iterator it = properties.begin(); it != properties.end(); it++)
     ret &= Update(it->first, it->second);
@@ -38,11 +44,17 @@ bool IUpdatable::Update(const std::map<std::string, CVariant> &properties)
 
 bool IUpdatable::Update(Field propertyField, const CVariant &propertyValue)
 {
-  return SetHandledPropertyValue(propertyField, propertyValue);
+  if (m_propertyHandler == NULL)
+    return false;
+  
+  return m_propertyHandler->SetHandledPropertyValue(propertyField, propertyValue);
 }
 
 bool IUpdatable::Update(const std::map<Field, CVariant> &properties)
 {
+  if (m_propertyHandler == NULL)
+    return false;
+  
   bool ret = true;
   for (std::map<Field, CVariant>::const_iterator it = properties.begin(); it != properties.end(); it++)
     ret &= Update(it->first, it->second);

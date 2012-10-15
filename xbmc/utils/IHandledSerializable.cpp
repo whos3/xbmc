@@ -23,11 +23,14 @@
 
 void IHandledSerializable::Serialize(CVariant& value) const
 {
-  std::set<std::string> names = GetHandledPropertyNames();
+  if (m_propertyHandler == NULL)
+    return;
+  
+  std::set<std::string> names = m_propertyHandler->GetHandledPropertyNames();
   for (std::set<std::string>::const_iterator name = names.begin(); name != names.end(); name++)
   {
-    CVariant obj;
-    if (GetHandledPropertyValue(*name, obj))
-      value[*name] = obj;
+    CVariant var;
+    if (m_propertyHandler->GetHandledPropertyValue(*name, var))
+      value[*name] = var;
   }
 }
