@@ -57,71 +57,71 @@
 using namespace std;
 
 static const CGUIDialogMediaFilter::Filter filterList[] = {
-  { "movies",       FieldTitle,         556,    SettingInfo::EDIT,        CSmartPlaylistRule::OPERATOR_CONTAINS },
-  { "movies",       FieldRating,        563,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  //{ "movies",       FieldTime,          180,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
-  { "movies",       FieldInProgress,    575,    SettingInfo::CHECK,       CSmartPlaylistRule::OPERATOR_FALSE },
-  { "movies",       FieldYear,          562,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "movies",       FieldTag,           20459,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "movies",       FieldGenre,         515,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "movies",       FieldActor,         20337,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "movies",       FieldDirector,      20339,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "movies",       FieldStudio,        572,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  //{ "movies",       FieldLastPlayed,    568,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
-  //{ "movies",       FieldDateAdded,     570,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
+  { "movies",       FieldTitle,         556,    SettingInfo::EDIT,        CFilterOperator(FilterOperationContains) },
+  { "movies",       FieldRating,        563,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  //{ "movies",       FieldTime,          180,    SettingInfo::TODO,        CFilterOperator(TODO) },
+  { "movies",       FieldInProgress,    575,    SettingInfo::CHECK,       CFilterOperator(FilterOperationTrue, true) },
+  { "movies",       FieldYear,          562,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "movies",       FieldTag,           20459,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "movies",       FieldGenre,         515,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "movies",       FieldActor,         20337,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "movies",       FieldDirector,      20339,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "movies",       FieldStudio,        572,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  //{ "movies",       FieldLastPlayed,    568,    SettingInfo::TODO,        CFilterOperator(TODO) },
+  //{ "movies",       FieldDateAdded,     570,    SettingInfo::TODO,        CFilterOperator(TODO) },
 
-  { "tvshows",      FieldTitle,         556,    SettingInfo::EDIT,        CSmartPlaylistRule::OPERATOR_CONTAINS },
-  //{ "tvshows",      FieldTvShowStatus,  126,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
-  { "tvshows",      FieldRating,        563,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "tvshows",      FieldInProgress,    575,    SettingInfo::CHECK,       CSmartPlaylistRule::OPERATOR_FALSE },
-  { "tvshows",      FieldYear,          562,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "tvshows",      FieldGenre,         515,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "tvshows",      FieldActor,         20337,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "tvshows",      FieldDirector,      20339,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "tvshows",      FieldStudio,        572,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  //{ "tvshows",      FieldDateAdded,     570,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
+  { "tvshows",      FieldTitle,         556,    SettingInfo::EDIT,        CFilterOperator(FilterOperationContains) },
+  //{ "tvshows",      FieldTvShowStatus,  126,    SettingInfo::TODO,        CFilterOperator(TODO) },
+  { "tvshows",      FieldRating,        563,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "tvshows",      FieldInProgress,    575,    SettingInfo::CHECK,       CFilterOperator(FilterOperationTrue, true) },
+  { "tvshows",      FieldYear,          562,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "tvshows",      FieldGenre,         515,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "tvshows",      FieldActor,         20337,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "tvshows",      FieldDirector,      20339,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "tvshows",      FieldStudio,        572,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  //{ "tvshows",      FieldDateAdded,     570,    SettingInfo::TODO,        CFilterOperator(TODO) },
 
-  { "episodes",     FieldTitle,         556,    SettingInfo::EDIT,        CSmartPlaylistRule::OPERATOR_CONTAINS },
-  { "episodes",     FieldRating,        563,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "episodes",     FieldAirDate,       20416,  SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "episodes",     FieldInProgress,    575,    SettingInfo::CHECK,       CSmartPlaylistRule::OPERATOR_FALSE },
-  { "episodes",     FieldActor,         20337,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "episodes",     FieldDirector,      20339,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  //{ "episodes",     FieldLastPlayed,    568,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
-  //{ "episodes",     FieldDateAdded,     570,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
+  { "episodes",     FieldTitle,         556,    SettingInfo::EDIT,        CFilterOperator(FilterOperationContains) },
+  { "episodes",     FieldRating,        563,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "episodes",     FieldAirDate,       20416,  SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "episodes",     FieldInProgress,    575,    SettingInfo::CHECK,       CFilterOperator(FilterOperationTrue, true) },
+  { "episodes",     FieldActor,         20337,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "episodes",     FieldDirector,      20339,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  //{ "episodes",     FieldLastPlayed,    568,    SettingInfo::TODO,        CFilterOperator(TODO) },
+  //{ "episodes",     FieldDateAdded,     570,    SettingInfo::TODO,        CFilterOperator(TODO) },
 
-  { "musicvideos",  FieldTitle,         556,    SettingInfo::EDIT,        CSmartPlaylistRule::OPERATOR_CONTAINS },
-  { "musicvideos",  FieldArtist,        557,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "musicvideos",  FieldAlbum,         558,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  //{ "musicvideos",  FieldTime,          180,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
-  { "musicvideos",  FieldYear,          562,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "musicvideos",  FieldGenre,         515,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "musicvideos",  FieldDirector,      20339,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "musicvideos",  FieldStudio,        572,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  //{ "musicvideos",  FieldLastPlayed,    568,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
-  //{ "musicvideos",  FieldDateAdded,     570,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
+  { "musicvideos",  FieldTitle,         556,    SettingInfo::EDIT,        CFilterOperator(FilterOperationContains) },
+  { "musicvideos",  FieldArtist,        557,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "musicvideos",  FieldAlbum,         558,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  //{ "musicvideos",  FieldTime,          180,    SettingInfo::TODO,        CFilterOperator(TODO) },
+  { "musicvideos",  FieldYear,          562,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "musicvideos",  FieldGenre,         515,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "musicvideos",  FieldDirector,      20339,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "musicvideos",  FieldStudio,        572,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  //{ "musicvideos",  FieldLastPlayed,    568,    SettingInfo::TODO,        CFilterOperator(TODO) },
+  //{ "musicvideos",  FieldDateAdded,     570,    SettingInfo::TODO,        CFilterOperator(TODO) },
 
-  { "artists",      FieldArtist,        557,    SettingInfo::EDIT,        CSmartPlaylistRule::OPERATOR_CONTAINS },
-  { "artists",      FieldGenre,         515,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
+  { "artists",      FieldArtist,        557,    SettingInfo::EDIT,        CFilterOperator(FilterOperationContains) },
+  { "artists",      FieldGenre,         515,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
 
-  { "albums",       FieldAlbum,         556,    SettingInfo::EDIT,        CSmartPlaylistRule::OPERATOR_CONTAINS },
-  { "albums",       FieldArtist,        557,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "albums",       FieldRating,        563,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "albums",       FieldAlbumType,     564,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "albums",       FieldYear,          562,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "albums",       FieldGenre,         515,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "albums",       FieldMusicLabel,    21899,  SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
+  { "albums",       FieldAlbum,         556,    SettingInfo::EDIT,        CFilterOperator(FilterOperationContains) },
+  { "albums",       FieldArtist,        557,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "albums",       FieldRating,        563,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "albums",       FieldAlbumType,     564,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "albums",       FieldYear,          562,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "albums",       FieldGenre,         515,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "albums",       FieldMusicLabel,    21899,  SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
 
-  { "songs",        FieldTitle,         556,    SettingInfo::EDIT,        CSmartPlaylistRule::OPERATOR_CONTAINS },
-  { "songs",        FieldAlbum,         558,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "songs",        FieldArtist,        557,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "songs",        FieldTime,          180,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "songs",        FieldRating,        563,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "songs",        FieldYear,          562,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  { "songs",        FieldGenre,         515,    SettingInfo::BUTTON,      CSmartPlaylistRule::OPERATOR_EQUALS },
-  { "songs",        FieldPlaycount,     567,    SettingInfo::RANGE,       CSmartPlaylistRule::OPERATOR_BETWEEN },
-  //{ "songs",        FieldLastPlayed,    568,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
-  //{ "songs",        FieldDateAdded,     570,    SettingInfo::TODO,        CSmartPlaylistRule::TODO },
+  { "songs",        FieldTitle,         556,    SettingInfo::EDIT,        CFilterOperator(FilterOperationContains) },
+  { "songs",        FieldAlbum,         558,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "songs",        FieldArtist,        557,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "songs",        FieldTime,          180,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "songs",        FieldRating,        563,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "songs",        FieldYear,          562,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  { "songs",        FieldGenre,         515,    SettingInfo::BUTTON,      CFilterOperator(FilterOperationEquals) },
+  { "songs",        FieldPlaycount,     567,    SettingInfo::RANGE,       CFilterOperator(FilterOperationBetween) },
+  //{ "songs",        FieldLastPlayed,    568,    SettingInfo::TODO,        CFilterOperator(TODO) },
+  //{ "songs",        FieldDateAdded,     570,    SettingInfo::TODO,        CFilterOperator(TODO) },
 };
 
 #define NUM_FILTERS sizeof(filterList) / sizeof(CGUIDialogMediaFilter::Filter)
@@ -284,7 +284,7 @@ void CGUIDialogMediaFilter::CreateSettings()
         if (filter.rule == NULL)
           filter.data = new int(CHECK_ALL);
         else
-          filter.data = new int(filter.rule->m_operator == CSmartPlaylistRule::OPERATOR_TRUE ? CHECK_YES : CHECK_NO);
+          filter.data = new int(filter.rule->m_operator.operation == FilterOperationTrue ? CHECK_YES : CHECK_NO);
 
         vector<pair<int, int> > entries;
         entries.push_back(pair<int, int>(CHECK_ALL, CHECK_LABEL_ALL));
@@ -435,7 +435,7 @@ void CGUIDialogMediaFilter::OnSettingChanged(SettingInfo &setting)
       int choice = *(int *)setting.data;
       if (choice > CHECK_ALL)
       {
-        CSmartPlaylistRule::SEARCH_OPERATOR ruleOperator = choice == CHECK_YES ? CSmartPlaylistRule::OPERATOR_TRUE : CSmartPlaylistRule::OPERATOR_FALSE;
+        CFilterOperator ruleOperator(FilterOperationTrue, choice != CHECK_YES);
         if (filter.rule == NULL)
           filter.rule = AddRule(filter.field, ruleOperator);
         else
@@ -770,7 +770,7 @@ void CGUIDialogMediaFilter::OnBrowse(const Filter &filter, CFileItemList &items,
   pDialog->Reset();
 }
 
-CSmartPlaylistRule* CGUIDialogMediaFilter::AddRule(Field field, CSmartPlaylistRule::SEARCH_OPERATOR ruleOperator /* = CSmartPlaylistRule::OPERATOR_CONTAINS */)
+CSmartPlaylistRule* CGUIDialogMediaFilter::AddRule(Field field, CFilterOperator ruleOperator)
 {
   CSmartPlaylistRule rule;
   rule.m_field = field;

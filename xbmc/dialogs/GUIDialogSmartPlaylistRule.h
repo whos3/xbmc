@@ -43,7 +43,7 @@ protected:
   void OnOK();
   void OnCancel();
   void UpdateButtons();
-  void AddOperatorLabel(CSmartPlaylistRule::SEARCH_OPERATOR op);
+  void AddOperatorLabel(FilterOperation operation, bool negated = false);
   void OnBrowse();
 
   CSmartPlaylistRule m_rule;

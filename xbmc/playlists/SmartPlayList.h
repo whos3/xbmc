@@ -22,6 +22,7 @@
 #include <set>
 #include <vector>
 
+#include "utils/FilterUtils.h"
 #include "utils/SortUtils.h"
 #include "utils/StdString.h"
 #include "utils/XBMCTinyXML.h"
@@ -45,25 +46,6 @@ class CSmartPlaylistRule : public ISmartPlaylistRule
 public:
   CSmartPlaylistRule();
 
-  enum SEARCH_OPERATOR { OPERATOR_START = 0,
-                         OPERATOR_CONTAINS,
-                         OPERATOR_DOES_NOT_CONTAIN,
-                         OPERATOR_EQUALS,
-                         OPERATOR_DOES_NOT_EQUAL,
-                         OPERATOR_STARTS_WITH,
-                         OPERATOR_ENDS_WITH,
-                         OPERATOR_GREATER_THAN,
-                         OPERATOR_LESS_THAN,
-                         OPERATOR_AFTER,
-                         OPERATOR_BEFORE,
-                         OPERATOR_IN_THE_LAST,
-                         OPERATOR_NOT_IN_THE_LAST,
-                         OPERATOR_TRUE,
-                         OPERATOR_FALSE,
-                         OPERATOR_BETWEEN,
-                         OPERATOR_END
-                       };
-
   enum FIELD_TYPE { TEXT_FIELD = 0,
                     BROWSEABLE_FIELD,
                     NUMERIC_FIELD,
@@ -85,11 +67,11 @@ public:
   static SortBy               TranslateOrder(const char *order);
   static CStdString           TranslateOrder(SortBy order);
   static CStdString           GetField(Field field, const CStdString& strType);
-  static CStdString           TranslateOperator(SEARCH_OPERATOR oper);
+  static CStdString           TranslateOperator(CFilterOperator oper);
 
   static CStdString           GetLocalizedField(Field field);
   static CStdString           GetLocalizedOrder(SortBy order);
-  static CStdString           GetLocalizedOperator(SEARCH_OPERATOR oper);
+  static CStdString           GetLocalizedOperator(CFilterOperator oper);
   static std::vector<Field>   GetFields(const CStdString &type);
   static std::vector<SortBy>  GetOrders(const CStdString &type);
   static FIELD_TYPE           GetFieldType(Field field);
@@ -100,10 +82,10 @@ public:
   void                        SetParameter(const std::vector<CStdString> &values);
 
   Field                       m_field;
-  SEARCH_OPERATOR             m_operator;
+  CFilterOperator             m_operator;
   std::vector<CStdString>     m_parameter;
 private:
-  static SEARCH_OPERATOR TranslateOperator(const char *oper);
+  static CFilterOperator TranslateOperator(const char *oper);
 
   CStdString GetVideoResolutionQuery(const CStdString &parameter) const;
 };
@@ -196,7 +178,6 @@ public:
   CStdString GetSaveLocation() const;
 
   static void GetAvailableFields(const std::string &type, std::vector<std::string> &fieldList);
-  static void GetAvailableOperators(std::vector<std::string> &operatorList);
 
   bool IsEmpty(bool ignoreSortAndLimit = true) const;
 private:

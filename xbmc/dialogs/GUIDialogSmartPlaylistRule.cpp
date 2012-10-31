@@ -324,7 +324,7 @@ void CGUIDialogSmartPlaylistRule::OnOperator()
 {
   CGUIMessage msg(GUI_MSG_ITEM_SELECTED, GetID(), CONTROL_OPERATOR);
   OnMessage(msg);
-  m_rule.m_operator = (CSmartPlaylistRule::SEARCH_OPERATOR)msg.GetParam1();
+  m_rule.m_operator.FromInt(msg.GetParam1());
 
   UpdateButtons();
 }
@@ -349,54 +349,54 @@ void CGUIDialogSmartPlaylistRule::UpdateButtons()
     // fall through...
   case CSmartPlaylistRule::TEXT_FIELD:
     // text fields - add the usual comparisons
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_EQUALS);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_DOES_NOT_EQUAL);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_CONTAINS);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_DOES_NOT_CONTAIN);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_STARTS_WITH);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_ENDS_WITH);
+    AddOperatorLabel(FilterOperationEquals);
+    AddOperatorLabel(FilterOperationEquals, true);
+    AddOperatorLabel(FilterOperationContains);
+    AddOperatorLabel(FilterOperationContains, true);
+    AddOperatorLabel(FilterOperationStartsWith);
+    AddOperatorLabel(FilterOperationEndsWith);
     break;
 
   case CSmartPlaylistRule::NUMERIC_FIELD:
   case CSmartPlaylistRule::SECONDS_FIELD:
     // numerical fields - less than greater than
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_EQUALS);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_DOES_NOT_EQUAL);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_GREATER_THAN);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_LESS_THAN);
+    AddOperatorLabel(FilterOperationEquals);
+    AddOperatorLabel(FilterOperationEquals, true);
+    AddOperatorLabel(FilterOperationGreaterThan);
+    AddOperatorLabel(FilterOperationLessThan);
     break;
 
   case CSmartPlaylistRule::DATE_FIELD:
     // date field
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_AFTER);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_BEFORE);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_IN_THE_LAST);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_NOT_IN_THE_LAST);
+    AddOperatorLabel(FilterOperationAfter);
+    AddOperatorLabel(FilterOperationBefore);
+    AddOperatorLabel(FilterOperationInTheLast);
+    AddOperatorLabel(FilterOperationInTheLast, true);
     break;
 
   case CSmartPlaylistRule::PLAYLIST_FIELD:
     CONTROL_ENABLE(CONTROL_BROWSE);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_EQUALS);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_DOES_NOT_EQUAL);
+    AddOperatorLabel(FilterOperationEquals);
+    AddOperatorLabel(FilterOperationEquals, true);
     break;
 
   case CSmartPlaylistRule::BOOLEAN_FIELD:
     CONTROL_DISABLE(CONTROL_VALUE);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_TRUE);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_FALSE);
+    AddOperatorLabel(FilterOperationTrue);
+    AddOperatorLabel(FilterOperationTrue, true);
     break;
 
   case CSmartPlaylistRule::TEXTIN_FIELD:
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_EQUALS);
-    AddOperatorLabel(CSmartPlaylistRule::OPERATOR_DOES_NOT_EQUAL);
+    AddOperatorLabel(FilterOperationEquals);
+    AddOperatorLabel(FilterOperationEquals, true);
     break;
   }
 
   // check our operator is valid, and update if not
-  SendMessage(GUI_MSG_ITEM_SELECT, CONTROL_OPERATOR, m_rule.m_operator);
+  SendMessage(GUI_MSG_ITEM_SELECT, CONTROL_OPERATOR, m_rule.m_operator.ToInt());
   CGUIMessage selected(GUI_MSG_ITEM_SELECTED, GetID(), CONTROL_OPERATOR);
   OnMessage(selected);
-  m_rule.m_operator = (CSmartPlaylistRule::SEARCH_OPERATOR)selected.GetParam1();
+  m_rule.m_operator.FromInt(selected.GetParam1());
 
   // update the parameter edit control appropriately
   SET_CONTROL_LABEL2(CONTROL_VALUE, m_rule.GetParameter());
@@ -412,8 +412,7 @@ void CGUIDialogSmartPlaylistRule::UpdateButtons()
     type = CGUIEditControl::INPUT_TYPE_TEXT;
     break;
   case CSmartPlaylistRule::DATE_FIELD:
-    if (m_rule.m_operator == CSmartPlaylistRule::OPERATOR_IN_THE_LAST ||
-        m_rule.m_operator == CSmartPlaylistRule::OPERATOR_NOT_IN_THE_LAST)
+    if (m_rule.m_operator.operation == FilterOperationInTheLast)
       type = CGUIEditControl::INPUT_TYPE_TEXT;
     else
       type = CGUIEditControl::INPUT_TYPE_DATE;
@@ -428,9 +427,10 @@ void CGUIDialogSmartPlaylistRule::UpdateButtons()
   SendMessage(GUI_MSG_SET_TYPE, CONTROL_VALUE, type, 21420);
 }
 
-void CGUIDialogSmartPlaylistRule::AddOperatorLabel(CSmartPlaylistRule::SEARCH_OPERATOR op)
+void CGUIDialogSmartPlaylistRule::AddOperatorLabel(FilterOperation operation, bool negated /* = false */)
 {
-  CGUIMessage select(GUI_MSG_LABEL_ADD, GetID(), CONTROL_OPERATOR, op);
+  CFilterOperator op(operation, negated);
+  CGUIMessage select(GUI_MSG_LABEL_ADD, GetID(), CONTROL_OPERATOR, op.ToInt());
   select.SetLabel(CSmartPlaylistRule::GetLocalizedOperator(op));
   OnMessage(select);
 }
