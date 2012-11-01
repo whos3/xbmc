@@ -22,7 +22,7 @@
 #include <set>
 #include <vector>
 
-#include "utils/FilterUtils.h"
+#include "filter/Filter.h"
 #include "utils/SortUtils.h"
 #include "utils/StdString.h"
 #include "utils/XBMCTinyXML.h"

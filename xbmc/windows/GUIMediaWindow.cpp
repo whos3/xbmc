@@ -65,7 +65,7 @@
 #endif
 #include "interfaces/Builtins.h"
 #include "dialogs/GUIDialogKaiToast.h"
-#include "dialogs/GUIDialogMediaFilter.h"
+#include "filter/dialogs/GUIDialogMediaFilter.h"
 #include "filesystem/SmartPlaylistDirectory.h"
 #if defined(TARGET_ANDROID)
 #include "xbmc/android/activity/XBMCApp.h"

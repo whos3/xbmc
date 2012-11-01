@@ -276,7 +276,7 @@
 #include "guilib/GUIControlFactory.h"
 #include "dialogs/GUIDialogCache.h"
 #include "dialogs/GUIDialogPlayEject.h"
-#include "dialogs/GUIDialogMediaFilter.h"
+#include "filter/dialogs/GUIDialogMediaFilter.h"
 #include "utils/XMLUtils.h"
 #include "addons/AddonInstaller.h"
 

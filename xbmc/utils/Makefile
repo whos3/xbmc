@@ -20,7 +20,6 @@ SRCS=AlarmClock.cpp \
      fastmemcpy-arm.S \
      FileOperationJob.cpp \
      FileUtils.cpp \
-     FilterUtils.cpp \
      fstrcmp.c \
      fft.cpp \
      GLUtils.cpp \

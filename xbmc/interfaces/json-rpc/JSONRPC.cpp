@@ -26,7 +26,7 @@
 #include "interfaces/AnnouncementManager.h"
 #include "playlists/SmartPlayList.h"
 #include "settings/AdvancedSettings.h"
-#include "utils/FilterUtils.h"
+#include "filter/Filter.h"
 #include "utils/log.h"
 #include "utils/Variant.h"
 
@@ -52,7 +52,7 @@ void CJSONRPC::Initialize()
 
   // filter-related enums
   vector<string> smartplaylistList;
-  FilterUtils::GetAvailableOperators(smartplaylistList);
+  CFilter::GetAvailableOperators(smartplaylistList);
   CJSONServiceDescription::AddEnum("List.Filter.Operators", smartplaylistList);
 
   smartplaylistList.clear();

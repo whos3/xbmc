@@ -253,12 +253,12 @@ bool CSmartPlaylistRule::Save(CVariant &obj) const
 
 Field CSmartPlaylistRule::TranslateField(const char *field)
 {
-  return FilterUtils::TranslateField(field);
+  return CFilter::TranslateField(field);
 }
 
 CStdString CSmartPlaylistRule::TranslateField(Field field)
 {
-  return FilterUtils::TranslateField(field);
+  return CFilter::TranslateField(field);
 }
 
 SortBy CSmartPlaylistRule::TranslateOrder(const char *order)
@@ -277,7 +277,7 @@ CStdString CSmartPlaylistRule::TranslateOrder(SortBy order)
 
 CFilterOperator CSmartPlaylistRule::TranslateOperator(const char *oper)
 {
-  CFilterOperator op = FilterUtils::TranslateOperator(oper);
+  CFilterOperator op = CFilter::TranslateOperator(oper);
   if (op.operation == FilterOperationNone)
     op.operation = FilterOperationContains;
 
@@ -286,7 +286,7 @@ CFilterOperator CSmartPlaylistRule::TranslateOperator(const char *oper)
 
 CStdString CSmartPlaylistRule::TranslateOperator(CFilterOperator oper)
 {
-  CStdString op = FilterUtils::TranslateOperator(oper);
+  CStdString op = CFilter::TranslateOperator(oper);
   if (!op.empty())
     return op;
 
@@ -295,7 +295,7 @@ CStdString CSmartPlaylistRule::TranslateOperator(CFilterOperator oper)
 
 CStdString CSmartPlaylistRule::GetLocalizedField(Field field)
 {
-  CStdString strField = FilterUtils::GetLocalizedField(field);
+  CStdString strField = CFilter::GetLocalizedField(field);
   if (!strField.empty())
     return strField;
   
@@ -588,7 +588,7 @@ std::vector<SortBy> CSmartPlaylistRule::GetOrders(const CStdString &type)
 
 CStdString CSmartPlaylistRule::GetLocalizedOperator(CFilterOperator oper)
 {
-  CStdString op = FilterUtils::GetLocalizedOperator(oper);
+  CStdString op = CFilter::GetLocalizedOperator(oper);
   if (!op.empty())
     return op;
 

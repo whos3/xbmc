@@ -18,7 +18,7 @@
  *
  */
 
-#include "FilterUtils.h"
+#include "Filter.h"
 #include "guilib/LocalizeStrings.h"
 #include "utils/StringUtils.h"
 #include "utils/Variant.h"
@@ -125,173 +125,6 @@ static const FilterOperator operators[] = {
 
 #define NUM_OPERATORS sizeof(operators) / sizeof(FilterOperator)
 
-/*********** CFilterRule **********/
-CFilterRule::CFilterRule()
-  : m_field(FieldNone), m_type(FilterFieldTypeNone), m_browseable(false)
-{ }
-
-bool CFilterRule::Load(const CVariant &obj)
-{
-  if (!obj.isObject() ||
-    !obj.isMember("field") || !obj["field"].isString() ||
-    !obj.isMember("operator") || !obj["operator"].isString())
-    return false;
-  
-  m_field = FilterUtils::TranslateField(obj["field"].asString().c_str());
-  m_operator = FilterUtils::TranslateOperator(obj["operator"].asString().c_str());
-  
-  if (m_operator.operation == FilterOperationTrue)
-    return true;
-  
-  if (!obj.isMember("value") || (!obj["value"].isString() && !obj["value"].isArray()))
-    return false;
-  
-  const CVariant &value = obj["value"];
-  if (value.isString() && !value.asString().empty())
-    m_value.push_back(value.asString());
-  else if (value.isArray())
-  {
-    for (CVariant::const_iterator_array val = value.begin_array(); val != value.end_array(); val++)
-    {
-      if (val->isString() && !val->asString().empty())
-        m_value.push_back(val->asString());
-    }
-  }
-  else
-    return false;
-  
-  return true;
-}
-
-bool CFilterRule::Save(CVariant &obj) const
-{
-  if (obj.isNull() || (m_value.empty() && m_operator.operation != FilterOperationTrue))
-    return false;
-  
-  obj["field"] = FilterUtils::TranslateField(m_field);
-  obj["operator"] = FilterUtils::TranslateOperator(m_operator);
-  
-  obj["value"] = CVariant(CVariant::VariantTypeArray);
-  for (vector<std::string>::const_iterator it = m_value.begin(); it != m_value.end(); it++)
-    obj["value"].push_back(*it);
-  
-  return true;
-}
-
-std::string CFilterRule::GetValue() const
-{
-  return StringUtils::Join(m_value, " / ");
-}
-
-void CFilterRule::SetValue(const std::string &value)
-{
-  m_value.clear();
-  m_value = StringUtils::Split(value, " / ");
-}
-
-void CFilterRule::SetValue(const std::vector<std::string> &values)
-{
-  m_value.assign(values.begin(), values.end());
-}
-
-/********** CFilterRuleCombination **********/
-CFilterRuleCombination::CFilterRuleCombination()
-: m_type(CombinationAnd)
-{ }
-
-bool CFilterRuleCombination::Load(const CVariant &obj)
-{
-  if (!obj.isObject() && !obj.isArray())
-    return false;
-  
-  CVariant child;
-  if (obj.isObject())
-  {
-    if (obj.isMember("and") && obj["and"].isArray())
-    {
-      m_type = CombinationAnd;
-      child = obj["and"];
-    }
-    else if (obj.isMember("or") && obj["or"].isArray())
-    {
-      m_type = CombinationOr;
-      child = obj["or"];
-    }
-    else
-      return false;
-  }
-  else
-    child = obj;
-  
-  for (CVariant::const_iterator_array it = child.begin_array(); it != child.end_array(); it++)
-  {
-    if (!it->isObject())
-      continue;
-    
-    if (it->isMember("and") || it->isMember("or"))
-    {
-      CFilterRuleCombination combo;
-      if (combo.Load(*it))
-        m_combinations.push_back(combo);
-    }
-    else
-    {
-      CFilterRule rule;
-      if (rule.Load(*it))
-        m_rules.push_back(rule);
-    }
-  }
-  
-  return true;
-}
-
-bool CFilterRuleCombination::Save(CVariant &obj) const
-{
-  if (!obj.isObject() || (m_combinations.empty() && m_rules.empty()))
-    return false;
-  
-  CVariant comboArray(CVariant::VariantTypeArray);
-  if (!m_combinations.empty())
-  {
-    for (CFilterRuleCombinations::const_iterator combo = m_combinations.begin(); combo != m_combinations.end(); combo++)
-    {
-      CVariant comboObj(CVariant::VariantTypeObject);
-      if (combo->Save(comboObj))
-        comboArray.push_back(comboObj);
-    }
-    
-  }
-  if (!m_rules.empty())
-  {
-    for (CFilterRules::const_iterator rule = m_rules.begin(); rule != m_rules.end(); rule++)
-    {
-      CVariant ruleObj(CVariant::VariantTypeObject);
-      if (rule->Save(ruleObj))
-        comboArray.push_back(ruleObj);
-    }
-  }
-  
-  obj[TranslateCombinationType()] = comboArray;
-  
-  return true;
-}
-
-std::string CFilterRuleCombination::TranslateCombinationType() const
-{
-  return m_type == CombinationAnd ? "and" : "or";
-}
-
-void CFilterRuleCombination::AddRule(const CFilterRule &rule)
-{
-  m_rules.push_back(rule);
-}
-
-void CFilterRuleCombination::AddCombination(const CFilterRuleCombination &combination)
-{
-  m_combinations.push_back(combination);
-}
-
-/********** CFilter **********/
 CFilter::CFilter()
 {
   Reset();
@@ -338,14 +171,13 @@ bool CFilter::Save(CVariant &obj) const
   return true;
 }
 
-/********** FilterUtils **********/
-void FilterUtils::GetAvailableFields(std::vector<std::string> &fieldList)
+void CFilter::GetAvailableFields(std::vector<std::string> &fieldList)
 {
   for (unsigned int index = 0; index < NUM_FIELDS; index++)
     fieldList.push_back(fields[index].id);
 }
 
-const std::string& FilterUtils::TranslateField(Field field)
+const std::string& CFilter::TranslateField(Field field)
 {
   for (unsigned int i = 0; i < NUM_FIELDS; i++)
   {
@@ -355,7 +187,7 @@ const std::string& FilterUtils::TranslateField(Field field)
   return fields[0].id;
 }
 
-Field FilterUtils::TranslateField(const std::string &field)
+Field CFilter::TranslateField(const std::string &field)
 {
   for (unsigned int i = 0; i < NUM_FIELDS; i++)
   {
@@ -365,7 +197,7 @@ Field FilterUtils::TranslateField(const std::string &field)
   return fields[0].field;
 }
 
-std::string FilterUtils::GetLocalizedField(Field field)
+std::string CFilter::GetLocalizedField(Field field)
 {
   for (unsigned int i = 0; i < NUM_FIELDS; i++)
   {
@@ -375,13 +207,13 @@ std::string FilterUtils::GetLocalizedField(Field field)
   return "";
 }
 
-void FilterUtils::GetAvailableOperators(std::vector<std::string> &operatorList)
+void CFilter::GetAvailableOperators(std::vector<std::string> &operatorList)
 {
   for (unsigned int index = 1; index < NUM_OPERATORS; index++)
     operatorList.push_back(operators[index].id);
 }
 
-const std::string& FilterUtils::TranslateOperator(const CFilterOperator &op)
+const std::string& CFilter::TranslateOperator(const CFilterOperator &op)
 {
   for (unsigned int i = 1; i < NUM_OPERATORS; i++)
   {
@@ -391,7 +223,7 @@ const std::string& FilterUtils::TranslateOperator(const CFilterOperator &op)
   return operators[0].id;
 }
 
-const CFilterOperator& FilterUtils::TranslateOperator(const std::string &op)
+const CFilterOperator& CFilter::TranslateOperator(const std::string &op)
 {
   for (unsigned int i = 1; i < NUM_OPERATORS; i++)
   {
@@ -401,7 +233,7 @@ const CFilterOperator& FilterUtils::TranslateOperator(const std::string &op)
   return operators[0].op;
 }
 
-std::string FilterUtils::GetLocalizedOperator(const CFilterOperator &op)
+std::string CFilter::GetLocalizedOperator(const CFilterOperator &op)
 {
   for (unsigned int i = 1; i < NUM_OPERATORS; i++)
   {

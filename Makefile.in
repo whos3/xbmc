@@ -46,6 +46,8 @@ DIRECTORY_ARCHIVES=$(DVDPLAYER_ARCHIVES) \
                    xbmc/filesystem/MusicDatabaseDirectory/musicdatabasedirectory.a \
                    xbmc/filesystem/VideoDatabaseDirectory/videodatabasedirectory.a \
                    xbmc/filesystem/filesystem.a \
+                   xbmc/filter/dialogs/filterdialogs.a \
+                   xbmc/filter/filter.a \
                    xbmc/guilib/guilib.a \
                    xbmc/input/input.a \
                    xbmc/interfaces/info/info.a \
