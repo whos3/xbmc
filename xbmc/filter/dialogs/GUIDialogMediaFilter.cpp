@@ -284,7 +284,7 @@ void CGUIDialogMediaFilter::CreateSettings()
         if (filter.rule == NULL)
           filter.data = new int(CHECK_ALL);
         else
-          filter.data = new int(filter.rule->m_operator.operation == FilterOperationTrue ? CHECK_YES : CHECK_NO);
+          filter.data = new int(filter.rule->m_operator.GetOperation() == FilterOperationTrue ? CHECK_YES : CHECK_NO);
 
         vector<pair<int, int> > entries;
         entries.push_back(pair<int, int>(CHECK_ALL, CHECK_LABEL_ALL));

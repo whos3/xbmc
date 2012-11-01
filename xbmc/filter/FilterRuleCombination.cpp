@@ -28,6 +28,13 @@ CFilterRuleCombination::CFilterRuleCombination()
 : m_type(CombinationAnd)
 { }
 
+void CFilterRuleCombination::Reset()
+{
+  m_type = CombinationAnd;
+  m_rules.clear();
+  m_combinations.clear();
+}
+
 bool CFilterRuleCombination::Load(const CVariant &obj)
 {
   if (!obj.isObject() && !obj.isArray())

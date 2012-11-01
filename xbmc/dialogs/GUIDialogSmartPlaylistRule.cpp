@@ -412,7 +412,7 @@ void CGUIDialogSmartPlaylistRule::UpdateButtons()
     type = CGUIEditControl::INPUT_TYPE_TEXT;
     break;
   case CSmartPlaylistRule::DATE_FIELD:
-    if (m_rule.m_operator.operation == FilterOperationInTheLast)
+    if (m_rule.m_operator.GetOperation() == FilterOperationInTheLast)
       type = CGUIEditControl::INPUT_TYPE_TEXT;
     else
       type = CGUIEditControl::INPUT_TYPE_DATE;

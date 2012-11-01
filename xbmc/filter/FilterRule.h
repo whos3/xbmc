@@ -54,21 +54,32 @@ class CFilterOperator
 {
 public:
   CFilterOperator(FilterOperation op = FilterOperationNone, bool neg = false)
-    : operation(op), negated(neg)
+    : m_operation(op), m_negated(neg)
   { }
 
-  bool operator==(const CFilterOperator &other) const { return operation == other.operation && negated == other.negated; }
+  bool operator==(const CFilterOperator &other) const { return m_operation == other.m_operation && m_negated == other.m_negated; }
   bool operator!=(const CFilterOperator &other) const { return !(*this == other); }
+  
+  virtual bool Load(const CVariant &obj);
+  virtual bool Save(CVariant &obj) const;
 
-  int ToInt() const { return (int)operation | (int)negated << 31; }
+  FilterOperation GetOperation() const { return m_operation; }
+  void SetOperation(FilterOperation op) { m_operation = op; }
+  bool IsNegated() const { return m_negated; }
+  void Negate(bool negate) { m_negated = negate; }
+
+  int ToInt() const { return (int)m_operation | (int)m_negated << 31; }
   void FromInt(int op)
   {
-    operation = (FilterOperation)(op & 0x7FFFFFFF);
-    negated = (bool)(op >> 31);
+    m_operation = (FilterOperation)(op & 0x7FFFFFFF);
+    m_negated = (bool)(op >> 31);
   }
 
-  FilterOperation operation;
-  bool negated;
+private:
+  friend class CFilterRule;
+
+  FilterOperation m_operation;
+  bool m_negated;
 };
 
 class CFilterRule
@@ -80,10 +91,22 @@ public:
   virtual bool Load(const CVariant &obj);
   virtual bool Save(CVariant &obj) const;
 
+  Field GetField() const { return m_field; }
+  void SetField(Field field) { m_field = field; }
+  FilterFieldType GetType() const { return m_type; }
+  void SetType(FilterFieldType type) { m_type = type; }
+  const CFilterOperator& GetOperator() const { return m_operator; }
+  CFilterOperator& GetOperator() { return m_operator; }
+  void SetOperator(const CFilterOperator& op) { m_operator = op; }
+  bool IsBrowseable() const { return m_browseable; }
+  void SetBrowseable(bool browseable) { m_browseable = browseable; }
+
   std::string GetValue() const;
+  const std::vector<std::string>& GetValues() const { return m_value; }
   void SetValue(const std::string &value);
   void SetValue(const std::vector<std::string> &values);
 
+private:
   Field m_field;
   FilterFieldType m_type;
   CFilterOperator m_operator;

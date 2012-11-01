@@ -25,6 +25,31 @@
 
 using namespace std;
 
+bool CFilterOperator::Load(const CVariant &obj)
+{
+  if (!obj.isObject() ||
+      !obj.isMember("operation") || !obj["operation"].isString())
+    return false;
+
+  *this = CFilter::TranslateOperator(obj["operation"].asString());
+  if (obj.isMember("negated") && obj["negated"].isBoolean())
+    m_negated = obj["negated"].asBoolean();
+
+  return true;
+}
+
+bool CFilterOperator::Save(CVariant &obj) const
+{
+  if (obj.isNull() || m_operation == FilterOperationNone)
+    return false;
+
+  obj["operation"] = CFilter::TranslateOperator(*this);
+  if (m_negated)
+    obj["negated"] = true;
+
+  return true;
+}
+
 CFilterRule::CFilterRule()
   : m_field(FieldNone), m_type(FilterFieldTypeNone), m_browseable(false)
 { }
@@ -32,14 +57,13 @@ CFilterRule::CFilterRule()
 bool CFilterRule::Load(const CVariant &obj)
 {
   if (!obj.isObject() ||
-    !obj.isMember("field") || !obj["field"].isString() ||
-    !obj.isMember("operator") || !obj["operator"].isString())
+      !obj.isMember("field") || !obj["field"].isString() ||
+      !obj.isMember("operator") || !obj["operator"].isObject() ||
+      !m_operator.Load(obj["operator"]))
     return false;
   
-  m_field = CFilter::TranslateField(obj["field"].asString().c_str());
-  m_operator = CFilter::TranslateOperator(obj["operator"].asString().c_str());
-  
-  if (m_operator.operation == FilterOperationTrue)
+  m_field = CFilter::TranslateField(obj["field"].asString().c_str());  
+  if (m_operator.m_operation == FilterOperationTrue)
     return true;
   
   if (!obj.isMember("value") || (!obj["value"].isString() && !obj["value"].isArray()))
@@ -64,12 +88,12 @@ bool CFilterRule::Load(const CVariant &obj)
 
 bool CFilterRule::Save(CVariant &obj) const
 {
-  if (obj.isNull() || (m_value.empty() && m_operator.operation != FilterOperationTrue))
+  if (obj.isNull() ||
+     (m_value.empty() && m_operator.m_operation != FilterOperationTrue) ||
+     !m_operator.Save(obj["operator"]))
     return false;
   
-  obj["field"] = CFilter::TranslateField(m_field);
-  obj["operator"] = CFilter::TranslateOperator(m_operator);
-  
+  obj["field"] = CFilter::TranslateField(m_field);  
   obj["value"] = CVariant(CVariant::VariantTypeArray);
   for (vector<std::string>::const_iterator it = m_value.begin(); it != m_value.end(); it++)
     obj["value"].push_back(*it);

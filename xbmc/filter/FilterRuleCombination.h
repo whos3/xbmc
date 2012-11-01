@@ -34,11 +34,14 @@ class CFilterRuleCombination
 {
 public:
   CFilterRuleCombination();
+  virtual ~CFilterRuleCombination() { }
 
   typedef enum {
     CombinationOr = 0,
     CombinationAnd
   } Combination;
+
+  virtual void Reset();
 
   virtual bool Load(const CVariant &obj);
   virtual bool Save(CVariant &obj) const;
@@ -48,9 +51,14 @@ public:
   Combination GetType() const { return m_type; }
   void SetType(Combination combination) { m_type = combination; }
 
+  const CFilterRules& GetRules() const { return m_rules; }
+  CFilterRules& GetRules() { return m_rules; }
   void AddRule(const CFilterRule &rule);
+  const CFilterRuleCombinations& GetCombinations() const { return m_combinations; }
+  CFilterRuleCombinations& GetCombinations() { return m_combinations; }
   void AddCombination(const CFilterRuleCombination &rule);
 
+private:
   Combination m_type;
   CFilterRuleCombinations m_combinations;
   CFilterRules m_rules;

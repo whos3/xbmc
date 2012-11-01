@@ -115,7 +115,7 @@ static const translateField fields[] = {
 CSmartPlaylistRule::CSmartPlaylistRule()
 {
   m_field = FieldNone;
-  m_operator.operation = FilterOperationContains;
+  m_operator.SetOperation(FilterOperationContains);
   m_parameter.clear();
 }
 
@@ -136,7 +136,7 @@ bool CSmartPlaylistRule::Load(TiXmlElement *element, const CStdString &encoding 
   m_field = TranslateField(field);
   m_operator = TranslateOperator(oper);
 
-  if (m_operator.operation == FilterOperationTrue)
+  if (m_operator.GetOperation() == FilterOperationTrue)
     return true;
 
   TiXmlNode *parameter = element->FirstChild();
@@ -191,7 +191,7 @@ bool CSmartPlaylistRule::Load(const CVariant &obj)
   m_field = TranslateField(obj["field"].asString().c_str());
   m_operator = TranslateOperator(obj["operator"].asString().c_str());
 
-  if (m_operator.operation == FilterOperationTrue)
+  if (m_operator.GetOperation() == FilterOperationTrue)
     return true;
 
   if (!obj.isMember("value") || (!obj["value"].isString() && !obj["value"].isArray()))
@@ -216,7 +216,7 @@ bool CSmartPlaylistRule::Load(const CVariant &obj)
 
 bool CSmartPlaylistRule::Save(TiXmlNode *parent) const
 {
-  if (parent == NULL || (m_parameter.empty() && m_operator.operation != FilterOperationTrue))
+  if (parent == NULL || (m_parameter.empty() && m_operator.GetOperation() != FilterOperationTrue))
     return false;
 
   TiXmlElement rule("rule");
@@ -238,7 +238,7 @@ bool CSmartPlaylistRule::Save(TiXmlNode *parent) const
 
 bool CSmartPlaylistRule::Save(CVariant &obj) const
 {
-  if (obj.isNull() || (m_parameter.empty() && m_operator.operation != FilterOperationTrue))
+  if (obj.isNull() || (m_parameter.empty() && m_operator.GetOperation() != FilterOperationTrue))
     return false;
 
   obj["field"] = TranslateField(m_field);
@@ -278,8 +278,8 @@ CStdString CSmartPlaylistRule::TranslateOrder(SortBy order)
 CFilterOperator CSmartPlaylistRule::TranslateOperator(const char *oper)
 {
   CFilterOperator op = CFilter::TranslateOperator(oper);
-  if (op.operation == FilterOperationNone)
-    op.operation = FilterOperationContains;
+  if (op.GetOperation() == FilterOperationNone)
+    op.SetOperation(FilterOperationContains);
 
   return op;
 }
@@ -629,10 +629,10 @@ CStdString CSmartPlaylistRule::GetVideoResolutionQuery(const CStdString &paramet
   else if (iRes >= 540) { min =  721; max =  960; }
   else                  { min =    0; max =  720; }
 
-  switch (m_operator.operation)
+  switch (m_operator.GetOperation())
   {
     case FilterOperationEquals:
-      if (!m_operator.negated)
+      if (!m_operator.IsNegated())
         retVal.AppendFormat(">= %i and iVideoWidth <= %i)", min, max);
       else
         retVal.AppendFormat("< %i or iVideoWidth > %i)", min, max);
@@ -656,30 +656,30 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
   if ((strType == "tvshows" || strType == "episodes") && m_field == FieldYear)
   { // special case for premiered which is a date rather than a year
     // TODO: SMARTPLAYLISTS do we really need this, or should we just make this field the premiered date and request a date?
-    if (op.operation == FilterOperationEquals)
-      op.operation = FilterOperationContains;
+    if (op.GetOperation() == FilterOperationEquals)
+      op.SetOperation(FilterOperationContains);
   }
 
   CStdString operatorString, negate;
   if (GetFieldType(m_field) == TEXTIN_FIELD)
   {
-    if (op.operation == FilterOperationEquals && op.negated)
+    if (op.GetOperation() == FilterOperationEquals && op.IsNegated())
       negate = " NOT";
   }
   else
   {
     // the comparison piece
-    switch (op.operation)
+    switch (op.GetOperation())
     {
     case FilterOperationContains:
       operatorString = " LIKE '%%%s%%'";
-      if (op.negated)
+      if (op.IsNegated())
         negate = " NOT";
       break;
 
     case FilterOperationEquals:
       operatorString = " LIKE '%s'";
-      if (op.negated)
+      if (op.IsNegated())
         negate = " NOT";
       break;
 
@@ -694,9 +694,9 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
     case FilterOperationAfter:
     case FilterOperationGreaterThan:
     case FilterOperationInTheLast:
-      if (!op.negated)
+      if (!op.IsNegated())
         operatorString = " > ";
-      else if (op.operation == FilterOperationInTheLast)
+      else if (op.GetOperation() == FilterOperationInTheLast)
         operatorString = " < ";
 
       if (GetFieldType(m_field) == NUMERIC_FIELD || GetFieldType(m_field) == SECONDS_FIELD)
@@ -715,7 +715,7 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
       break;
 
     case FilterOperationTrue:
-      if (!op.negated)
+      if (!op.IsNegated())
         operatorString = " = 1";
       else
       {
@@ -730,7 +730,7 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
   }
 
   // boolean operators don't have any values in m_parameter, they work on the operator
-  if (m_operator.operation == FilterOperationTrue)
+  if (m_operator.GetOperation() == FilterOperationTrue)
   {
     if (strType == "movies")
     {
@@ -791,7 +791,7 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
 
     if (GetFieldType(m_field) == DATE_FIELD)
     {
-      if (m_operator.operation == FilterOperationInTheLast)
+      if (m_operator.GetOperation() == FilterOperationInTheLast)
       { // translate time period
         CDateTime date=CDateTime::GetCurrentDateTime();
         CDateTimeSpan span;
@@ -819,8 +819,8 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
       else if (m_field == FieldAlbumArtist)
         query = table + ".idAlbum" + negate + " IN (SELECT idAlbum FROM album_artist, artist WHERE album_artist.idArtist = artist.idArtist AND artist.strArtist" + parameter + ")";
       else if (m_field == FieldLastPlayed &&
-              (m_operator.operation == FilterOperationLessThan || m_operator.operation == FilterOperationBefore ||
-              (m_operator.operation == FilterOperationInTheLast && m_operator.negated)))
+              (m_operator.GetOperation() == FilterOperationLessThan || m_operator.GetOperation() == FilterOperationBefore ||
+              (m_operator.GetOperation() == FilterOperationInTheLast && m_operator.IsNegated())))
         query = GetField(m_field, strType) + " is NULL or " + GetField(m_field, strType) + parameter;
     }
     else if (strType == "albums")
@@ -858,8 +858,8 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
       else if (m_field == FieldCountry)
         query = GetField(FieldId, strType) + negate + " IN (SELECT idMovie FROM countrylinkmovie JOIN country ON country.idCountry=countrylinkmovie.idCountry WHERE country.strCountry" + parameter + ")";
       else if ((m_field == FieldLastPlayed || m_field == FieldDateAdded) &&
-               (m_operator.operation == FilterOperationLessThan || m_operator.operation == FilterOperationBefore ||
-               (m_operator.operation == FilterOperationInTheLast && m_operator.negated)))
+               (m_operator.GetOperation() == FilterOperationLessThan || m_operator.GetOperation() == FilterOperationBefore ||
+               (m_operator.GetOperation() == FilterOperationInTheLast && m_operator.IsNegated())))
         query = GetField(m_field, strType) + " IS NULL OR " + GetField(m_field, strType) + parameter;
       else if (m_field == FieldSet)
         query = GetField(FieldId, strType) + negate + " IN (SELECT idMovie FROM setlinkmovie JOIN sets ON sets.idSet=setlinkmovie.idSet WHERE sets.strSet" + parameter + ")";
@@ -879,8 +879,8 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
       else if (m_field == FieldDirector)
         query = GetField(FieldId, strType) + negate + " IN (SELECT idMVideo FROM directorlinkmusicvideo JOIN actors ON actors.idActor=directorlinkmusicvideo.idDirector WHERE actors.strActor" + parameter + ")";
       else if ((m_field == FieldLastPlayed || m_field == FieldDateAdded) &&
-               (m_operator.operation == FilterOperationLessThan || m_operator.operation == FilterOperationBefore ||
-               (m_operator.operation == FilterOperationInTheLast && m_operator.negated)))
+               (m_operator.GetOperation() == FilterOperationLessThan || m_operator.GetOperation() == FilterOperationBefore ||
+               (m_operator.GetOperation() == FilterOperationInTheLast && m_operator.IsNegated())))
         query = GetField(m_field, strType) + " IS NULL OR " + GetField(m_field, strType) + parameter;
     }
     else if (strType == "tvshows")
@@ -898,8 +898,8 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
       else if (m_field == FieldMPAA)
         query = GetField(FieldId, strType) + negate + " IN (SELECT idShow FROM tvshowview WHERE " + GetField(m_field, strType) + parameter + ")";
       else if ((m_field == FieldLastPlayed || m_field == FieldDateAdded) &&
-               (m_operator.operation == FilterOperationLessThan || m_operator.operation == FilterOperationBefore ||
-               (m_operator.operation == FilterOperationInTheLast && m_operator.negated)))
+               (m_operator.GetOperation() == FilterOperationLessThan || m_operator.GetOperation() == FilterOperationBefore ||
+               (m_operator.GetOperation() == FilterOperationInTheLast && m_operator.IsNegated())))
         query = GetField(m_field, strType) + " IS NULL OR " + GetField(m_field, strType) + parameter;
     }
     else if (strType == "episodes")
@@ -915,8 +915,8 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
       else if (m_field == FieldWriter)
         query = GetField(FieldId, strType) + negate + " IN (SELECT idEpisode FROM writerlinkepisode JOIN actors ON actors.idActor=writerlinkepisode.idWriter WHERE actors.strActor" + parameter + ")";
       else if ((m_field == FieldLastPlayed || m_field == FieldDateAdded) &&
-               (m_operator.operation == FilterOperationLessThan || m_operator.operation == FilterOperationBefore ||
-               (m_operator.operation == FilterOperationInTheLast && m_operator.negated)))
+               (m_operator.GetOperation() == FilterOperationLessThan || m_operator.GetOperation() == FilterOperationBefore ||
+               (m_operator.GetOperation() == FilterOperationInTheLast && m_operator.IsNegated())))
         query = GetField(m_field, strType) + " IS NULL OR " + GetField(m_field, strType) + parameter;
       else if (m_field == FieldStudio)
         query = GetField(FieldId, strType) + negate + " IN (SELECT idEpisode FROM episodeview WHERE strStudio" + parameter + ")";
@@ -939,8 +939,8 @@ CStdString CSmartPlaylistRule::GetWhereClause(const CDatabase &db, const CStdStr
       query = table + ".idFile" + negate + " IN (SELECT DISTINCT idFile FROM streamdetails WHERE fVideoAspect " + parameter + ")";
     if (m_field == FieldPlaycount && strType != "songs" && strType != "albums")
     { // playcount IS stored as NULL OR number IN video db
-      if ((m_operator.operation == FilterOperationEquals && it->Equals("0") == !m_operator.negated) ||
-          (m_operator.operation == FilterOperationLessThan))
+      if ((m_operator.GetOperation() == FilterOperationEquals && it->Equals("0") == !m_operator.IsNegated()) ||
+          (m_operator.GetOperation() == FilterOperationLessThan))
       {
         CStdString field = GetField(FieldPlaycount, strType);
         query = field + " IS NULL OR " + field + parameter;
@@ -1018,7 +1018,7 @@ CStdString CSmartPlaylistRuleCombination::GetWhereClause(const CDatabase &db, co
         }
         if (playlist.GetType().Equals(strType))
         {
-          if (it->m_operator.operation == FilterOperationEquals && it->m_operator.negated)
+          if (it->m_operator.GetOperation() == FilterOperationEquals && it->m_operator.IsNegated())
             currentRule.Format("NOT (%s)", playlistQuery.c_str());
           else
             currentRule = playlistQuery;

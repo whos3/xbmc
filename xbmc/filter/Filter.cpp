@@ -132,9 +132,7 @@ CFilter::CFilter()
 
 void CFilter::Reset()
 {
-  m_ruleCombination.m_combinations.clear();
-  m_ruleCombination.m_rules.clear();
-  m_ruleCombination.SetType(CFilterRuleCombination::CombinationAnd);
+  m_ruleCombination.Reset();
   m_type = MediaTypeSong;
 }
 
@@ -169,6 +167,18 @@ bool CFilter::Save(CVariant &obj) const
     obj["rules"] = rulesObj;
 
   return true;
+}
+
+bool CFilter::Filter(const CDatabase &db, std::string &query) const
+{
+  set<string> referencedPlaylists;
+  return filter(db, referencedPlaylists, query);
+}
+
+bool CFilter::Filter(CFileItemList& items) const
+{
+  set<string> referencedPlaylists;
+  return filter(referencedPlaylists, items);
 }
 
 void CFilter::GetAvailableFields(std::vector<std::string> &fieldList)
@@ -241,4 +251,18 @@ std::string CFilter::GetLocalizedOperator(const CFilterOperator &op)
       return g_localizeStrings.Get(operators[i].label);
   }
   return "";
+}
+
+bool CFilter::filter(const CDatabase &db, std::set<std::string> &referencedPlaylists, std::string &query) const
+{
+  // TODO
+
+  return false;
+}
+
+bool CFilter::filter(std::set<std::string> &referencedPlaylists, CFileItemList& items) const
+{
+  // TODO
+
+  return false;
 }

@@ -19,12 +19,16 @@
  *
  */
 
+#include <set>
 #include <string>
 #include <vector>
 
 #include "FilterRule.h"
 #include "FilterRuleCombination.h"
 #include "utils/DatabaseUtils.h"
+
+class CDatabase;
+class CFileItemList;
 
 class CFilter
 {
@@ -33,6 +37,7 @@ public:
   virtual ~CFilter() { }
   
   virtual void Reset();
+  virtual bool IsEmpty() const { return m_ruleCombination.GetRules().empty() && m_ruleCombination.GetCombinations().empty(); }
   
   virtual bool Load(const CVariant &obj);
   virtual bool Save(CVariant &obj) const;
@@ -40,10 +45,14 @@ public:
   MediaType GetType() const { return m_type; }
   virtual void SetType(MediaType type) { m_type = type; }
 
+  CFilterRuleCombination& GetRuleCombination() { return m_ruleCombination; }
+  const CFilterRuleCombination& GetRuleCombination() const { return m_ruleCombination; }
+
   void SetMatchAllRules(bool matchAll) { m_ruleCombination.SetType(matchAll ? CFilterRuleCombination::CombinationAnd : CFilterRuleCombination::CombinationOr); }
   bool GetMatchAllRules() const { return m_ruleCombination.GetType() == CFilterRuleCombination::CombinationAnd; }
-  
-  virtual bool IsEmpty() const { return m_ruleCombination.m_rules.empty() && m_ruleCombination.m_combinations.empty(); }
+
+  virtual bool Filter(const CDatabase &db, std::string &query) const;
+  virtual bool Filter(CFileItemList& items) const;
 
   static void GetAvailableFields(std::vector<std::string> &fieldList);
   static const std::string& TranslateField(Field field);
@@ -56,6 +65,9 @@ public:
   static std::string GetLocalizedOperator(const CFilterOperator &op);
 
 protected:
+  virtual bool filter(const CDatabase &db, std::set<std::string> &referencedPlaylists, std::string &query) const;
+  virtual bool filter(std::set<std::string> &referencedPlaylists, CFileItemList& items) const;
+  
   CFilterRuleCombination m_ruleCombination;
   MediaType m_type;
 };
