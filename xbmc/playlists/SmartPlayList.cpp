@@ -1342,6 +1342,9 @@ const TiXmlNode* CSmartPlaylist::readName(const TiXmlNode *root)
   // load the playlist name
   XMLUtils::GetString(root, "name", m_playlistName);
 
+  // load the icon
+  XMLUtils::GetString(root, "icon", m_icon);
+
   return root;
 }
 
@@ -1422,6 +1425,10 @@ bool CSmartPlaylist::Load(const CVariant &obj)
   // load the playlist name
   if (obj.isMember("name") && obj["name"].isString())
     m_playlistName = obj["name"].asString();
+
+  // load the icon
+  if (obj.isMember("icon") && obj["icon"].isString())
+    m_icon = obj["icon"].asString();
 
   if (obj.isMember("rules"))
     m_ruleCombination.Load(obj["rules"]);
@@ -1532,6 +1539,10 @@ bool CSmartPlaylist::Save(const CStdString &path) const
   // add the <name> tag
   XMLUtils::SetString(pRoot, "name", m_playlistName);
 
+  // add the <icon> tag
+  if (!m_icon.empty())
+    XMLUtils::SetString(pRoot, "icon", m_icon);
+
   // add the <match> tag
   XMLUtils::SetString(pRoot, "match", m_ruleCombination.GetType() == CSmartPlaylistRuleCombination::CombinationAnd ? "all" : "one");
 
@@ -1576,6 +1587,10 @@ bool CSmartPlaylist::Save(CVariant &obj, bool full /* = true */) const
   obj.clear();
   // add "type"
   obj["type"] = m_playlistType;
+
+  // add "icon"
+  if (!m_icon.empty())
+    obj["icon"] = m_icon;
 
   // add "rules"
   CVariant rulesObj = CVariant(CVariant::VariantTypeObject);
@@ -1627,6 +1642,7 @@ void CSmartPlaylist::Reset()
   m_playlistType = "songs"; // sane default
   m_group.clear();
   m_groupMixed = false;
+  m_icon.clear();
 }
 
 void CSmartPlaylist::SetName(const CStdString &name)

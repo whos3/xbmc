@@ -177,8 +177,10 @@ public:
 
   void SetName(const CStdString &name);
   void SetType(const CStdString &type); // music, video, mixed
+  void SetIcon(const CStdString &icon) { m_icon = icon; }
   const CStdString& GetName() const { return m_playlistName; };
   const CStdString& GetType() const { return m_playlistType; };
+  const CStdString& GetIcon() const { return m_icon; }
   bool IsVideoType() const;
   bool IsMusicType() const;
 
@@ -234,6 +236,7 @@ private:
   CSmartPlaylistRuleCombination m_ruleCombination;
   CStdString m_playlistName;
   CStdString m_playlistType;
+  CStdString m_icon;
 
   // order information
   unsigned int m_limit;

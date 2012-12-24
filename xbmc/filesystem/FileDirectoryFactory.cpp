@@ -227,6 +227,8 @@ IFileDirectory* CFileDirectoryFactory::Create(const CStdString& strPath, CFileIt
     {
       pItem->SetLabel(playlist.GetName());
       pItem->SetLabelPreformated(true);
+      if (!playlist.GetIcon().empty())
+        pItem->SetIconImage(playlist.GetIcon());
     }
     IFileDirectory* pDir=new CSmartPlaylistDirectory;
     return pDir; // treat as directory
