@@ -76,7 +76,7 @@
 				<description>Name Label</description>
 				<posx>30</posx>
 				<posy>120</posy>
-				<width>740</width>
+				<width>685</width>
 				<label>21433</label>
 				<font>font12</font>
 				<textcolor>blue</textcolor>
@@ -86,7 +86,7 @@
 				<description>Name Button</description>
 				<posx>30</posx>
 				<posy>145</posy>
-				<width>740</width>
+				<width>685</width>
 				<height>40</height>
 				<textoffsetx>10</textoffsetx>
 				<textwidth>720</textwidth>
@@ -95,10 +95,24 @@
 				<texturefocus border="5">button-focus2.png</texturefocus>
 				<label>-</label>
 				<onup>22</onup>
-				<onleft>12</onleft>
-				<onright>12</onright>
+				<onleft>23</onleft>
+				<onright>23</onright>
 				<ondown>10</ondown>
 			</control>
+      <control type="button" id="23">
+        <description>Icon Button</description>
+        <posx>730</posx>
+        <posy>145</posy>
+        <width>40</width>
+        <height>40</height>
+        <label>-</label>
+        <align>center</align>
+        <aligny>center</aligny>
+        <onup>22</onup>
+        <onleft>12</onleft>
+        <onright>12</onright>
+        <ondown>10</ondown>
+      </control>
 			<control type="label">
 				<description>rules label</description>
 				<posx>30</posx>
