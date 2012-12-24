@@ -49,6 +49,7 @@ protected:
   void OnMatch();
   void OnLimit();
   void OnType();
+  void OnIcon();
   void OnOrder();
   void OnOrderDirection();
   void OnGroupBy();

@@ -19,6 +19,8 @@
  */
 
 #include "GUIDialogSmartPlaylistEditor.h"
+#include "dialogs/GUIDialogFileBrowser.h"
+#include "guilib/GUIButtonControl.h"
 #include "guilib/GUIKeyboardFactory.h"
 #include "Util.h"
 #include "utils/StringUtils.h"
@@ -27,7 +29,9 @@
 #include "guilib/GUIWindowManager.h"
 #include "filesystem/File.h"
 #include "profiles/ProfilesManager.h"
+#include "settings/MediaSourceSettings.h"
 #include "settings/Settings.h"
+#include "storage/MediaManager.h"
 #include "FileItem.h"
 #include "guilib/Key.h"
 #include "guilib/LocalizeStrings.h"
@@ -46,6 +50,7 @@ using namespace std;
 #define CONTROL_ORDER_DIRECTION 19
 #define CONTROL_GROUP_BY        23
 #define CONTROL_GROUP_MIXED     24
+#define CONTROL_ICON            25
 
 #define CONTROL_OK              20
 #define CONTROL_CANCEL          21
@@ -107,6 +112,8 @@ bool CGUIDialogSmartPlaylistEditor::OnMessage(CGUIMessage& message)
         OnRuleRemove(GetSelectedItem());
       else if (iControl == CONTROL_NAME)
         OnEditChanged(iControl, m_playlist.m_playlistName);
+      else if (iControl == CONTROL_ICON)
+        OnIcon();
       else if (iControl == CONTROL_OK)
         OnOK();
       else if (iControl == CONTROL_CANCEL)
@@ -231,6 +238,100 @@ void CGUIDialogSmartPlaylistEditor::OnType()
   UpdateButtons();
 }
 
+void CGUIDialogSmartPlaylistEditor::OnIcon()
+{
+  CFileItemList items;
+
+  // Current thumb
+  if (!m_playlist.m_icon.empty())
+  {
+    CFileItemPtr item(new CFileItem("thumb://Current", false));
+    item->SetArt("thumb", m_playlist.m_icon);
+    item->SetLabel(g_localizeStrings.Get(13512));
+    items.Add(item);
+  }
+
+  vector<string> icons;
+  if (m_mode == "music")
+  {
+    if (m_playlist.m_playlistType == "artists")
+      icons.push_back("DefaultArtist.png");
+    else
+      icons.push_back("DefaultAlbumCover.png");
+    icons.push_back("DefaultAudio.png");
+    icons.push_back("DefaultPlaylist.png");
+    icons.push_back("DefaultMusicAlbums.png");
+    icons.push_back("DefaultMusicArtists.png");
+    icons.push_back("DefaultMusicCompilations.png");
+    icons.push_back("DefaultMusicGenres.png");
+    icons.push_back("DefaultMusicPlaylists.png");
+    icons.push_back("DefaultMusicPlugins.png");
+    icons.push_back("DefaultMusicRecentlyAdded.png");
+    icons.push_back("DefaultMusicRecentlyPlayed.png");
+    icons.push_back("DefaultMusicSongs.png");
+    icons.push_back("DefaultMusicTop100.png");
+    icons.push_back("DefaultMusicVideos.png");
+    icons.push_back("DefaultMusicYears.png");
+  }
+  else
+  {
+    if (m_playlist.m_playlistType == "movies")
+      icons.push_back("DefaultMovies.png");
+    else if (m_playlist.m_playlistType == "tvshows" ||
+             m_playlist.m_playlistType == "episodes")
+      icons.push_back("DefaultMovies.png");
+    else if (m_playlist.m_playlistType == "musicvideos" ||
+             m_playlist.m_playlistType == "mixed")
+      icons.push_back("DefaultMusicVideos.png");
+
+    icons.push_back("DefaultVideo.png");
+    icons.push_back("DefaultVideoCover.png");
+    icons.push_back("DefaultPlaylist.png");
+    icons.push_back("DefaultInProgressShows.png");
+    icons.push_back("DefaultRecentlyAddedMovies.png");
+    icons.push_back("DefaultRecentlyAddedEpisodes.png");
+    icons.push_back("DefaultRecentlyAddedMusicVideos.png");
+    icons.push_back("DefaultVideoPlaylists.png");
+    icons.push_back("DefaultVideoPlugins.png");
+    icons.push_back("DefaultActor.png");
+  }
+
+  for (vector<string>::const_iterator icon = icons.begin(); icon != icons.end(); icon++)
+  {
+    CFileItemPtr iconItem(new CFileItem(*icon, false));
+    iconItem->SetIconImage(*icon);
+    iconItem->SetLabel(*icon);
+    items.Add(iconItem);
+  }
+
+  CFileItemPtr item(new CFileItem("thumb://None", false));
+  if (m_mode == "music")
+  {
+    if (m_playlist.m_playlistType == "artists")
+      item->SetIconImage("DefaultArtist.png");
+    else
+      item->SetIconImage("DefaultAlbumCover.png");
+  }
+  else
+    item->SetIconImage("DefaultVideo.png");
+  item->SetLabel(g_localizeStrings.Get(13515));
+  items.Add(item);
+
+  CStdString result;
+  VECSOURCES sources = *CMediaSourceSettings::Get().GetSources("video");
+  g_mediaManager.GetLocalDrives(sources);
+  if (!CGUIDialogFileBrowser::ShowAndGetImage(items, sources, g_localizeStrings.Get(1030), result))
+    return;   // user cancelled
+
+  if (result == "thumb://Current")
+    return;   // user chose the one they have
+
+  if (result.empty() || result == "thumb://None" || (!XFILE::CFile::Exists(result) && !g_TextureManager.HasTexture(result)))
+    return;
+
+  m_playlist.m_icon = result;
+}
+
 void CGUIDialogSmartPlaylistEditor::OnOrder()
 {
   CGUIMessage msg(GUI_MSG_ITEM_SELECTED, GetID(), CONTROL_ORDER_FIELD);
@@ -279,9 +380,26 @@ void CGUIDialogSmartPlaylistEditor::UpdateButtons()
   {
     SET_CONTROL_LABEL2(CONTROL_NAME, g_localizeStrings.Get(16035));
     CONTROL_DISABLE(CONTROL_NAME);
+    CONTROL_DISABLE(CONTROL_ICON);
   }
   else
+  {
     SET_CONTROL_LABEL2(CONTROL_NAME, m_playlist.m_playlistName);
+    CONTROL_ENABLE(CONTROL_NAME);
+    CONTROL_ENABLE(CONTROL_ICON);
+  }
+
+  /* TODO
+  CGUIButtonControl *iconControl = (CGUIButtonControl*)GetControl(CONTROL_ICON);
+  if (iconControl != NULL)
+  {
+    if (m_playlist.m_icon.empty() ||
+       (!g_TextureManager.HasTexture(m_playlist.m_icon) && !XFILE::CFile::Exists(m_playlist.m_icon)))
+      iconControl->SetFileName("DefaultFolder.png");
+    else
+      iconControl->SetFileName(m_playlist.m_icon);
+  }
+  */
   
   UpdateRuleControlButtons();
 
