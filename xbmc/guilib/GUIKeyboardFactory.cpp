@@ -32,6 +32,8 @@
 #include "dialogs/GUIDialogKeyboardGeneric.h"
 #if defined(TARGET_DARWIN_IOS)
 #include "osx/ios/IOSKeyboard.h"
+#elif defined(TARGET_ANDROID)
+#include "android/activity/AndroidKeyboard.h"
 #endif
 
 FILTERING CGUIKeyboardFactory::m_filtering = FILTERING_NONE;
@@ -85,6 +87,8 @@ bool CGUIKeyboardFactory::ShowAndGetInput(CStdString& aTextString, const CVarian
 
 #if defined(TARGET_DARWIN_IOS) && !defined(TARGET_DARWIN_IOS_ATV2)
   kb = new CIOSKeyboard();
+#elif defined(TARGET_ANDROID)
+  kb = new CAndroidKeyboard();
 #endif
 
   if(!kb)
