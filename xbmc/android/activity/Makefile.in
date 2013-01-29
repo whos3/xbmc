@@ -11,6 +11,7 @@ INCLUDES += -I$(GLUEPATH) -I$(CPUPATH)
 SRCS       = android_main.cpp
 SRCS      += AndroidFeatures.cpp
 SRCS      += AndroidKey.cpp
+SRCS      += AndroidKeyboard.cpp
 SRCS      += AndroidTouch.cpp
 SRCS      += AndroidMouse.cpp
 SRCS      += GraphicBuffer.cpp
