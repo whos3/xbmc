@@ -92,14 +92,31 @@
 			<animation effect="slide" end="-120,0" time="0" condition="!Control.IsVisible(5)">Conditional</animation>
 			<visible>system.getbool(input.enablemouse)</visible>
 		</control>
+		<control type="edit" id="7">
+			<description>Input</description>
+			<left>30</left>
+			<top>65</top>
+			<width>550</width>
+			<height>40</height>
+			<align>left</align>
+			<aligny>center</aligny>
+			<label>-</label>
+			<font>font13</font>
+			<texturefocus border="5">button-focus2.png</texturefocus>
+			<texturenofocus border="5">button-nofocus.png</texturenofocus>
+			<onup>5</onup>
+			<onleft>3</onleft>
+			<onright>8</onright>
+			<ondown>3</ondown>
+		</control>
 		<control type="list" id="3">
 			<left>20</left>
-			<top>67</top>
+			<top>117</top>
 			<width>550</width>
-			<height>506</height>
+			<height>456</height>
 			<onup>3</onup>
 			<ondown>3</ondown>
-			<onleft>5</onleft>
+			<onleft>7</onleft>
 			<onright>61</onright>
 			<pagecontrol>61</pagecontrol>
 			<scrolltime>200</scrolltime>
@@ -161,12 +178,12 @@
 		</control>
 		<control type="list" id="6">
 			<left>20</left>
-			<top>65</top>
+			<top>115</top>
 			<width>550</width>
-			<height>510</height>
+			<height>460</height>
 			<onup>6</onup>
 			<ondown>6</ondown>
-			<onleft>5</onleft>
+			<onleft>7</onleft>
 			<onright>61</onright>
 			<pagecontrol>61</pagecontrol>
 			<scrolltime>200</scrolltime>
@@ -268,9 +285,9 @@
 		</control>
 		<control type="scrollbar" id="61">
 			<left>570</left>
-			<top>65</top>
+			<top>115</top>
 			<width>25</width>
-			<height>510</height>
+			<height>460</height>
 			<texturesliderbackground border="0,14,0,14">ScrollBarV.png</texturesliderbackground>
 			<texturesliderbar border="0,14,0,14">ScrollBarV_bar.png</texturesliderbar>
 			<texturesliderbarfocus border="0,14,0,14">ScrollBarV_bar_focus.png</texturesliderbarfocus>
@@ -328,6 +345,23 @@
 			<align>center</align>
 			<onleft>3</onleft>
 			<onright>3</onright>
+			<onup>7</onup>
+			<ondown>8</ondown>
+		</control>
+		<control type="button" id="8">
+			<description>Add button</description>
+			<left>615</left>
+			<top>157</top>
+			<width>200</width>
+			<height>40</height>
+			<font>font12_title</font>
+			<textcolor>white</textcolor>
+			<focusedcolor>white</focusedcolor>
+			<align>center</align>
+			<onleft>3</onleft>
+			<onright>3</onright>
+			<onup>5</onup>
+			<ondown>7</ondown>
 		</control>
 		<control type="group">
 			<left>610</left>
