@@ -662,9 +662,23 @@ string CGUIDialogVideoInfo::ChooseArtType(const CFileItem &videoItem, map<string
   if (dialog->IsButtonPressed())
   {
     // Get the new artwork name
+    CGUIDialogSelect* selectDialog = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
+    selectDialog->Reset();
+    selectDialog->SetHeading(13516);
+    selectDialog->AllowNewItem(true);
+
+    selectDialog->SetItems(&items);
+
+    selectDialog->DoModal();
     CStdString strArtworkName;
-    if (!CGUIKeyboardFactory::ShowAndGetInput(strArtworkName, g_localizeStrings.Get(13516), false))
-      return "";
+    if (selectDialog->IsConfirmed())
+    {
+      if (selectDialog->IsNewItem())
+        strArtworkName = selectDialog->GetNewItem();
+      else
+        strArtworkName = selectDialog->GetSelectedLabelText();
+    }
+    selectDialog->Reset();
 
     return strArtworkName;
   }
