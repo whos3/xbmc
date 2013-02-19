@@ -2795,7 +2795,7 @@
     <ClCompile Include="..\..\xbmc\network\upnp\UPnPInternal.cpp">
       <Filter>network\upnp</Filter>
     </ClCompile>
-     <ClCompile Include="..\..\xbmc\network\upnp\UPnPPlayer.cpp">
+    <ClCompile Include="..\..\xbmc\network\upnp\UPnPPlayer.cpp">
       <Filter>network\upnp</Filter>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\network\upnp\UPnPRenderer.cpp">
@@ -5793,7 +5793,6 @@
     <ClInclude Include="..\..\xbmc\interfaces\python\PyContext.h">
       <Filter>interfaces\python</Filter>
     </ClInclude>
-
     <ClInclude Include="..\..\xbmc\guilib\iimage.h">
       <Filter>guilib</Filter>
     </ClInclude>
@@ -5826,6 +5825,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\filesystem\DAVCommon.h">
       <Filter>filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\TLSKeys.h">
+      <Filter>network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
