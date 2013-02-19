@@ -369,6 +369,9 @@ CApplication::CApplication(void)
   : m_pPlayer(NULL)
 #ifdef HAS_WEB_SERVER
   , m_WebServer(*new CWebServer)
+#ifdef HAS_WEB_SERVER_HTTPS
+  , m_WebServerHttps(*new CWebServer)
+#endif
   , m_httpImageHandler(*new CHTTPImageHandler)
   , m_httpVfsHandler(*new CHTTPVfsHandler)
 #ifdef HAS_JSONRPC
@@ -440,6 +443,9 @@ CApplication::~CApplication(void)
 {
 #ifdef HAS_WEB_SERVER
   delete &m_WebServer;
+#ifdef HAS_WEB_SERVER_HTTPS
+  delete &m_WebServerHttps;
+#endif
   delete &m_httpImageHandler;
   delete &m_httpVfsHandler;
 #ifdef HAS_JSONRPC
@@ -1516,29 +1522,68 @@ bool CApplication::StartWebServer()
 #ifdef HAS_WEB_SERVER
   if (g_guiSettings.GetBool("services.webserver") && m_network->IsAvailable())
   {
-    int webPort = atoi(g_guiSettings.GetString("services.webserverport"));
-    CLog::Log(LOGNOTICE, "Webserver: Starting...");
-#ifdef _LINUX
-    if (webPort < 1024 && !CUtil::CanBindPrivileged())
+    bool started = false;
+    int protocols = g_guiSettings.GetInt("services.webserverprotocol");
+
+    if (protocols == WEBSERVER_ACCESS_HTTP
+#ifdef HAS_WEB_SERVER_HTTPS
+     || protocols == WEBSERVER_ACCESS_BOTH
+#endif
+    )
     {
-        CLog::Log(LOGERROR, "Cannot start Web Server on port %i, no permission to bind to ports below 1024", webPort);
-        return false;
-    }
+      int webPort = strtol(g_guiSettings.GetString("services.webserverport"), NULL, 0);
+      CLog::Log(LOGNOTICE, "Webserver [HTTP]: Starting...");
+#ifdef TARGET_LINUX
+      if (webPort < 1024 && !CUtil::CanBindPrivileged())
+      {
+          CLog::Log(LOGERROR, "Cannot start Webserver [HTTP] on port %i, no permission to bind to ports below 1024", webPort);
+          return false;
+      }
 #endif
 
-    bool started = false;
-    if (m_WebServer.Start(webPort, g_guiSettings.GetString("services.webserverusername"), g_guiSettings.GetString("services.webserverpassword")))
-    {
-      std::vector<std::pair<std::string, std::string> > txt;
-      started = true;
-      // publish web frontend and API services
+      if (m_WebServer.Start(webPort, g_guiSettings.GetString("services.webserverusername"), g_guiSettings.GetString("services.webserverpassword")))
+      {
+        started = true;
+        
+        // publish web frontend and API services
+        std::vector<std::pair<std::string, std::string> > txt;
 #ifdef HAS_WEB_INTERFACE
-      CZeroconf::GetInstance()->PublishService("servers.webserver", "_http._tcp", g_infoManager.GetLabel(SYSTEM_FRIENDLY_NAME), webPort, txt);
+        CZeroconf::GetInstance()->PublishService("servers.webserver", "_http._tcp", g_infoManager.GetLabel(SYSTEM_FRIENDLY_NAME), webPort, txt);
 #endif
 #ifdef HAS_JSONRPC
-      CZeroconf::GetInstance()->PublishService("servers.jsonrpc-http", "_xbmc-jsonrpc-h._tcp", g_infoManager.GetLabel(SYSTEM_FRIENDLY_NAME), webPort, txt);
+        CZeroconf::GetInstance()->PublishService("servers.jsonrpc-http", "_xbmc-jsonrpc-h._tcp", g_infoManager.GetLabel(SYSTEM_FRIENDLY_NAME), webPort, txt);
 #endif
+      }
     }
+
+#ifdef HAS_WEB_SERVER_HTTPS
+    if (protocols == WEBSERVER_ACCESS_HTTPS || protocols == WEBSERVER_ACCESS_BOTH)
+    {
+      int webPort = strtol(g_guiSettings.GetString("services.webserverporthttps"), NULL, 0);
+      CLog::Log(LOGNOTICE, "Webserver [HTTPS]: Starting...");
+#ifdef TARGET_LINUX
+      if (webPort < 1024 && !CUtil::CanBindPrivileged())
+      {
+          CLog::Log(LOGERROR, "Cannot start Webserver [HTTPS] on port %i, no permission to bind to ports below 1024", webPort);
+          return false;
+      }
+#endif
+
+      if (m_WebServerHttps.Start(webPort, g_guiSettings.GetString("services.webserverusername"), g_guiSettings.GetString("services.webserverpassword"), true))
+      {
+        started = true;
+        
+        // publish web frontend and API services
+        std::vector<std::pair<std::string, std::string> > txt;
+#ifdef HAS_WEB_INTERFACE
+        CZeroconf::GetInstance()->PublishService("servers.webserver-https", "_https._tcp", g_infoManager.GetLabel(SYSTEM_FRIENDLY_NAME), webPort, txt);
+#endif
+#ifdef HAS_JSONRPC
+        CZeroconf::GetInstance()->PublishService("servers.jsonrpc-https", "_xbmc-jsonrpc-s._tcp", g_infoManager.GetLabel(SYSTEM_FRIENDLY_NAME), webPort, txt);
+#endif
+      }
+    }
+#endif
 
     return started;
   }
@@ -1552,17 +1597,32 @@ void CApplication::StopWebServer()
 #ifdef HAS_WEB_SERVER
   if (m_WebServer.IsStarted())
   {
-    CLog::Log(LOGNOTICE, "Webserver: Stopping...");
-    m_WebServer.Stop();
-    if(! m_WebServer.IsStarted() )
+    CLog::Log(LOGNOTICE, "Webserver [HTTP]: Stopping...");
+    if (m_WebServer.Stop() && !m_WebServer.IsStarted())
     {
-      CLog::Log(LOGNOTICE, "Webserver: Stopped...");
+      CLog::Log(LOGNOTICE, "Webserver [HTTP]: Stopped...");
       CZeroconf::GetInstance()->RemoveService("servers.webserver");
       CZeroconf::GetInstance()->RemoveService("servers.jsonrpc-http");
       CZeroconf::GetInstance()->RemoveService("servers.webapi");
-    } else
-      CLog::Log(LOGWARNING, "Webserver: Failed to stop.");
+    }
+    else
+      CLog::Log(LOGWARNING, "Webserver [HTTP]: Failed to stop.");
   }
+
+#ifdef HAS_WEB_SERVER_HTTPS
+  if (m_WebServerHttps.IsStarted())
+  {
+    CLog::Log(LOGNOTICE, "Webserver [HTTPS]: Stopping...");
+    if (m_WebServerHttps.Stop() && !m_WebServerHttps.IsStarted())
+    {
+      CLog::Log(LOGNOTICE, "Webserver [HTTPS]: Stopped...");
+      CZeroconf::GetInstance()->RemoveService("servers.webserver-https");
+      CZeroconf::GetInstance()->RemoveService("servers.jsonrpc-https");
+    }
+    else
+      CLog::Log(LOGWARNING, "Webserver [HTTPS]: Failed to stop.");
+  }
+#endif
 #endif
 }
 

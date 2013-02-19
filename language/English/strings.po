@@ -2714,14 +2714,7 @@ msgctxt "#728"
 msgid "FTP server"
 msgstr ""
 
-#empty string with id 729
-
-#: xbmc/settings/GUISettings.cpp
-msgctxt "#730"
-msgid "- Port"
-msgstr ""
-
-#empty string with id 731
+#empty strings from id 729 to 731
 
 msgctxt "#732"
 msgid "Save & apply"
@@ -12007,4 +12000,36 @@ msgstr ""
 #: xbmc/video/dialogs/guidialogvideoinfo.cpp
 msgctxt "#36041"
 msgid "* Item folder"
+msgstr ""
+
+#empty strings from id 36042 to 36049
+
+#: xbmc/settings/GUISettings.cpp
+msgctxt "#36050"
+msgid "Access"
+msgstr ""
+
+#: xbmc/settings/GUISettings.cpp
+msgctxt "#36051"
+msgid "Standard (HTTP)"
+msgstr ""
+
+#: xbmc/settings/GUISettings.cpp
+msgctxt "#36052"
+msgid "Secure (HTTPS)"
+msgstr ""
+
+#: xbmc/settings/GUISettings.cpp
+msgctxt "#36053"
+msgid "Both (HTTP/HTTPS)"
+msgstr ""
+
+#: xbmc/settings/GUISettings.cpp
+msgctxt "#36054"
+msgid "- HTTP Port"
+msgstr ""
+
+#: xbmc/settings/GUISettings.cpp
+msgctxt "#36055"
+msgid "- HTTPS Port"
 msgstr ""

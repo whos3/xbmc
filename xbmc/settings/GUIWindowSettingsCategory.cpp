@@ -423,6 +423,16 @@ void CGUIWindowSettingsCategory::CreateSettings()
       control->SetDelayed();
       continue;
     }
+#ifdef HAS_WEB_SERVER_HTTPS
+    
+    else if (strSetting.Equals("services.webserverporthttps"))
+    {
+      AddSetting(pSetting, group->GetWidth(), iControlID);
+      BaseSettingControlPtr control = GetSetting(pSetting->GetSetting());
+      control->SetDelayed();
+      continue;
+    }
+#endif
 #endif
     else if (strSetting.Equals("services.esport"))
     {
@@ -793,6 +803,26 @@ void CGUIWindowSettingsCategory::UpdateSettings()
       if (pControl)
         pControl->SetEnabled(g_guiSettings.GetBool("services.webserver"));
     }
+#ifdef HAS_WEB_SERVER_HTTPS
+    else if (strSetting.Equals("services.webserverport"))
+    {
+      CGUIEditControl *pControl = (CGUIEditControl *)GetControl(pSettingControl->GetID());
+      if (pControl)
+      {
+        int protocols = g_guiSettings.GetInt("services.webserverprotocol");
+        pControl->SetEnabled(protocols == WEBSERVER_ACCESS_HTTP || protocols == WEBSERVER_ACCESS_BOTH);
+      }
+    }
+    else if (strSetting.Equals("services.webserverporthttps"))
+    {
+      CGUIEditControl *pControl = (CGUIEditControl *)GetControl(pSettingControl->GetID());
+      if (pControl)
+      {
+        int protocols = g_guiSettings.GetInt("services.webserverprotocol");
+        pControl->SetEnabled(protocols == WEBSERVER_ACCESS_HTTPS || protocols == WEBSERVER_ACCESS_BOTH);
+      }
+    }
+#endif
 #endif
 #ifdef HAS_AIRPLAY
     else if ( strSetting.Equals("services.airplaypassword") ||
@@ -1248,21 +1278,32 @@ void CGUIWindowSettingsCategory::OnSettingChanged(BaseSettingControlPtr pSetting
     g_guiSettings.m_replayGain.bAvoidClipping = g_guiSettings.GetBool("musicplayer.replaygainavoidclipping");
   }
 #ifdef HAS_WEB_SERVER
-  else if ( strSetting.Equals("services.webserver") || strSetting.Equals("services.webserverport"))
+  else if ( strSetting.Equals("services.webserver") || strSetting.Equals("services.webserverport")
+#ifdef HAS_WEB_SERVER_HTTPS
+          || strSetting.Equals("services.webserverporthttps") || strSetting.Equals("services.webserverprotocol")
+#endif
+          )
   {
     if (strSetting.Equals("services.webserverport"))
       ValidatePortNumber(pSettingControl, "8080", "80");
+#ifdef HAS_WEB_SERVER_HTTPS
+    else if (strSetting.Equals("services.webserverporthttps"))
+      ValidatePortNumber(pSettingControl, "4430", "443");
+#endif
+
     g_application.StopWebServer();
-    if (g_guiSettings.GetBool("services.webserver"))
-      if (!g_application.StartWebServer())
-      {
-        CGUIDialogOK::ShowAndGetInput(g_localizeStrings.Get(33101), "", g_localizeStrings.Get(33100), "");
-        g_guiSettings.SetBool("services.webserver", false);
-      }
+    if (g_guiSettings.GetBool("services.webserver") && !g_application.StartWebServer())
+    {
+      CGUIDialogOK::ShowAndGetInput(g_localizeStrings.Get(33101), "", g_localizeStrings.Get(33100), "");
+      g_guiSettings.SetBool("services.webserver", false);
+    }
   }
   else if (strSetting.Equals("services.webserverusername") || strSetting.Equals("services.webserverpassword"))
   {
     g_application.m_WebServer.SetCredentials(g_guiSettings.GetString("services.webserverusername"), g_guiSettings.GetString("services.webserverpassword"));
+#ifdef HAS_WEB_SERVER_HTTPS
+    g_application.m_WebServerHttps.SetCredentials(g_guiSettings.GetString("services.webserverusername"), g_guiSettings.GetString("services.webserverpassword"));
+#endif
   }
 #endif
   else if (strSetting.Equals("services.zeroconf"))

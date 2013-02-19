@@ -214,6 +214,16 @@ enum SubtitleAlign
   SUBTITLE_ALIGN_TOP_OUTSIDE
 };
 
+enum WebServerAccess
+{
+  WEBSERVER_ACCESS_NONE  = 0,
+  WEBSERVER_ACCESS_HTTP,
+#ifdef HAS_WEB_SERVER_HTTPS
+  WEBSERVER_ACCESS_HTTPS,
+  WEBSERVER_ACCESS_BOTH
+#endif
+};
+
 // replay gain settings struct for quick access by the player multiple
 // times per second (saves doing settings lookup)
 struct ReplayGainSettings

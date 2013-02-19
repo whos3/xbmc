@@ -33,7 +33,11 @@ public:
   CWebServer();
   virtual ~CWebServer() { }
 
+#ifndef HAS_WEB_SERVER_HTTPS
   bool Start(int port, const std::string &username, const std::string &password);
+#else
+  bool Start(int port, const std::string &username, const std::string &password, bool useHttps = false);
+#endif
   bool Stop();
   bool IsStarted();
   void SetCredentials(const std::string &username, const std::string &password);
@@ -101,6 +105,11 @@ private:
   bool m_running, m_needcredentials;
   std::string m_Credentials64Encoded;
   CCriticalSection m_critSection;
+
+#ifdef HAS_WEB_SERVER_HTTPS
+  bool m_useHttps;
+#endif
+
   static std::vector<IHTTPRequestHandler *> m_requestHandlers;
 
   typedef struct ConnectionHandler

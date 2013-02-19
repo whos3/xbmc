@@ -283,6 +283,9 @@ public:
 
 #ifdef HAS_WEB_SERVER
   CWebServer& m_WebServer;
+#ifdef HAS_WEB_SERVER_HTTPS
+  CWebServer& m_WebServerHttps;
+#endif
   CHTTPImageHandler& m_httpImageHandler;
   CHTTPVfsHandler& m_httpVfsHandler;
 #ifdef HAS_JSONRPC

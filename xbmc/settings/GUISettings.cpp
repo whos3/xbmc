@@ -837,7 +837,21 @@ void CGUISettings::Initialize()
 #ifdef HAS_WEB_SERVER
   CSettingsCategory* srvWeb = AddCategory(SETTINGS_SERVICE, "webserver", 33101);
   AddBool(srvWeb,  "services.webserver",        263, false);
-  AddString(srvWeb,"services.webserverport",    730, CUtil::CanBindPrivileged()?"80":"8080", EDIT_CONTROL_NUMBER_INPUT, false, 730);
+
+#ifdef HAS_WEB_SERVER_HTTPS
+  map<int, int> webserverProtocols;
+  webserverProtocols.insert(make_pair(36051, WEBSERVER_ACCESS_HTTP));
+  webserverProtocols.insert(make_pair(36052, WEBSERVER_ACCESS_HTTPS));
+  webserverProtocols.insert(make_pair(36053, WEBSERVER_ACCESS_BOTH));
+  AddInt(srvWeb, "services.webserverprotocol", 36050, WEBSERVER_ACCESS_HTTP, webserverProtocols, SPIN_CONTROL_TEXT);
+#else
+  AddInt(NULL, "services.webserverprotocol", 36050, WEBSERVER_ACCESS_HTTP, WEBSERVER_ACCESS_HTTP, 0, WEBSERVER_ACCESS_HTTP, SPIN_CONTROL_TEXT);
+#endif
+
+  AddString(srvWeb,"services.webserverport", 36054, CUtil::CanBindPrivileged()?"80":"8080", EDIT_CONTROL_NUMBER_INPUT, false, 36054);
+#ifdef HAS_WEB_SERVER_HTTPS
+  AddString(srvWeb,"services.webserverporthttps", 36055, CUtil::CanBindPrivileged()?"443":"4430", EDIT_CONTROL_NUMBER_INPUT, false, 36055);
+#endif
   AddString(srvWeb,"services.webserverusername",1048, "xbmc", EDIT_CONTROL_INPUT);
   AddString(srvWeb,"services.webserverpassword",733, "", EDIT_CONTROL_HIDDEN_INPUT, true, 733);
   AddDefaultAddon(srvWeb, "services.webskin",199, DEFAULT_WEB_INTERFACE, ADDON_WEB_INTERFACE);

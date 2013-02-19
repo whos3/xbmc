@@ -21,6 +21,9 @@
 #include "WebServer.h"
 #ifdef HAS_WEB_SERVER
 #include "filesystem/File.h"
+#ifdef HAS_WEB_SERVER_HTTPS
+#include "network/TLSKeys.h"
+#endif
 #include "utils/log.h"
 #include "utils/URIUtils.h"
 #include "utils/Variant.h"
@@ -29,7 +32,7 @@
 #include "XBDateTime.h"
 #include "URL.h"
 
-#ifdef _WIN32
+#ifdef TARGET_WINDOWS
 #pragma comment(lib, "libmicrohttpd.dll.lib")
 #endif
 
@@ -50,6 +53,10 @@ CWebServer::CWebServer()
   m_daemon = NULL;
   m_needcredentials = true;
   m_Credentials64Encoded = "eGJtYzp4Ym1j"; // xbmc:xbmc
+
+#ifdef HAS_WEB_SERVER_HTTPS
+  m_useHttps = false;
+#endif
 }
 
 int CWebServer::FillArgumentMap(void *cls, enum MHD_ValueKind kind, const char *key, const char *value) 
@@ -548,33 +555,66 @@ struct MHD_Daemon* CWebServer::StartMHD(unsigned int flags, int port)
   // MHD_USE_THREAD_PER_CONNECTION = one thread per connection
   // MHD_USE_SELECT_INTERNALLY = use main thread for each connection, can only handle one request at a time [unless you set the thread pool size]
 
-  return MHD_start_daemon(flags,
-                          port,
-                          NULL,
-                          NULL,
-                          &CWebServer::AnswerToConnection,
-                          this,
-#if (MHD_VERSION >= 0x00040002)
-                          MHD_OPTION_THREAD_POOL_SIZE, 4,
+#ifdef HAS_WEB_SERVER_HTTPS
+  if (!m_useHttps)
 #endif
-                          MHD_OPTION_CONNECTION_LIMIT, 512,
-                          MHD_OPTION_CONNECTION_TIMEOUT, timeout,
-                          MHD_OPTION_URI_LOG_CALLBACK, &CWebServer::UriRequestLogger, this,
-                          MHD_OPTION_END);
+    return MHD_start_daemon(flags,
+                            port,
+                            NULL,
+                            NULL,
+                            &CWebServer::AnswerToConnection,
+                            this,
+#if (MHD_VERSION >= 0x00040002)
+                            MHD_OPTION_THREAD_POOL_SIZE, 4,
+#endif
+                            MHD_OPTION_CONNECTION_LIMIT, 512,
+                            MHD_OPTION_CONNECTION_TIMEOUT, timeout,
+                            MHD_OPTION_URI_LOG_CALLBACK, &CWebServer::UriRequestLogger, this,
+                            MHD_OPTION_END);
+#ifdef HAS_WEB_SERVER_HTTPS
+  else
+    return MHD_start_daemon(flags,
+                            port,
+                            NULL,
+                            NULL,
+                            &CWebServer::AnswerToConnection,
+                            this,
+#if (MHD_VERSION >= 0x00040002)
+                            MHD_OPTION_THREAD_POOL_SIZE, 4,
+#endif
+                            MHD_OPTION_CONNECTION_LIMIT, 512,
+                            MHD_OPTION_CONNECTION_TIMEOUT, timeout,
+                            MHD_OPTION_HTTPS_MEM_KEY, TLS_PRIVATE_KEY,
+                            MHD_OPTION_HTTPS_MEM_CERT, TLS_CERTIFICATE,
+                            MHD_OPTION_URI_LOG_CALLBACK, &CWebServer::UriRequestLogger, this,
+                            MHD_OPTION_END);
+
+#endif
 }
 
+#ifndef HAS_WEB_SERVER_HTTPS
 bool CWebServer::Start(int port, const string &username, const string &password)
+#else
+bool CWebServer::Start(int port, const string &username, const string &password, bool useHttps /* = false */)
+#endif
 {
   SetCredentials(username, password);
   if (!m_running)
   {
-    m_daemon = StartMHD(MHD_USE_SELECT_INTERNALLY, port);
+    int mhdFlags = MHD_USE_SELECT_INTERNALLY;
+#ifdef HAS_WEB_SERVER_HTTPS
+    m_useHttps = useHttps;
+    if (m_useHttps)
+      mhdFlags |= MHD_USE_SSL;
+#endif
+
+    m_daemon = StartMHD(mhdFlags, port);
 
     m_running = m_daemon != NULL;
     if (m_running)
-      CLog::Log(LOGNOTICE, "WebServer: Started the webserver");
+      CLog::Log(LOGNOTICE, "WebServer [%s]: Started the webserver", useHttps ? "HTTPS" : "HTTP");
     else
-      CLog::Log(LOGERROR, "WebServer: Failed to start the webserver");
+      CLog::Log(LOGERROR, "WebServer [%s]: Failed to start the webserver", useHttps ? "HTTPS" : "HTTP");
   }
   return m_running;
 }
