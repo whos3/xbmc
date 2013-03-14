@@ -228,6 +228,7 @@
 #include "dialogs/GUIDialogSeekBar.h"
 #include "dialogs/GUIDialogKaiToast.h"
 #include "dialogs/GUIDialogVolumeBar.h"
+#include "dialogs/GUIDialogMultiPropertyEditor.h"
 #include "dialogs/GUIDialogMuteBug.h"
 #include "video/dialogs/GUIDialogFileStacking.h"
 #include "dialogs/GUIDialogNumeric.h"
@@ -1344,6 +1345,8 @@ bool CApplication::Initialize()
     g_windowManager.Add(new CGUIWindowScreensaver);
     g_windowManager.Add(new CGUIWindowWeather);
     g_windowManager.Add(new CGUIWindowStartup);
+    
+    g_windowManager.Add(new CGUIDialogMultiPropertyEditor);
 
     /* window id's 3000 - 3100 are reserved for python */
 
@@ -3427,6 +3430,7 @@ bool CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_SLIDESHOW);
     g_windowManager.Delete(WINDOW_ADDON_BROWSER);
     g_windowManager.Delete(WINDOW_SKIN_SETTINGS);
+    g_windowManager.Delete(WINDOW_DIALOG_MULTIPROPERTY_EDITOR);
 
     g_windowManager.Delete(WINDOW_HOME);
     g_windowManager.Delete(WINDOW_PROGRAMS);

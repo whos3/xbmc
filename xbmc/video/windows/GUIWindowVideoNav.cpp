@@ -36,6 +36,7 @@
 #include "guilib/GUIWindowManager.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "dialogs/GUIDialogSelect.h"
+#include "dialogs/GUIDialogMultiPropertyEditor.h"
 #include "filesystem/Directory.h"
 #include "filesystem/File.h"
 #include "FileItem.h"
@@ -1727,19 +1728,29 @@ bool CGUIWindowVideoNav::GetItemsForTag(const CStdString &strHeading, const std:
   if (!videoUrl.FromString(baseDir))
     return false;
 
-  CVideoDatabase::Filter filter;
+  CDatabase::Filter filter;
   if (idTag > 0)
   {
+    /* TODO:
     if (!showAll)
       videoUrl.AddOption("tagid", idTag);
     else
+    */
       filter.where = videodb.PrepareSQL("%sview.%s NOT IN (SELECT taglinks.idMedia FROM taglinks WHERE taglinks.idTag = %d AND taglinks.media_type = '%s')", type.c_str(), idColumn.c_str(), idTag, type.c_str());
   }
 
   CFileItemList listItems;
-  if (!videodb.GetSortedVideos(mediaType, videoUrl.ToString(), SortDescription(), listItems, filter) || listItems.Size() <= 0)
+  if (!videodb.GetSortedVideos(mediaType, videoUrl.ToString(), SortDescription(), listItems, filter))
     return false;
 
+  if (idTag > 0)
+    videoUrl.AddOption("tagid", idTag);
+  
+  CFileItemList assignedItems;
+  if (!videodb.GetSortedVideos(mediaType, videoUrl.ToString(), SortDescription(), assignedItems))
+    return false;
+
+  /*
   CGUIDialogSelect *dialog = (CGUIDialogSelect *)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
   if (dialog == NULL)
     return false;
@@ -1754,6 +1765,22 @@ bool CGUIWindowVideoNav::GetItemsForTag(const CStdString &strHeading, const std:
   dialog->DoModal();
 
   items.Copy(dialog->GetSelectedItems());
+  */
+
+  CGUIDialogMultiPropertyEditor *dialog = (CGUIDialogMultiPropertyEditor*)g_windowManager.GetWindow(WINDOW_DIALOG_MULTIPROPERTY_EDITOR);
+  if (dialog == NULL)
+    return false;
+
+  listItems.Sort(SORT_METHOD_LABEL_IGNORE_THE, SortOrderAscending);
+  assignedItems.Sort(SORT_METHOD_LABEL_IGNORE_THE, SortOrderAscending);
+
+  dialog->Reset();
+  dialog->SetHeading(strHeading);
+  dialog->SetItems(listItems);
+  dialog->SetAssignedItems(assignedItems);
+  dialog->DoModal();
+
+  items.Copy(dialog->GetAssignedItems());
   return items.Size() > 0;
 }
 
