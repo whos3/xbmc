@@ -45,6 +45,7 @@ public:
   void AddAssignedItem(const std::string &item);
   void AddAssignedItem(const CFileItem *item);
   void SetSorting(const SortDescription &sorting);
+  void SetLimit(unsigned int limit);
 
   const CFileItemList& GetAssignedItems() const;
 
@@ -55,9 +56,11 @@ protected:
   virtual void OnWindowUnload();
 
   void SetupButton();
+  void UpdateControls();
 
   bool m_aborted;
   SortDescription m_sorting;
+  unsigned int m_limit;
   
   CFileItemList* m_items;
   CFileItemList* m_assignedItems;

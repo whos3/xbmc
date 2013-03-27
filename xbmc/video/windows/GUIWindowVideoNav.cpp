@@ -1778,6 +1778,7 @@ bool CGUIWindowVideoNav::GetItemsForTag(const CStdString &strHeading, const std:
   dialog->SetHeading(strHeading);
   dialog->SetItems(listItems);
   dialog->SetAssignedItems(assignedItems);
+  dialog->SetLimit(5);
   dialog->DoModal();
 
   items.Copy(dialog->GetAssignedItems());

@@ -26,7 +26,7 @@
 #define CONTROL_HEADING                   1
 #define CONTROL_LIST                      2
 #define CONTROL_LIST_ASSIGNED             3
-#define CONTROL_BUTTON                    4
+#define CONTROL_BUTTON                    5
 
 static CFileItemList EmtpyItemList;
 
@@ -35,6 +35,7 @@ CGUIDialogMultiPropertyEditor::CGUIDialogMultiPropertyEditor()
 {
   m_aborted = false;
   m_sorting.sortBy = SortByLabel;
+  m_limit = 0;
   m_items = new CFileItemList;
   m_assignedItems = new CFileItemList;
 }
@@ -60,7 +61,6 @@ bool CGUIDialogMultiPropertyEditor::OnMessage(CGUIMessage& message)
       m_viewControlAssignedItems.Clear();
 
       m_items->Clear();
-      SET_CONTROL_LABEL(CONTROL_BUTTON, "");
       return true;
 
     case GUI_MSG_CLICKED:
@@ -78,6 +78,10 @@ bool CGUIDialogMultiPropertyEditor::OnMessage(CGUIMessage& message)
         int iAction = message.GetParam1();
         if (iAction == ACTION_SELECT_ITEM || ACTION_MOUSE_LEFT_CLICK == iAction)
         {
+          // check if more items can be assigned
+          if (iControl == CONTROL_LIST && m_limit > 0 && m_limit <= (unsigned int)m_assignedItems->Size())
+            break;
+
           CFileItemList *itemsFrom = iControl == CONTROL_LIST ? m_items : m_assignedItems;
           CFileItemList *itemsTo   = iControl == CONTROL_LIST ? m_assignedItems : m_items;
           CGUIViewControl *viewControlFrom = iControl == CONTROL_LIST ? &m_viewControlItems : &m_viewControlAssignedItems;
@@ -119,6 +123,8 @@ bool CGUIDialogMultiPropertyEditor::OnMessage(CGUIMessage& message)
               if (iSelected >= 0)
                 viewControlTo->SetSelectedItem(iSelected);
             }
+
+            UpdateControls();
           }
         }
       }
@@ -156,6 +162,7 @@ void CGUIDialogMultiPropertyEditor::Reset()
   m_aborted = false;
   m_sorting = SortDescription();
   m_sorting.sortBy = SortByLabel;
+  m_limit = 0;
 
   m_items->Clear();
   m_assignedItems->Clear();
@@ -208,6 +215,11 @@ void CGUIDialogMultiPropertyEditor::SetSorting(const SortDescription &sorting)
   m_sorting = sorting;
 }
 
+void CGUIDialogMultiPropertyEditor::SetLimit(unsigned int limit)
+{
+  m_limit = limit;
+}
+
 const CFileItemList& CGUIDialogMultiPropertyEditor::GetAssignedItems() const
 {
   if (m_aborted)
@@ -218,7 +230,7 @@ const CFileItemList& CGUIDialogMultiPropertyEditor::GetAssignedItems() const
 
 CGUIControl* CGUIDialogMultiPropertyEditor::GetFirstFocusableControl(int id)
 {
-  if (m_viewControlItems.HasControl(id))
+  if (m_viewControlItems.HasControl(id) && (m_limit <= 0 || m_limit > (unsigned int)m_assignedItems->Size()))
     id = m_viewControlItems.GetCurrentControl();
   else if (m_viewControlAssignedItems.HasControl(id))
     id = m_viewControlAssignedItems.GetCurrentControl();
@@ -245,6 +257,7 @@ void CGUIDialogMultiPropertyEditor::OnInitWindow()
   m_viewControlAssignedItems.SetCurrentView(CONTROL_LIST_ASSIGNED);
 
   SetupButton();
+  UpdateControls();
   CGUIDialogBoxBase::OnInitWindow();
 
   m_viewControlItems.SetSelectedItem(0);
@@ -261,4 +274,9 @@ void CGUIDialogMultiPropertyEditor::OnWindowUnload()
 void CGUIDialogMultiPropertyEditor::SetupButton()
 {
   SET_CONTROL_LABEL(CONTROL_BUTTON, g_localizeStrings.Get(186));
+}
+
+void CGUIDialogMultiPropertyEditor::UpdateControls()
+{
+  CONTROL_ENABLE_ON_CONDITION(CONTROL_LIST, m_limit <= 0 || m_limit > (unsigned int)m_assignedItems->Size());
 }

@@ -1,5 +1,5 @@
 <window type="dialog">
-	<defaultcontrol always="true">2</defaultcontrol>
+	<defaultcontrol>2</defaultcontrol>
 	<coordinates>
 		<system>1</system>
 		<posx>190</posx>
@@ -70,7 +70,7 @@
 			<height>466</height>
 			<onup>2</onup>
 			<ondown>2</ondown>
-			<onleft>4</onleft>
+			<onleft>5</onleft>
 			<onright>61</onright>
 			<pagecontrol>61</pagecontrol>
 			<scrolltime>200</scrolltime>
@@ -146,7 +146,7 @@
 			<showonepage>false</showonepage>
 			<orientation>vertical</orientation>
 		</control>
-		<control type="label">
+		<!--<control type="label">
 			<description>number of files/pages in list text label</description>
 			<posx>430</posx>
 			<posy>545</posy>
@@ -159,7 +159,7 @@
 			<textcolor>grey</textcolor>
 			<label>([COLOR=blue]$INFO[Container(2).NumItems][/COLOR]) $LOCALIZE[31025] - $LOCALIZE[31024] ([COLOR=blue]$INFO[Container(2).CurrentPage]/$INFO[Container(2).NumPages][/COLOR])</label>
 			<visible>Control.IsVisible(2)</visible>
-		</control>
+		</control>-->
 		<control type="list" id="3">
 			<posx>460</posx>
 			<posy>67</posy>
@@ -237,13 +237,13 @@
 			<textureslidernib>ScrollBarNib.png</textureslidernib>
 			<textureslidernibfocus>ScrollBarNib.png</textureslidernibfocus>
 			<onleft>3</onleft>
-			<onright>4</onright>
+			<onright>5</onright>
 			<ondown>62</ondown>
 			<onup>62</onup>
 			<showonepage>false</showonepage>
 			<orientation>vertical</orientation>
 		</control>
-		<control type="label">
+		<!--<control type="label">
 			<description>number of files/pages in list text label</description>
 			<posx>870</posx>
 			<posy>545</posy>
@@ -256,10 +256,10 @@
 			<textcolor>grey</textcolor>
 			<label>([COLOR=blue]$INFO[Container(3).NumItems][/COLOR]) $LOCALIZE[31025] - $LOCALIZE[31024] ([COLOR=blue]$INFO[Container(3).CurrentPage]/$INFO[Container(3).NumPages][/COLOR])</label>
 			<visible>Control.IsVisible(3)</visible>
-		</control>
-		<control type="button" id="4">
+		</control>-->
+		<control type="button" id="5">
 			<description>Manual button</description>
-			<posx>20</posx>
+			<posx>350</posx>
 			<posy>585</posy>
 			<width>200</width>
 			<height>40</height>
