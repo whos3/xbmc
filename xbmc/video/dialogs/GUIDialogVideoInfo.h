@@ -66,6 +66,8 @@ protected:
   void Play(bool resume = false);
   void OnGetArt();
   void OnGetFanart();
+  static bool GetArt(const CFileItemPtr &item, bool keepOpen = false);
+  static bool GetFanart(const CFileItemPtr &item);
   void PlayTrailer();
 
   static bool UpdateVideoItemSortTitle(const CFileItemPtr &pItem);

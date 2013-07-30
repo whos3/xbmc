@@ -664,23 +664,50 @@ string CGUIDialogVideoInfo::ChooseArtType(const CFileItem &videoItem, map<string
 
 void CGUIDialogVideoInfo::OnGetArt()
 {
+  if (!GetArt(m_movieItem))
+    return;
+
+  m_hasUpdatedThumb = true;
+
+  // Update our screen
+  Update();
+
+  // re-open the art selection dialog as we come back from
+  // the image selection dialog
+  GetArt(m_movieItem);
+}
+
+void CGUIDialogVideoInfo::OnGetFanart()
+{
+  if (!GetFanart(m_movieItem))
+    return;
+
+  m_hasUpdatedThumb = true;
+
+  // Update our screen
+  Update();
+}
+
+bool CGUIDialogVideoInfo::GetArt(const CFileItemPtr &item, bool keepOpen /* = false */)
+{
   map<string, string> currentArt;
-  string type = ChooseArtType(*m_movieItem, currentArt);
+  string type = ChooseArtType(*item, currentArt);
   if (type.empty())
-    return; // cancelled
+    return true; // cancelled
 
   // TODO: this can be removed once these are unified.
+  bool res = false;
   if (type == "fanart")
-    OnGetFanart();
+    res = GetFanart(item);
   else
   {
     CFileItemList items;
 
     // Current thumb
-    if (m_movieItem->HasArt(type))
+    if (item->HasArt(type))
     {
       CFileItemPtr item(new CFileItem("thumb://Current", false));
-      item->SetArt("thumb", m_movieItem->GetArt(type));
+      item->SetArt("thumb", item->GetArt(type));
       item->SetLabel(g_localizeStrings.Get(13512));
       items.Add(item);
     }
@@ -694,8 +721,8 @@ void CGUIDialogVideoInfo::OnGetArt()
 
     // Grab the thumbnails from the web
     vector<CStdString> thumbs;
-    int season = (m_movieItem->GetVideoInfoTag()->m_type == "season") ? m_movieItem->GetVideoInfoTag()->m_iSeason : -1;
-    m_movieItem->GetVideoInfoTag()->m_strPictureURL.GetThumbURLs(thumbs, type, season);
+    int season = (item->GetVideoInfoTag()->m_type == "season") ? item->GetVideoInfoTag()->m_iSeason : -1;
+    item->GetVideoInfoTag()->m_strPictureURL.GetThumbURLs(thumbs, type, season);
 
     for (unsigned int i = 0; i < thumbs.size(); ++i)
     {
@@ -711,7 +738,7 @@ void CGUIDialogVideoInfo::OnGetArt()
       items.Add(item);
     }
 
-    CStdString localThumb = CVideoThumbLoader::GetLocalArt(*m_movieItem, type);
+    CStdString localThumb = CVideoThumbLoader::GetLocalArt(*item, type);
     if (!localThumb.empty())
     {
       CFileItemPtr item(new CFileItem("thumb://Local", false));
@@ -731,9 +758,9 @@ void CGUIDialogVideoInfo::OnGetArt()
 
     CStdString result;
     VECSOURCES sources(*CMediaSourceSettings::Get().GetSources("video"));
-    AddItemPathToFileBrowserSources(sources, *m_movieItem);
+    AddItemPathToFileBrowserSources(sources, *item);
     g_mediaManager.GetLocalDrives(sources);
-    if (CGUIDialogFileBrowser::ShowAndGetImage(items, sources, g_localizeStrings.Get(13511), result) &&
+    if ((res = CGUIDialogFileBrowser::ShowAndGetImage(items, sources, g_localizeStrings.Get(13511), result)) &&
         result != "thumb://Current") // user didn't choose the one they have
     {
       CStdString newThumb;
@@ -755,33 +782,33 @@ void CGUIDialogVideoInfo::OnGetArt()
       CVideoDatabase db;
       if (db.Open())
       {
-        db.SetArtForItem(m_movieItem->GetVideoInfoTag()->m_iDbId, m_movieItem->GetVideoInfoTag()->m_type, type, newThumb);
+        db.SetArtForItem(item->GetVideoInfoTag()->m_iDbId, item->GetVideoInfoTag()->m_type, type, newThumb);
         db.Close();
       }
       CUtil::DeleteVideoDatabaseDirectoryCache(); // to get them new thumbs to show
-      m_movieItem->SetArt(type, newThumb);
-      if (m_movieItem->HasProperty("set_folder_thumb"))
+      item->SetArt(type, newThumb);
+      if (item->HasProperty("set_folder_thumb"))
       { // have a folder thumb to set as well
-        VIDEO::CVideoInfoScanner::ApplyThumbToFolder(m_movieItem->GetProperty("set_folder_thumb").asString(), newThumb);
+        VIDEO::CVideoInfoScanner::ApplyThumbToFolder(item->GetProperty("set_folder_thumb").asString(), newThumb);
       }
-      m_hasUpdatedThumb = true;
     }
   }
 
-  // Update our screen
-  Update();
+  if (!res)
+    return false;
 
-  // re-open the art selection dialog as we come back from
-  // the image selection dialog
-  OnGetArt();
+  if (keepOpen)
+    return GetArt(item, true);
+
+  return true;
 }
 
 // Allow user to select a Fanart
-void CGUIDialogVideoInfo::OnGetFanart()
+bool CGUIDialogVideoInfo::GetFanart(const CFileItemPtr &pItem)
 {
   CFileItemList items;
 
-  CFileItem item(*m_movieItem->GetVideoInfoTag());
+  CFileItem item(*pItem->GetVideoInfoTag());
   if (item.HasArt("fanart"))
   {
     CFileItemPtr itemCurrent(new CFileItem("fanart://Current",false));
@@ -791,15 +818,15 @@ void CGUIDialogVideoInfo::OnGetFanart()
   }
 
   // ensure the fanart is unpacked
-  m_movieItem->GetVideoInfoTag()->m_fanart.Unpack();
+  pItem->GetVideoInfoTag()->m_fanart.Unpack();
 
   // Grab the thumbnails from the web
-  for (unsigned int i = 0; i < m_movieItem->GetVideoInfoTag()->m_fanart.GetNumFanarts(); i++)
+  for (unsigned int i = 0; i < pItem->GetVideoInfoTag()->m_fanart.GetNumFanarts(); i++)
   {
     CStdString strItemPath;
     strItemPath.Format("fanart://Remote%i",i);
     CFileItemPtr item(new CFileItem(strItemPath, false));
-    CStdString thumb = m_movieItem->GetVideoInfoTag()->m_fanart.GetPreviewURL(i);
+    CStdString thumb = pItem->GetVideoInfoTag()->m_fanart.GetPreviewURL(i);
     item->SetArt("thumb", CTextureCache::GetWrappedThumbURL(thumb));
     item->SetIconImage("DefaultPicture.png");
     item->SetLabel(g_localizeStrings.Get(20441));
@@ -834,7 +861,7 @@ void CGUIDialogVideoInfo::OnGetFanart()
   g_mediaManager.GetLocalDrives(sources);
   bool flip=false;
   if (!CGUIDialogFileBrowser::ShowAndGetImage(items, sources, g_localizeStrings.Get(20437), result, &flip, 20445) || result.Equals("fanart://Current"))
-    return;   // user cancelled
+    return false;   // user cancelled
 
   if (result.Equals("fanart://Local"))
     result = strLocal;
@@ -843,14 +870,14 @@ void CGUIDialogVideoInfo::OnGetFanart()
   {
     int iFanart = atoi(result.Mid(15).c_str());
     // set new primary fanart, and update our database accordingly
-    m_movieItem->GetVideoInfoTag()->m_fanart.SetPrimaryFanart(iFanart);
+    pItem->GetVideoInfoTag()->m_fanart.SetPrimaryFanart(iFanart);
     CVideoDatabase db;
     if (db.Open())
     {
-      db.UpdateFanart(*m_movieItem, (VIDEODB_CONTENT_TYPE)m_movieItem->GetVideoContentType());
+      db.UpdateFanart(*pItem, (VIDEODB_CONTENT_TYPE)pItem->GetVideoContentType());
       db.Close();
     }
-    result = m_movieItem->GetVideoInfoTag()->m_fanart.GetImageURL();
+    result = pItem->GetVideoInfoTag()->m_fanart.GetImageURL();
   }
   else if (result.Equals("fanart://None") || !CFile::Exists(result))
     result.clear();
@@ -861,16 +888,14 @@ void CGUIDialogVideoInfo::OnGetFanart()
   CVideoDatabase db;
   if (db.Open())
   {
-    db.SetArtForItem(m_movieItem->GetVideoInfoTag()->m_iDbId, m_movieItem->GetVideoInfoTag()->m_type, "fanart", result);
+    db.SetArtForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, "fanart", result);
     db.Close();
   }
 
   CUtil::DeleteVideoDatabaseDirectoryCache(); // to get them new thumbs to show
-  m_movieItem->SetArt("fanart", result);
-  m_hasUpdatedThumb = true;
+  pItem->SetArt("fanart", result);
 
-  // Update our screen
-  Update();
+  return true;
 }
 
 void CGUIDialogVideoInfo::PlayTrailer()
@@ -966,6 +991,8 @@ int CGUIDialogVideoInfo::ManageVideoItem(const CFileItemPtr &item)
       buttons.Add(CONTEXT_BUTTON_MARK_WATCHED, 16103);   //Mark as Watched
   }
 
+  buttons.Add(CONTEXT_BUTTON_SET_THUMB, 13511);
+
   if (type == VIDEODB_CONTENT_MOVIES)
   {
     // only show link/unlink if there are tvshows available
@@ -1004,6 +1031,10 @@ int CGUIDialogVideoInfo::ManageVideoItem(const CFileItemPtr &item)
 
       case CONTEXT_BUTTON_MARK_UNWATCHED:
         result = MarkWatched(item, false);
+        break;
+
+      case CONTEXT_BUTTON_SET_THUMB:
+        result = GetArt(item, true);
         break;
 
       case CONTEXT_BUTTON_LINK_MOVIE:
