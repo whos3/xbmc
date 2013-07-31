@@ -726,6 +726,9 @@ void CVideoInfoTag::ParseNative(const TiXmlElement* movie, bool prioritise)
         p->m_strLanguage.MakeLower();
         m_streamDetails.AddStream(p);
       }
+
+      if (m_duration <= 0)
+        m_duration = m_streamDetails.GetVideoDuration();
     }
     m_streamDetails.DetermineBestStreams();
   }  /* if fileinfo */
