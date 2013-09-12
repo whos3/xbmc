@@ -36,9 +36,19 @@
 #include "utils/URIUtils.h"
 #include "video/VideoDatabase.h"
 
+// TODO
+#ifdef HAS_UPNP
+#include "media/import/importer/UPnPImporter.h"
+#endif
+
 CMediaImportManager::CMediaImportManager()
   : CJobQueue(false, 1, CJob::PRIORITY_LOW_PAUSABLE)
-{ }
+{
+  // TODO
+#ifdef HAS_UPNP
+  RegisterImporter(new CUPnPImporter());
+#endif
+}
 
 CMediaImportManager::~CMediaImportManager()
 {

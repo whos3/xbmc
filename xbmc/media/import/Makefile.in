@@ -6,6 +6,10 @@ SRCS= MediaImportJob.cpp \
       task/MediaImportSourceRegistrationTask.cpp \
       task/MediaImportSynchronisationTask.cpp \
 
+ifeq (@USE_UPNP@, 1)
+SRCS+= importer/UPnPImporter.cpp
+endif
+
 LIB=media-import.a
 
 include @abs_top_srcdir@/Makefile.include
