@@ -1,0 +1,12 @@
+SRCS= MediaImportJob.cpp \
+      MediaImportManager.cpp \
+      MediaImportTaskProcessorJob.cpp \
+      task/MediaImportRetrievalTask.cpp \
+      task/MediaImportSourceRegistrationTask.cpp \
+      task/MediaImportSynchronisationTask.cpp \
+
+LIB=media-import.a
+
+include @abs_top_srcdir@/Makefile.include
+-include $(patsubst %.cpp,%.P,$(patsubst %.c,%.P,$(SRCS)))
+
