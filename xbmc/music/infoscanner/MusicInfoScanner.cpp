@@ -730,7 +730,7 @@ int CMusicInfoScanner::RetrieveMusicInfo(const CStdString& strDirectory, CFileIt
                                      downloadedAlbum,
                                      downloadedAlbum.songs);
         m_musicDatabase.SetArtForItem(downloadedAlbum.idAlbum,
-                                      "album", album->art);
+                                      MediaTypeAlbum, album->art);
         GetAlbumArtwork(downloadedAlbum.idAlbum, downloadedAlbum);
         m_albumCache.insert(make_pair(*album, albumInfo.GetAlbum()));
       }
@@ -747,7 +747,7 @@ int CMusicInfoScanner::RetrieveMusicInfo(const CStdString& strDirectory, CFileIt
                                                   album->bCompilation);
         if (!album->art.empty())
           m_musicDatabase.SetArtForItem(album->idAlbum,
-                                        "album", album->art);
+                                        MediaTypeAlbum, album->art);
         m_albumCache.insert(make_pair(*album, *album));
       }
 
@@ -790,7 +790,7 @@ int CMusicInfoScanner::RetrieveMusicInfo(const CStdString& strDirectory, CFileIt
           URIUtils::GetParentPath(album->strPath, downloadedArtist.strPath);
           map<string, string> artwork = GetArtistArtwork(downloadedArtist);
           // check thumb stuff
-          m_musicDatabase.SetArtForItem(downloadedArtist.idArtist, "artist", artwork);
+          m_musicDatabase.SetArtForItem(downloadedArtist.idArtist, MediaTypeArtist, artwork);
           m_artistCache.insert(make_pair(*artistCredit, downloadedArtist));
         }
         else if (artistDownloadStatus == INFO_CANCELLED)
@@ -860,7 +860,7 @@ int CMusicInfoScanner::RetrieveMusicInfo(const CStdString& strDirectory, CFileIt
             // check thumb stuff
             URIUtils::GetParentPath(album->strPath, downloadedArtist.strPath);
             map<string, string> artwork = GetArtistArtwork(downloadedArtist);
-            m_musicDatabase.SetArtForItem(downloadedArtist.idArtist, "artist", artwork);
+            m_musicDatabase.SetArtForItem(downloadedArtist.idArtist, MediaTypeArtist, artwork);
             m_artistCache.insert(make_pair(*artistCredit, downloadedArtist));
           }
           else if (artistDownloadStatus == INFO_CANCELLED)
@@ -1089,7 +1089,7 @@ loop:
     m_musicDatabase.SetArtistInfo(params.GetArtistId(), artistInfo.GetArtist());
     m_musicDatabase.GetArtistPath(params.GetArtistId(), artist.strPath);
     map<string, string> artwork = GetArtistArtwork(artist);
-    m_musicDatabase.SetArtForItem(params.GetArtistId(), "artist", artwork);
+    m_musicDatabase.SetArtForItem(params.GetArtistId(), MediaTypeArtist, artwork);
     artistInfo.SetLoaded();
     m_musicDatabase.Close();
   }
@@ -1298,13 +1298,13 @@ void CMusicInfoScanner::GetAlbumArtwork(long id, const CAlbum &album)
 {
   if (album.thumbURL.m_url.size())
   {
-    if (m_musicDatabase.GetArtForItem(id, "album", "thumb").empty())
+    if (m_musicDatabase.GetArtForItem(id, MediaTypeAlbum, "thumb").empty())
     {
       string thumb = CScraperUrl::GetThumbURL(album.thumbURL.GetFirstThumb());
       if (!thumb.empty())
       {
         CTextureCache::Get().BackgroundCacheImage(thumb);
-        m_musicDatabase.SetArtForItem(id, "album", "thumb", thumb);
+        m_musicDatabase.SetArtForItem(id, MediaTypeAlbum, "thumb", thumb);
       }
     }
   }

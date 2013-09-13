@@ -411,7 +411,7 @@ int CMusicDatabase::AddSong(const int idAlbum,
     }
 
     if (!strThumb.empty())
-      SetArtForItem(idSong, "song", "thumb", strThumb);
+      SetArtForItem(idSong, MediaTypeSong, "thumb", strThumb);
 
     unsigned int index = 0;
     // If this is karaoke song, change the genre to 'Karaoke' (and add it if it's not there)
@@ -434,7 +434,7 @@ int CMusicDatabase::AddSong(const int idAlbum,
     if (bHasKaraoke)
       AddKaraokeData(idSong, iKaraokeNumber, crc);
 
-    AnnounceUpdate("song", idSong);
+    AnnounceUpdate(MediaTypeSong, idSong);
   }
   catch (...)
   {
@@ -1024,7 +1024,7 @@ void CMusicDatabase::GetFileItemFromDataset(const dbiplus::sql_record* const rec
   item->GetMusicInfoTag()->SetAlbumId(record->at(song_idAlbum).get_asInt());
   item->GetMusicInfoTag()->SetTrackAndDiskNumber(record->at(song_iTrack).get_asInt());
   item->GetMusicInfoTag()->SetDuration(record->at(song_iDuration).get_asInt());
-  item->GetMusicInfoTag()->SetDatabaseId(record->at(song_idSong).get_asInt(), "song");
+  item->GetMusicInfoTag()->SetDatabaseId(record->at(song_idSong).get_asInt(), MediaTypeSong);
   SYSTEMTIME stTime;
   stTime.wYear = (WORD)record->at(song_iYear).get_asInt();
   item->GetMusicInfoTag()->SetReleaseDate(stTime);
@@ -1293,7 +1293,7 @@ bool CMusicDatabase::SearchArtists(const CStdString& search, CFileItemList &arti
       pItem->SetLabel(label);
       label = StringUtils::Format("A %s", m_pDS->fv(1).get_asString().c_str()); // sort label is stored in the title tag
       pItem->GetMusicInfoTag()->SetTitle(label);
-      pItem->GetMusicInfoTag()->SetDatabaseId(m_pDS->fv(0).get_asInt(), "artist");
+      pItem->GetMusicInfoTag()->SetDatabaseId(m_pDS->fv(0).get_asInt(), MediaTypeArtist);
       artists.Add(pItem);
       m_pDS->next();
     }
@@ -3094,7 +3094,7 @@ bool CMusicDatabase::GetArtistsByWhere(const CStdString& strBaseDir, const Filte
         itemUrl.AppendPath(path);
         pItem->SetPath(itemUrl.ToString());
 
-        pItem->GetMusicInfoTag()->SetDatabaseId(artist.idArtist, "artist");
+        pItem->GetMusicInfoTag()->SetDatabaseId(artist.idArtist, MediaTypeArtist);
         pItem->SetIconImage("DefaultArtist.png");
 
         SetPropertiesFromArtist(*pItem, artist);
@@ -3949,7 +3949,7 @@ bool CMusicDatabase::GetAlbumPath(int idAlbum, CStdString& path)
 
 bool CMusicDatabase::SaveAlbumThumb(int idAlbum, const CStdString& strThumb)
 {
-  SetArtForItem(idAlbum, "album", "thumb", strThumb);
+  SetArtForItem(idAlbum, MediaTypeAlbum, "thumb", strThumb);
   // TODO: We should prompt the user to update the art for songs
   CStdString sql = PrepareSQL("UPDATE art"
                               " SET url='-'"
@@ -4301,7 +4301,7 @@ bool CMusicDatabase::RemoveSongsFromPath(const CStdString &path1, MAPSONGS& song
       while (!m_pDS->eof())
       {
         CSong song = GetSongFromDataset();
-        song.strThumb = GetArtForItem(song.idSong, "song", "thumb");
+        song.strThumb = GetArtForItem(song.idSong, MediaTypeSong, "thumb");
         songs.insert(make_pair(song.strFileName, song));
         songIds.push_back(PrepareSQL("%i", song.idSong));
         m_pDS->next();
@@ -4310,7 +4310,7 @@ bool CMusicDatabase::RemoveSongsFromPath(const CStdString &path1, MAPSONGS& song
 
       //TODO: move this below the m_pDS->exec block, once UPnP doesn't rely on this anymore
       for (MAPSONGS::iterator songit = songs.begin(); songit != songs.end(); ++songit)
-        AnnounceRemove("song", songit->second.idSong);
+        AnnounceRemove(MediaTypeSong, songit->second.idSong);
 
       // and delete all songs, and anything linked to them
       sql = "delete from song where idSong in (" + StringUtils::Join(songIds, ",") + ")";
@@ -4680,7 +4680,7 @@ void CMusicDatabase::ExportToXML(const CStdString &xmlFile, bool singleFiles, bo
 
           if (images)
           {
-            string thumb = GetArtForItem(album.idAlbum, "album", "thumb");
+            string thumb = GetArtForItem(album.idAlbum, MediaTypeAlbum, "thumb");
             if (!thumb.empty() && (overwrite || !CFile::Exists(URIUtils::AddFileToFolder(strPath,"folder.jpg"))))
               CTextureCache::Get().Export(thumb, URIUtils::AddFileToFolder(strPath,"folder.jpg"));
           }
@@ -4742,7 +4742,7 @@ void CMusicDatabase::ExportToXML(const CStdString &xmlFile, bool singleFiles, bo
       artist.Save(pMain, "artist", strPath);
 
       map<string, string> artwork;
-      if (GetArtForItem(artist.idArtist, "artist", artwork) && !singleFiles)
+      if (GetArtForItem(artist.idArtist, MediaTypeArtist, artwork) && !singleFiles)
       { // append to the XML
         TiXmlElement additionalNode("art");
         for (map<string, string>::const_iterator i = artwork.begin(); i != artwork.end(); ++i)
