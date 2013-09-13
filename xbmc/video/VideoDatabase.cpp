@@ -900,7 +900,7 @@ int CVideoDatabase::AddFile(const CFileItem& item)
   return AddFile(item.GetPath());
 }
 
-void CVideoDatabase::UpdateFileDateAdded(int idFile, const CStdString& strFileNameAndPath)
+void CVideoDatabase::UpdateFileDateAdded(int idFile, const CStdString& strFileNameAndPath, CDateTime dateAdded /* = CDateTime() */)
 {
   if (idFile < 0 || strFileNameAndPath.empty())
     return;
@@ -911,52 +911,54 @@ void CVideoDatabase::UpdateFileDateAdded(int idFile, const CStdString& strFileNa
     if (NULL == m_pDB.get()) return;
     if (NULL == m_pDS.get()) return;
 
-    CStdString file = strFileNameAndPath;
-    if (URIUtils::IsStack(strFileNameAndPath))
-      file = CStackDirectory::GetFirstStackedFile(strFileNameAndPath);
-
-    if (URIUtils::IsInArchive(file))
-      file = CURL(file).GetHostName();
-
-    CDateTime dateAdded;
-    // Skip looking at the files ctime/mtime if defined by the user through as.xml
-    if (g_advancedSettings.m_iVideoLibraryDateAdded > 0)
+    if (!dateAdded.IsValid())
     {
-      // Let's try to get the modification datetime
-      struct __stat64 buffer;
-      if (CFile::Stat(file, &buffer) == 0 && (buffer.st_mtime != 0 || buffer.st_ctime !=0))
-      {
-        time_t now = time(NULL);
-        time_t addedTime;
-        // Prefer the modification time if it's valid
-        if (g_advancedSettings.m_iVideoLibraryDateAdded == 1)
-        {
-          if (buffer.st_mtime != 0 && (time_t)buffer.st_mtime <= now)
-            addedTime = (time_t)buffer.st_mtime;
-          else
-            addedTime = (time_t)buffer.st_ctime;
-        }
-        // Use the newer of the creation and modification time
-        else
-        {
-          addedTime = max((time_t)buffer.st_ctime, (time_t)buffer.st_mtime);
-          // if the newer of the two dates is in the future, we try it with the older one
-          if (addedTime > now)
-            addedTime = min((time_t)buffer.st_ctime, (time_t)buffer.st_mtime);
-        }
+      CStdString file = strFileNameAndPath;
+      if (URIUtils::IsStack(strFileNameAndPath))
+        file = CStackDirectory::GetFirstStackedFile(strFileNameAndPath);
 
-        // make sure the datetime does is not in the future
-        if (addedTime <= now)
+      if (URIUtils::IsInArchive(file))
+        file = CURL(file).GetHostName();
+
+      // Skip looking at the files ctime/mtime if defined by the user through as.xml
+      if (g_advancedSettings.m_iVideoLibraryDateAdded > 0)
+      {
+        // Let's try to get the modification datetime
+        struct __stat64 buffer;
+        if (CFile::Stat(file, &buffer) == 0 && (buffer.st_mtime != 0 || buffer.st_ctime !=0))
         {
-          struct tm *time;
+          time_t now = time(NULL);
+          time_t addedTime;
+          // Prefer the modification time if it's valid
+          if (g_advancedSettings.m_iVideoLibraryDateAdded == 1)
+          {
+            if (buffer.st_mtime != 0 && (time_t)buffer.st_mtime <= now)
+              addedTime = (time_t)buffer.st_mtime;
+            else
+              addedTime = (time_t)buffer.st_ctime;
+          }
+          // Use the newer of the creation and modification time
+          else
+          {
+            addedTime = max((time_t)buffer.st_ctime, (time_t)buffer.st_mtime);
+            // if the newer of the two dates is in the future, we try it with the older one
+            if (addedTime > now)
+              addedTime = min((time_t)buffer.st_ctime, (time_t)buffer.st_mtime);
+          }
+
+          // make sure the datetime is not in the future
+          if (addedTime <= now)
+          {
+            struct tm *time;
 #ifdef HAVE_LOCALTIME_R
-          struct tm result = {};
-          time = localtime_r(&addedTime, &result);
+            struct tm result = {};
+            time = localtime_r(&addedTime, &result);
 #else
-          time = localtime(&addedTime);
+            time = localtime(&addedTime);
 #endif
-          if (time)
-            dateAdded = *time;
+            if (time)
+              dateAdded = *time;
+          }
         }
       }
     }
@@ -1302,7 +1304,7 @@ int CVideoDatabase::GetMusicVideoId(const CStdString& strFilenameAndPath)
 }
 
 //********************************************************************************************************************************
-int CVideoDatabase::AddMovie(const CStdString& strFilenameAndPath)
+int CVideoDatabase::AddMovie(const CStdString& strFilenameAndPath, CDateTime dateAdded /* = CDateTime() */)
 {
   try
   {
@@ -1315,7 +1317,7 @@ int CVideoDatabase::AddMovie(const CStdString& strFilenameAndPath)
       int idFile = AddFile(strFilenameAndPath);
       if (idFile < 0)
         return -1;
-      UpdateFileDateAdded(idFile, strFilenameAndPath);
+      UpdateFileDateAdded(idFile, strFilenameAndPath, dateAdded);
       CStdString strSQL=PrepareSQL("insert into movie (idMovie, idFile) values (NULL, %i)", idFile);
       m_pDS->exec(strSQL.c_str());
       idMovie = (int)m_pDS->lastinsertid();
@@ -1330,17 +1332,14 @@ int CVideoDatabase::AddMovie(const CStdString& strFilenameAndPath)
   return -1;
 }
 
-bool CVideoDatabase::AddPathToTvShow(int idShow, const std::string &path, const std::string &parentPath)
+bool CVideoDatabase::AddPathToTvShow(int idShow, const std::string &path, const std::string &parentPath, CDateTime dateAdded /* = CDateTime() */)
 {
   // Check if this path is already added
   int idPath = GetPathId(path);
   if (idPath < 0)
   {
-    // Get the creation datetime of the tvshow directory
-    CDateTime dateAdded;
-
     // Skip looking at the files ctime/mtime if defined by the user through as.xml
-    if (g_advancedSettings.m_iVideoLibraryDateAdded > 0)
+    if (!dateAdded.IsValid() && g_advancedSettings.m_iVideoLibraryDateAdded > 0)
     {
       struct __stat64 buffer;
       if (XFILE::CFile::Stat(path, &buffer) == 0)
@@ -1379,7 +1378,7 @@ int CVideoDatabase::AddTvShow()
 }
 
 //********************************************************************************************************************************
-int CVideoDatabase::AddEpisode(int idShow, const CStdString& strFilenameAndPath)
+int CVideoDatabase::AddEpisode(int idShow, const CStdString& strFilenameAndPath, CDateTime dateAdded /* = CDatetime() */)
 {
   try
   {
@@ -1389,7 +1388,7 @@ int CVideoDatabase::AddEpisode(int idShow, const CStdString& strFilenameAndPath)
     int idFile = AddFile(strFilenameAndPath);
     if (idFile < 0)
       return -1;
-    UpdateFileDateAdded(idFile, strFilenameAndPath);
+    UpdateFileDateAdded(idFile, strFilenameAndPath, dateAdded);
 
     CStdString strSQL=PrepareSQL("insert into episode (idEpisode, idFile, idShow) values (NULL, %i, %i)", idFile, idShow);
     m_pDS->exec(strSQL.c_str());
@@ -2219,7 +2218,7 @@ int CVideoDatabase::SetDetailsForMovie(const CStdString& strFilenameAndPath, con
       // only add a new movie if we don't already have a valid idMovie
       // (DeleteMovie is called with bKeepId == true so the movie won't
       // be removed from the movie table)
-      idMovie = AddMovie(strFilenameAndPath);
+      idMovie = AddMovie(strFilenameAndPath, details.m_dateAdded);
       if (idMovie < 0)
       {
         RollbackTransaction();
@@ -2573,7 +2572,7 @@ int CVideoDatabase::SetDetailsForEpisode(const CStdString& strFilenameAndPath, c
       // only add a new episode if we don't already have a valid idEpisode
       // (DeleteEpisode is called with bKeepId == true so the episode won't
       // be removed from the episode table)
-      idEpisode = AddEpisode(idShow,strFilenameAndPath);
+      idEpisode = AddEpisode(idShow,strFilenameAndPath,details.m_dateAdded);
       if (idEpisode < 0)
       {
         RollbackTransaction();
