@@ -162,12 +162,14 @@ bool CVideoDatabase::CreateTables()
     m_pDS->exec("CREATE TABLE actors ( idActor integer primary key, strActor text, strThumb text )\n");
 
     CLog::Log(LOGINFO, "create path table");
-    m_pDS->exec("CREATE TABLE path ( idPath integer primary key, strPath text, strContent text, strScraper text, strHash text, scanRecursive integer, useFolderNames bool, strSettings text, noUpdate bool, exclude bool, dateAdded text)");
+    m_pDS->exec("CREATE TABLE path ( idPath integer primary key, strPath text, strContent text, strScraper text, strHash text, scanRecursive integer, useFolderNames bool, strSettings text, noUpdate bool, exclude bool, dateAdded text, strSource text)");
     m_pDS->exec("CREATE INDEX ix_path ON path ( strPath(255) )");
+    m_pDS->exec("CREATE INDEX ix_source ON path ( strSource(255) )");
 
     CLog::Log(LOGINFO, "create files table");
-    m_pDS->exec("CREATE TABLE files ( idFile integer primary key, idPath integer, strFilename text, playCount integer, lastPlayed text, dateAdded text)");
+    m_pDS->exec("CREATE TABLE files ( idFile integer primary key, idPath integer, strFilename text, playCount integer, lastPlayed text, dateAdded text, enabled bool NOT NULL DEFAULT 1)");
     m_pDS->exec("CREATE INDEX ix_files ON files ( idPath, strFilename(255) )");
+    m_pDS->exec("CREATE INDEX ix_enabled ON files(enabled)");
 
     CLog::Log(LOGINFO, "create tvshow table");
     columns = "CREATE TABLE tvshow ( idShow integer primary key";
@@ -368,6 +370,7 @@ void CVideoDatabase::CreateViews()
                                       "  episode.*,"
                                       "  files.strFileName AS strFileName,"
                                       "  path.strPath AS strPath,"
+                                      "  path.strSource AS strSource,"
                                       "  files.playCount AS playCount,"
                                       "  files.lastPlayed AS lastPlayed,"
                                       "  files.dateAdded AS dateAdded,"
@@ -378,7 +381,8 @@ void CVideoDatabase::CreateViews()
                                       "  tvshow.c%02d AS strShowPath, "
                                       "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
                                       "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
-                                      "  seasons.idSeason AS idSeason "
+                                      "  seasons.idSeason AS idSeason, "
+                                      "  files.enabled AS enabled "
                                       "FROM episode"
                                       "  JOIN files ON"
                                       "    files.idFile=episode.idFile"
@@ -398,10 +402,12 @@ void CVideoDatabase::CreateViews()
                                      "  tvshow.*,"
                                      "  path.strPath AS strPath,"
                                      "  path.dateAdded AS dateAdded,"
+                                     "  path.strSource AS strSource,"
                                      "  MAX(files.lastPlayed) AS lastPlayed,"
                                      "  NULLIF(COUNT(episode.c12), 0) AS totalCount,"
                                      "  COUNT(files.playCount) AS watchedcount,"
-                                     "  NULLIF(COUNT(DISTINCT(episode.c12)), 0) AS totalSeasons "
+                                     "  NULLIF(COUNT(DISTINCT(episode.c12)), 0) AS totalSeasons, "
+                                     "  COUNT(files.enabled) AS enabled "
                                      "FROM tvshow"
                                      "  LEFT JOIN tvshowlinkpath ON"
                                      "    tvshowlinkpath.idShow=tvshow.idShow"
@@ -420,11 +426,13 @@ void CVideoDatabase::CreateViews()
               "  musicvideo.*,"
               "  files.strFileName as strFileName,"
               "  path.strPath as strPath,"
+              "  path.strSource AS strSource,"
               "  files.playCount as playCount,"
               "  files.lastPlayed as lastPlayed,"
               "  files.dateAdded as dateAdded, "
               "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
-              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds "
+              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
+              "  files.enabled AS enabled "
               "FROM musicvideo"
               "  JOIN files ON"
               "    files.idFile=musicvideo.idFile"
@@ -440,11 +448,13 @@ void CVideoDatabase::CreateViews()
               "  sets.strSet AS strSet,"
               "  files.strFileName AS strFileName,"
               "  path.strPath AS strPath,"
+              "  path.strSource AS strSource,"
               "  files.playCount AS playCount,"
               "  files.lastPlayed AS lastPlayed, "
               "  files.dateAdded AS dateAdded, "
               "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
-              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds "
+              "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
+              "  files.enabled AS enabled "
               "FROM movie"
               "  LEFT JOIN sets ON"
               "    sets.idSet = movie.idSet"
@@ -638,13 +648,41 @@ int CVideoDatabase::AddPath(const CStdString& strPath, const CStdString &strDate
     if (URIUtils::IsStack(strPath) || StringUtils::StartsWithNoCase(strPath, "rar://") || StringUtils::StartsWithNoCase(strPath, "zip://"))
       URIUtils::GetParentPath(strPath,strPath1);
 
+    CStdString strSource;
+    if (URIUtils::IsPlugin(strPath) || URIUtils::IsUPnP(strPath))
+    {
+      CURL url(strPath);
+      strSource.Format("%s://%s", url.GetProtocol().c_str(), url.GetHostName().c_str());
+    }
+
     URIUtils::AddSlashAtEnd(strPath1);
 
-    // only set dateadded if we got one
+    std::stringstream stream;
+    stream << "INSERT INTO path (idPath, strPath, strContent, strScraper";
+
     if (!strDateAdded.empty())
-      strSQL=PrepareSQL("insert into path (idPath, strPath, strContent, strScraper, dateAdded) values (NULL,'%s','','', '%s')", strPath1.c_str(), strDateAdded.c_str());
-    else
-      strSQL=PrepareSQL("insert into path (idPath, strPath, strContent, strScraper) values (NULL,'%s','','')", strPath1.c_str());
+      stream <<  ", dateAdded";
+
+    if (!strSource.empty())
+      stream << ", strSource";
+
+    stream << ") VALUES (NULL, '%s', '', ''";
+
+    if (!strDateAdded.empty())
+      stream << ", '%s'";
+
+    if (!strSource.empty())
+      stream << ", '%s'";
+
+    stream << ")";
+
+    // depending on the values of strDateAdded and strSource, the formatting
+    // stream takes a different number of variable arguments and at different
+    // positions
+    strSQL=PrepareSQL(stream.str(), strPath1.c_str(),
+      !strDateAdded.empty() ? strDateAdded.c_str() : strSource.c_str(),
+      strSource.c_str());
+
     m_pDS->exec(strSQL.c_str());
     idPath = (int)m_pDS->lastinsertid();
     return idPath;
@@ -3417,6 +3455,7 @@ CVideoInfoTag CVideoDatabase::GetDetailsForMovie(const dbiplus::sql_record* cons
   details.m_strPath = record->at(VIDEODB_DETAILS_MOVIE_PATH).get_asString();
   CStdString strFileName = record->at(VIDEODB_DETAILS_MOVIE_FILE).get_asString();
   ConstructPath(details.m_strFileNameAndPath,details.m_strPath,strFileName);
+  details.m_strSource = record->at(VIDEODB_DETAILS_MOVIE_SOURCE).get_asString();
   details.m_playCount = record->at(VIDEODB_DETAILS_MOVIE_PLAYCOUNT).get_asInt();
   details.m_lastPlayed.SetFromDBDateTime(record->at(VIDEODB_DETAILS_MOVIE_LASTPLAYED).get_asString());
   details.m_dateAdded.SetFromDBDateTime(record->at(VIDEODB_DETAILS_MOVIE_DATEADDED).get_asString());
@@ -3482,6 +3521,7 @@ CVideoInfoTag CVideoDatabase::GetDetailsForTvShow(const dbiplus::sql_record* con
   details.m_iDbId = idTvShow;
   details.m_type = MediaTypeTvShow;
   details.m_strPath = record->at(VIDEODB_DETAILS_TVSHOW_PATH).get_asString();
+  details.m_strSource = record->at(VIDEODB_DETAILS_TVSHOW_SOURCE).get_asString();
   details.m_dateAdded.SetFromDBDateTime(record->at(VIDEODB_DETAILS_TVSHOW_DATEADDED).get_asString());
   details.m_lastPlayed.SetFromDBDateTime(record->at(VIDEODB_DETAILS_TVSHOW_LASTPLAYED).get_asString());
   details.m_iEpisode = record->at(VIDEODB_DETAILS_TVSHOW_NUM_EPISODES).get_asInt();
@@ -3514,6 +3554,7 @@ CVideoInfoTag CVideoDatabase::GetDetailsForTvShow(const dbiplus::sql_record* con
 
   if (item != NULL)
   {
+    item->SetEnabled(record->at(VIDEODB_DETAILS_TVSHOW_ENABLED).get_asBool());
     item->m_dateTime = details.m_premiered;
     item->SetProperty("totalseasons", record->at(VIDEODB_DETAILS_TVSHOW_NUM_SEASONS).get_asInt());
     item->SetProperty("totalepisodes", details.m_iEpisode);
@@ -3546,6 +3587,7 @@ CVideoInfoTag CVideoDatabase::GetDetailsForEpisode(const dbiplus::sql_record* co
   details.m_type = MediaTypeEpisode;
   details.m_iFileId = record->at(VIDEODB_DETAILS_FILEID).get_asInt();
   details.m_strPath = record->at(VIDEODB_DETAILS_EPISODE_PATH).get_asString();
+  details.m_strSource = record->at(VIDEODB_DETAILS_EPISODE_SOURCE).get_asString();
   CStdString strFileName = record->at(VIDEODB_DETAILS_EPISODE_FILE).get_asString();
   ConstructPath(details.m_strFileNameAndPath,details.m_strPath,strFileName);
   details.m_playCount = record->at(VIDEODB_DETAILS_EPISODE_PLAYCOUNT).get_asInt();
@@ -3604,6 +3646,7 @@ CVideoInfoTag CVideoDatabase::GetDetailsForMusicVideo(const dbiplus::sql_record*
   
   details.m_iFileId = record->at(VIDEODB_DETAILS_FILEID).get_asInt();
   details.m_strPath = record->at(VIDEODB_DETAILS_MUSICVIDEO_PATH).get_asString();
+  details.m_strSource = record->at(VIDEODB_DETAILS_MUSICVIDEO_SOURCE).get_asString();
   CStdString strFileName = record->at(VIDEODB_DETAILS_MUSICVIDEO_FILE).get_asString();
   ConstructPath(details.m_strFileNameAndPath,details.m_strPath,strFileName);
   details.m_playCount = record->at(VIDEODB_DETAILS_MUSICVIDEO_PLAYCOUNT).get_asInt();
@@ -4552,7 +4595,14 @@ bool CVideoDatabase::UpdateOldVersion(int iVersion)
   }
   if (iVersion < 77)
     m_pDS->exec("ALTER TABLE streamdetails ADD strStereoMode text");
+  if (iVersion < 78)
+  { // add source and enabled flag to path table and media views
+    m_pDS->exec("ALTER TABLE path ADD strSource text");
+    m_pDS->exec("CREATE INDEX ix_source ON path ( strSource(255) )");
 
+    m_pDS->exec("ALTER TABLE files ADD enabled bool NOT NULL DEFAULT 1");
+    m_pDS->exec("CREATE INDEX ix_enabled ON files(enabled)");
+  }
   // always recreate the view after any table change
   CreateViews();
   return true;
@@ -4560,7 +4610,7 @@ bool CVideoDatabase::UpdateOldVersion(int iVersion)
 
 int CVideoDatabase::GetMinVersion() const
 {
-  return 77;
+  return 78;
 }
 
 bool CVideoDatabase::LookupByFolders(const CStdString &path, bool shows)
@@ -6212,6 +6262,7 @@ bool CVideoDatabase::GetMoviesByWhere(const CStdString& strBaseDir, const Filter
         itemUrl.AppendPath(path);
         pItem->SetPath(itemUrl.ToString());
 
+        pItem->SetEnabled(record->at(VIDEODB_DETAILS_MOVIE_ENABLED).get_asBool());
         pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED,movie.m_playCount > 0);
         items.Add(pItem);
       }
@@ -6638,6 +6689,7 @@ bool CVideoDatabase::GetEpisodesByWhere(const CStdString& strBaseDir, const Filt
         itemUrl.AppendPath(path);
         pItem->SetPath(itemUrl.ToString());
 
+        pItem->SetEnabled(record->at(VIDEODB_DETAILS_EPISODE_ENABLED).get_asBool());
         pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, movie.m_playCount > 0);
         pItem->m_dateTime = movie.m_firstAired;
         pItem->GetVideoInfoTag()->m_iYear = pItem->m_dateTime.GetYear();
@@ -7481,6 +7533,7 @@ bool CVideoDatabase::GetMusicVideosByWhere(const CStdString &baseDir, const Filt
         itemUrl.AppendPath(path);
         item->SetPath(itemUrl.ToString());
 
+        item->SetEnabled(record->at(VIDEODB_DETAILS_MUSICVIDEO_ENABLED).get_asBool());
         item->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, musicvideo.m_playCount > 0);
         items.Add(item);
       }
@@ -9948,4 +10001,47 @@ bool CVideoDatabase::GetFilter(CDbUrl &videoUrl, Filter &filter, SortDescription
   }
 
   return true;
+}
+
+void CVideoDatabase::SetItemsEnabled(bool enabled, const std::string& source /* = "" */, const MediaType &mediaType /* = MediaTypeNone */)
+{
+  string sql;
+  try
+  {
+    if (NULL == m_pDB.get() || NULL == m_pDS.get())
+    return;
+
+    sql = PrepareSQL("UPDATE files SET enabled=%d WHERE EXISTS (SELECT 1 FROM path WHERE path.idFile = files.idFile AND strSource ", enabled ? 1 : 0);
+    if (source.empty())
+      sql += "IS NOT NULL";
+    else
+      sql += PrepareSQL("= '%s'", source.c_str());
+    sql += ")";
+
+    if (mediaType != MediaTypeNone)
+    {
+      std::string table;
+      if (MediaTypes::IsMediaType(mediaType, MediaTypeMovie))
+        table = "movieview";
+      else if (MediaTypes::IsMediaType(mediaType, MediaTypeTvShow))
+        table = "tvshowview";
+      else if (MediaTypes::IsMediaType(mediaType, MediaTypeEpisode))
+        table = "episodeview";
+      else if (MediaTypes::IsMediaType(mediaType, MediaTypeMusicVideo))
+        table = "musicvideoview";
+      else
+      {
+        CLog::Log(LOGWARNING, "CVideoDatabase::SetItemsEnabled(%s, %s, %s): unknown media type \"%s\"", source, enabled ? "true" : "false", mediaType, mediaType);
+        return;
+      }
+
+      sql += " AND EXISTS (SELECT 1 FROM " + table + " WHERE " + table + ".idFile = files.idFile)";
+    }
+
+    m_pDS->exec(sql.c_str());
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, sql.c_str());
+  }
 }
