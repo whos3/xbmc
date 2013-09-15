@@ -37,6 +37,13 @@
 #include "video/VideoDatabase.h"
 
 // TODO
+#include "media/import/handler/EpisodeImportHandler.h"
+#include "media/import/handler/MovieImportHandler.h"
+#include "media/import/handler/MusicVideoImportHandler.h"
+#include "media/import/handler/SeasonImportHandler.h"
+#include "media/import/handler/TvShowImportHandler.h"
+
+// TODO
 #ifdef HAS_UPNP
 #include "media/import/importer/UPnPImporter.h"
 #endif
@@ -44,6 +51,13 @@
 CMediaImportManager::CMediaImportManager()
   : CJobQueue(false, 1, CJob::PRIORITY_LOW_PAUSABLE)
 {
+  // TODO
+  RegisterMediaImportHandler(new CMovieImportHandler());
+  RegisterMediaImportHandler(new CTvShowImportHandler());
+  RegisterMediaImportHandler(new CSeasonImportHandler());
+  RegisterMediaImportHandler(new CEpisodeImportHandler());
+  RegisterMediaImportHandler(new CMusicVideoImportHandler());
+
   // TODO
 #ifdef HAS_UPNP
   RegisterImporter(new CUPnPImporter());
