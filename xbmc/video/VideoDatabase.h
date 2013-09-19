@@ -33,6 +33,7 @@ class CFileItemList;
 class CVideoSettings;
 class CGUIDialogProgress;
 class CGUIDialogProgressBarHandle;
+class CMediaImportSource;
 
 namespace dbiplus
 {
@@ -375,8 +376,8 @@ public:
   virtual bool Open();
   virtual bool CommitTransaction();
 
-  int AddMovie(const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime());
-  int AddEpisode(int idShow, const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime());
+  int AddMovie(const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime(), const CStdString& strSource = "");
+  int AddEpisode(int idShow, const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime(), const CStdString& strSource = "");
 
   // editing functions
   /*! \brief Set the playcount of an item
@@ -626,7 +627,7 @@ public:
    \param url - full path of the file to add.
    \return id of the file, -1 if it could not be added.
    */
-  int AddFile(const CStdString& url);
+  int AddFile(const CStdString& url, const CStdString& strSource = "");
 
   /*! \brief Add a file to the database, if necessary
    Works for both videodb:// items and normal fileitems
@@ -639,9 +640,41 @@ public:
    If the path is already in the database, we simply return its id.
    \param strPath the path to add
    \param strDateAdded datetime when the path was added to the filesystem/database
+   \param strSource identification of the source of the path
    \return id of the file, -1 if it could not be added.
    */
-  int AddPath(const CStdString& strPath, const CStdString &strDateAdded = "");
+  int AddPath(const CStdString& strPath, const CStdString &strDateAdded = "", const CStdString &strSource = "");
+
+  std::vector<CMediaImportSource> GetSources();
+
+  /*! \brief Add a source to the database, if necessary
+   If the identifier is already in the database, we simply return its id.
+   \param source Source to be added
+   \return id of the source, -1 if it could not be added.
+   */
+  int AddSource(const CMediaImportSource &source);
+
+  /*! \brief Updates the values of the given source.
+   \param source Source with updated values
+   \return True if the update was successful, false otherwise
+   */
+  bool SetDetailsForSource(const CMediaImportSource &source);
+
+  /*! \brief Update last synced date of the source with the given identifier
+   \param sourceIDentifier identifier of the source
+   */
+  void UpdateSourceLastSynced(const std::string& sourceIdentifier, const CDateTime &lastSynced = CDateTime());
+
+  /*! \brief sets the given media types for the source with the given identifier
+   \param sourceIDentifier identifier of the source
+   \param mediaTypes Media types to be set
+   */
+  void SetMediaTypesForSource(const std::string& sourceIdentifier, const std::set<MediaType> &mediaTypes);
+
+  /*! \brief Remove source with the given identifier from the database
+   \param sourceIdentifier identifier of the source
+   */
+  void RemoveSource(const std::string& sourceIdentifier);
   
   /*! \brief Updates the dateAdded field in the files table for the file
    with the given idFile and the given path based on the files modification date
@@ -739,14 +772,20 @@ protected:
    */
   int GetFileId(const CStdString& url);
 
+  /*! \brief Get the id of a source from its identifier
+   \param sourceIdentifier identifier of the source
+   \return id of the source, -1 if it is not in the db.
+   */
+  int GetSourceId(const std::string& sourceIdentifier);
+
   int AddToTable(const CStdString& table, const CStdString& firstField, const CStdString& secondField, const CStdString& value);
   int AddGenre(const CStdString& strGenre1);
   int AddActor(const CStdString& strActor, const CStdString& thumbURL, const CStdString &thumb = "");
   int AddCountry(const CStdString& strCountry);
   int AddStudio(const CStdString& strStudio1);
 
-  int AddTvShow(const CStdString& strPath, CDateTime dateAdded = CDateTime());
-  int AddMusicVideo(const CStdString& strFilenameAndPath);
+  int AddTvShow(const CStdString& strPath, CDateTime dateAdded = CDateTime(), const CStdString &strSource = "");
+  int AddMusicVideo(const CStdString& strFilenameAndPath, const CStdString& strSource = "");
   int AddSeason(int showID, int season);
 
   // link functions - these two do all the work
