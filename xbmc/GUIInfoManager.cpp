@@ -5805,7 +5805,8 @@ const infomap container_str[]  = {{ "property",         CONTAINER_PROPERTY },
 /// \table_end
 ///
 /// -----------------------------------------------------------------------------
-const infomap listitem_labels[]= {{ "thumb",            LISTITEM_THUMB },
+const infomap listitem_labels[]= {{ "enabled",          LISTITEM_ENABLED },
+                                  { "thumb",            LISTITEM_THUMB },
                                   { "icon",             LISTITEM_ICON },
                                   { "actualicon",       LISTITEM_ACTUAL_ICON },
                                   { "overlay",          LISTITEM_OVERLAY },
@@ -10024,6 +10025,15 @@ bool CGUIInfoManager::GetItemBool(const CGUIListItem *item, int contextWindow, i
         {
           const CFileItem *pItem = static_cast<const CFileItem *>(item);
           return pItem->IsParentFolder();
+        }
+        break;
+      }
+      case LISTITEM_ENABLED:
+      {
+        if (item->IsFileItem())
+        {
+          const CFileItem *pItem = static_cast<const CFileItem *>(item);
+          return pItem->IsEnabled();
         }
         break;
       }
