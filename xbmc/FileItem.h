@@ -117,6 +117,9 @@ public:
   void ToSortable(SortItem &sortable, const Fields &fields) const;
   virtual bool IsFileItem() const { return true; };
 
+  bool IsEnabled() const { return m_enabled; }
+  void SetEnabled(bool enabled) { m_enabled = enabled; }
+
   bool Exists(bool bUseCache = true) const;
   
   /*!
@@ -436,6 +439,7 @@ public:
   int m_iBadPwdCount;
 
 private:
+  bool m_enabled;
   CStdString m_strPath;            ///< complete path to item
 
   SortSpecial m_specialSort;
