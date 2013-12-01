@@ -8792,7 +8792,8 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
                                   "AND NOT EXISTS (SELECT 1 FROM movie WHERE movie.c%02d = path.idPath) "
                                   "AND NOT EXISTS (SELECT 1 FROM tvshow WHERE tvshow.c%02d = path.idPath) "
                                   "AND NOT EXISTS (SELECT 1 FROM episode WHERE episode.c%02d = path.idPath) "
-                                  "AND NOT EXISTS (SELECT 1 FROM musicvideo WHERE musicvideo.c%02d = path.idPath)"
+                                  "AND NOT EXISTS (SELECT 1 FROM musicvideo WHERE musicvideo.c%02d = path.idPath) "
+                                  "AND NOT EXISTS (SELECT 1 FROM imports WHERE imports.idPath = path.idPath)"
                 , VIDEODB_ID_PARENTPATHID, VIDEODB_ID_TV_PARENTPATHID, VIDEODB_ID_EPISODE_PARENTPATHID, VIDEODB_ID_MUSICVIDEO_PARENTPATHID );
     m_pDS->exec(sql.c_str());
 
@@ -8898,7 +8899,7 @@ std::vector<int> CVideoDatabase::CleanMediaType(const std::string &mediaType, co
     return cleanedIDs;
 
   // now grab them media items
-  std::string sql = PrepareSQL("SELECT %s.%s, %s.idFile, %s, path.idPath, parentPath.strPath FROM %s "
+  std::string sql = PrepareSQL("SELECT %s.%s, %s.idFile, %s, path.idPath, parentPath.strPath, sources.name FROM %s "
                                  "JOIN files ON files.idFile = %s.idFile "
                                  "JOIN path ON path.idPath = files.idPath ",
                                table.c_str(), idField.c_str(), table.c_str(), parentPathIdField.c_str(), table.c_str(),
@@ -8933,10 +8934,16 @@ std::vector<int> CVideoDatabase::CleanMediaType(const std::string &mediaType, co
           CGUIDialogYesNo* pDialog = (CGUIDialogYesNo*)g_windowManager.GetWindow(WINDOW_DIALOG_YES_NO);
           if (pDialog != NULL)
           {
-            CURL parentUrl(parentPath);
+            std::string source = m_pDS->fv(5).get_asString();
+            if (source.empty())
+            {
+              CURL parentUrl(parentPath);
+              source = parentUrl.GetWithoutUserDetails();
+            }
+
             pDialog->SetHeading(15012);
             pDialog->SetLine(1, 15013);
-            pDialog->SetLine(2, parentUrl.GetWithoutUserDetails());
+            pDialog->SetLine(2, source);
             pDialog->SetChoice(0, 15015);
             pDialog->SetChoice(1, 15014);
 
