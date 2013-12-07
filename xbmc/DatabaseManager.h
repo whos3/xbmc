@@ -22,6 +22,7 @@
 
 #include <map>
 #include <string>
+#include "media/import/repositories/VideoImportRepository.h"
 #include "threads/CriticalSection.h"
 #include "threads/Event.h"
 
@@ -65,6 +66,8 @@ public:
    */ 
   bool CanOpen(const std::string &name);
 
+  CVideoImportRepository& GetVideoImportRepository() { return m_videoImportRepository; }
+
 private:
   // private construction, and no assignements; use the provided singleton methods
   CDatabaseManager();
@@ -78,4 +81,6 @@ private:
 
   CCriticalSection            m_section;     ///< Critical section protecting m_dbStatus.
   std::map<std::string, DB_STATUS> m_dbStatus;    ///< Our database status map.
+
+  CVideoImportRepository m_videoImportRepository;
 };
