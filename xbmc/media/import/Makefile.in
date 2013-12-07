@@ -1,6 +1,7 @@
 SRCS= MediaImportJob.cpp \
       MediaImportManager.cpp \
       MediaImportTaskProcessorJob.cpp \
+      repositories/VideoImportRepository.cpp \
       task/MediaImportRetrievalTask.cpp \
       task/MediaImportSourceRegistrationTask.cpp \
       task/MediaImportSynchronisationTask.cpp \
