@@ -33,6 +33,7 @@ class CFileItemList;
 class CVideoSettings;
 class CGUIDialogProgress;
 class CGUIDialogProgressBarHandle;
+class CMediaImport;
 class CMediaImportSource;
 
 namespace dbiplus
@@ -376,8 +377,8 @@ public:
   virtual bool Open();
   virtual bool CommitTransaction();
 
-  int AddMovie(const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime(), const CStdString& strSource = "");
-  int AddEpisode(int idShow, const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime(), const CStdString& strSource = "");
+  int AddMovie(const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime());
+  int AddEpisode(int idShow, const CStdString& strFilenameAndPath, CDateTime dateAdded = CDateTime());
 
   // editing functions
   /*! \brief Set the playcount of an item
@@ -627,7 +628,7 @@ public:
    \param url - full path of the file to add.
    \return id of the file, -1 if it could not be added.
    */
-  int AddFile(const CStdString& url, const CStdString& strSource = "");
+  int AddFile(const CStdString& url);
 
   /*! \brief Add a file to the database, if necessary
    Works for both videodb:// items and normal fileitems
@@ -643,7 +644,7 @@ public:
    \param strSource identification of the source of the path
    \return id of the file, -1 if it could not be added.
    */
-  int AddPath(const CStdString& strPath, const CStdString &strDateAdded = "", const CStdString &strSource = "");
+  int AddPath(const CStdString& strPath, const CStdString &strDateAdded = "");
 
   std::vector<CMediaImportSource> GetSources();
 
@@ -660,11 +661,6 @@ public:
    */
   bool SetDetailsForSource(const CMediaImportSource &source);
 
-  /*! \brief Update last synced date of the source with the given identifier
-   \param sourceIDentifier identifier of the source
-   */
-  void UpdateSourceLastSynced(const std::string& sourceIdentifier, const CDateTime &lastSynced = CDateTime());
-
   /*! \brief sets the given media types for the source with the given identifier
    \param sourceIDentifier identifier of the source
    \param mediaTypes Media types to be set
@@ -675,6 +671,37 @@ public:
    \param sourceIdentifier identifier of the source
    */
   void RemoveSource(const std::string& sourceIdentifier);
+
+  std::vector<CMediaImport> GetImports();
+
+  /*! \brief Add an import to the database, if necessary
+   If the import is already in the database, we simply return its id.
+   \param import Import to be added
+   \return id of the import, -1 if it could not be added.
+   */
+  int AddImport(const CMediaImport &import);
+
+  /*! \brief Updates the values of the given import.
+   \param import Import with updated values
+   \return True if the update was successful, false otherwise
+   */
+  bool SetDetailsForImport(const CMediaImport &import);
+
+  /*! \brief Update last synced date of the import with the given path
+   \param sourceIDentifier identifier of the source
+   */
+  void UpdateImportLastSynced(const std::string& path, const CDateTime &lastSynced = CDateTime());
+
+  /*! \brief Sets the given media types for the import with the given path
+   \param path Path of the import
+   \param mediaTypes Media types to be set
+   */
+  void SetMediaTypesForImport(const std::string& path, const std::set<MediaType> &mediaTypes);
+
+  /*! \brief Remove the import with the given path from the database
+   \param path Path of the import
+   */
+  void RemoveImport(const std::string& path);
   
   /*! \brief Updates the dateAdded field in the files table for the file
    with the given idFile and the given path based on the files modification date
@@ -778,14 +805,22 @@ protected:
    */
   int GetSourceId(const std::string& sourceIdentifier);
 
+  /*! \brief Get the id of an import from its path
+   \param path path of the import
+   \param sourceIdentifier optional source identifier
+   \return id of the import, -1 if it is not in the db.
+   */
+  int GetImportId(const std::string& path, const std::string &sourceIdentifier = "");
+  int GetImportId(int idPath, int idSource = -1);
+
   int AddToTable(const CStdString& table, const CStdString& firstField, const CStdString& secondField, const CStdString& value);
   int AddGenre(const CStdString& strGenre1);
   int AddActor(const CStdString& strActor, const CStdString& thumbURL, const CStdString &thumb = "");
   int AddCountry(const CStdString& strCountry);
   int AddStudio(const CStdString& strStudio1);
 
-  int AddTvShow(const CStdString& strPath, CDateTime dateAdded = CDateTime(), const CStdString &strSource = "");
-  int AddMusicVideo(const CStdString& strFilenameAndPath, const CStdString& strSource = "");
+  int AddTvShow(const CStdString& strPath, CDateTime dateAdded = CDateTime());
+  int AddMusicVideo(const CStdString& strFilenameAndPath);
   int AddSeason(int showID, int season);
 
   // link functions - these two do all the work
