@@ -42,6 +42,11 @@ static std::map<std::string, std::string> fillDefaultMediaTypes()
 
 std::map<std::string, std::string> MediaTypes::m_mediaTypes = fillDefaultMediaTypes();
 
+bool MediaTypes::IsValidMediaType(const MediaType &mediaType)
+{
+  return findMediaType(mediaType) != m_mediaTypes.end();
+}
+
 bool MediaTypes::IsMediaType(const std::string &strMediaType, const MediaType &mediaType)
 {
   std::map<std::string, std::string>::const_iterator strMediaTypeIt = findMediaType(strMediaType);

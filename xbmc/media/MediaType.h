@@ -41,6 +41,7 @@ typedef std::string MediaType;
 class MediaTypes
 {
 public:
+  static bool IsValidMediaType(const MediaType &mediaType);
   static bool IsMediaType(const std::string &strMediaType, const MediaType &mediaType);
   static MediaType FromString(const std::string &strMediaType);
   static MediaType ToPlural(const MediaType &mediaType);
