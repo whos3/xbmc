@@ -849,7 +849,8 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
             item->GetPath() != "special://videoplaylists/" &&
             !StringUtils::StartsWith(item->GetPath(), "newsmartplaylist://") &&
             !StringUtils::StartsWith(item->GetPath(), "newplaylist://") &&
-            !StringUtils::StartsWith(item->GetPath(), "newtag://"))
+            !StringUtils::StartsWith(item->GetPath(), "newtag://") &&
+            !StringUtils::StartsWith(item->GetPath(), "import://"))
         {
           if (item->m_bIsFolder)
           {
@@ -906,7 +907,10 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
           buttons.Add(CONTEXT_BUTTON_RENAME, 118);
         }
         // add "Set/Change content" to folders
-        if (item->m_bIsFolder && !item->IsVideoDb() && !item->IsPlayList() && !item->IsSmartPlayList() && !item->IsLibraryFolder() && !item->IsLiveTV() && !item->IsPlugin() && !item->IsAddonsPath() && !URIUtils::IsUPnP(item->GetPath()))
+        if (item->m_bIsFolder && !item->IsVideoDb() && !item->IsPlayList() &&
+            !item->IsSmartPlayList() && !item->IsLibraryFolder() && !item->IsLiveTV() &&
+            !item->IsPlugin() && !item->IsAddonsPath() && !URIUtils::IsUPnP(item->GetPath()) &&
+            !StringUtils::StartsWith(item->GetPath(), "import://"))
         {
           if (!g_application.IsVideoScanning())
           {
