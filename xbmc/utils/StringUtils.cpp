@@ -1022,3 +1022,47 @@ void StringUtils::Tokenize(const std::string& input, std::vector<std::string>& t
     pos = input.find_first_of(delimiters, lastPos);
   }
 }
+
+std::string StringUtils::Unescape(const std::string &escaped)
+{
+  if (escaped.empty())
+    return escaped;
+  
+  std::string output;
+  output.reserve(escaped.size());
+
+  char unescapedChar;
+  for (std::string::const_iterator itChar = escaped.begin(); itChar != escaped.end(); )
+  {
+    unescapedChar = *(itChar++);
+    if (unescapedChar == '\\')
+    {
+      // unexpected unescaped character at the end
+      if (itChar == escaped.end())
+        break;
+
+      switch (*(itChar++))
+      {
+        case '0':  unescapedChar = '\0'; break;
+        case 'a':  unescapedChar = '\a'; break;
+        case 'b':  unescapedChar = '\b'; break;
+        case 'f':  unescapedChar = '\f'; break;
+        case 'n':  unescapedChar = '\n'; break;
+        case 'r':  unescapedChar = '\r'; break;
+        case 't':  unescapedChar = '\t'; break;
+        case 'v':  unescapedChar = '\v'; break;
+        case '"':  unescapedChar = '"' ; break;
+        case '?':  unescapedChar = '\?'; break;
+        case '\'': unescapedChar = '\''; break;
+        case '\\': unescapedChar = '\\'; break;
+        // skip unknown escaped character
+        default:
+          continue;
+      }
+    }
+
+    output.push_back(unescapedChar);
+  }
+
+  return output;
+}

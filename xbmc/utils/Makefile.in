@@ -16,6 +16,7 @@ SRCS += DatabaseUtils.cpp
 SRCS += EndianSwap.cpp
 SRCS += EdenVideoArtUpdater.cpp
 SRCS += Environment.cpp
+SRCS += ExpressionParser.cpp
 SRCS += Fanart.cpp
 SRCS += fastmemcpy.c
 SRCS += fastmemcpy-arm.S

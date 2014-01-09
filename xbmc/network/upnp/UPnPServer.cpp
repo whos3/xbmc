@@ -19,6 +19,7 @@
  */
 #include "UPnPServer.h"
 #include "UPnPInternal.h"
+#include "UPnPSearchCriteria.h"
 #include "Application.h"
 #include "view/GUIViewState.h"
 #include "Platinum.h"
@@ -832,8 +833,10 @@ CUPnPServer::OnSearchContainer(PLT_ActionReference&          action,
                                const PLT_HttpRequestContext& context)
 {
     CLog::Log(LOGDEBUG, "Received Search request for object '%s' with search '%s'",
-        (const char*)object_id,
-        (const char*)search_criteria);
+        object_id, search_criteria);
+
+    CUPnPSearchCriteria searchCriteria;
+    searchCriteria.Deserialize(search_criteria);
 
     NPT_String id = object_id;
     if (id.StartsWith("musicdb://")) {

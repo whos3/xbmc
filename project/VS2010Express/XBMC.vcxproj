@@ -798,6 +798,7 @@
     <ClCompile Include="..\..\xbmc\network\upnp\UPnPInternal.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\UPnPPlayer.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\UPnPRenderer.cpp" />
+    <ClCompile Include="..\..\xbmc\network\upnp\UPnPSearchCriteria.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\UPnPServer.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\UPnPSettings.cpp" />
     <ClCompile Include="..\..\xbmc\network\WakeOnAccess.cpp" />
@@ -1120,6 +1121,7 @@
     <ClInclude Include="..\..\xbmc\media\import\MediaImportManager.h" />
     <ClInclude Include="..\..\xbmc\music\karaoke\karaokevideobackground.h" />
     <ClInclude Include="..\..\xbmc\network\NetworkServices.h" />
+    <ClInclude Include="..\..\xbmc\network\upnp\UPnPSearchCriteria.h" />
     <ClInclude Include="..\..\xbmc\peripherals\bus\virtual\PeripheralBusCEC.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\UPnPSettings.h" />
     <ClInclude Include="..\..\xbmc\playlists\SmartPlaylistFileItemListModifier.h" />
@@ -1161,6 +1163,7 @@
     <ClInclude Include="..\..\xbmc\utils\ActorProtocol.h" />
     <ClInclude Include="..\..\xbmc\utils\BooleanLogic.h" />
     <ClInclude Include="..\..\xbmc\utils\CharsetDetection.h" />
+    <ClInclude Include="..\..\xbmc\utils\ExpressionParser.h" />
     <ClInclude Include="..\..\xbmc\utils\IRssObserver.h" />
     <ClInclude Include="..\..\xbmc\utils\IXmlDeserializable.h" />
     <ClInclude Include="..\..\xbmc\utils\LegacyPathTranslation.h" />
@@ -1309,9 +1312,17 @@
     <ClCompile Include="..\..\xbmc\utils\ActorProtocol.cpp" />
     <ClCompile Include="..\..\xbmc\utils\BooleanLogic.cpp" />
     <ClCompile Include="..\..\xbmc\utils\CharsetDetection.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\ExpressionParser.cpp" />
     <ClCompile Include="..\..\xbmc\utils\LegacyPathTranslation.cpp" />
     <ClCompile Include="..\..\xbmc\utils\RssManager.cpp" />
     <ClCompile Include="..\..\xbmc\utils\StringValidation.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\test\TestExpressionParser.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (DirectX)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (OpenGL)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (DirectX)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (OpenGL)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\xbmc\utils\test\TestUrlOptions.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (DirectX)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (OpenGL)|Win32'">true</ExcludedFromBuild>
@@ -1692,6 +1703,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (OpenGL)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (DirectX)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (OpenGL)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Testsuite|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\utils\TimeSmoother.cpp" />
     <ClCompile Include="..\..\xbmc\utils\TimeUtils.cpp" />

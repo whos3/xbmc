@@ -12,6 +12,7 @@ SRCS= UPnP.cpp \
       UPnPInternal.cpp \
       UPnPPlayer.cpp \
       UPnPRenderer.cpp \
+      UPnPSearchCriteria.cpp \
       UPnPServer.cpp \
       UPnPSettings.cpp \
 

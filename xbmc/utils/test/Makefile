@@ -11,6 +11,7 @@ SRCS=	\
 	TestCryptThreading.cpp \
 	TestDatabaseUtils.cpp \
 	TestEndianSwap.cpp \
+	TestExpressionParser.cpp \
 	Testfastmemcpy.cpp \
 	Testfft.cpp \
 	TestFileOperationJob.cpp \
