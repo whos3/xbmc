@@ -7993,6 +7993,7 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
     if (NULL == m_pDS.get()) return;
 
     unsigned int time = XbmcThreads::SystemClockMillis();
+    unsigned int parttime = time;
     CLog::Log(LOGNOTICE, "%s: Starting videodatabase cleanup ..", __FUNCTION__);
     ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::VideoLibrary, "xbmc", "OnCleanStarted");
 
@@ -8017,6 +8018,8 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
 
     m_pDS->query(sql.c_str());
     if (m_pDS->num_rows() == 0) return;
+    CLog::Log(LOGNOTICE, "%s: Getting all files from the database took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     if (handle)
     {
@@ -8077,6 +8080,8 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       current++;
     }
     m_pDS->close();
+    CLog::Log(LOGNOTICE, "%s: Checking all files took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     std::string filesToDelete;
 
@@ -8091,6 +8096,8 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       m_pDS->next();
     }
     m_pDS->close();
+    CLog::Log(LOGNOTICE, "%s: Getting all files without path from the database took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     std::map<int, bool> pathsDeleteDecisions;
     std::vector<int> movieIDs;
@@ -8103,8 +8110,14 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       StringUtils::TrimRight(filesToTestForDelete, ",");
 
       movieIDs = CleanMediaType("movie", filesToTestForDelete, pathsDeleteDecisions, filesToDelete, !showProgress);
+      CLog::Log(LOGNOTICE, "%s: Cleaning all movies took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
       episodeIDs = CleanMediaType("episode", filesToTestForDelete, pathsDeleteDecisions, filesToDelete, !showProgress);
+      CLog::Log(LOGNOTICE, "%s: Cleaning all episodes took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
       musicVideoIDs = CleanMediaType("musicvideo", filesToTestForDelete, pathsDeleteDecisions, filesToDelete, !showProgress);
+      CLog::Log(LOGNOTICE, "%s: Cleaning all musicvideos took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
     }
 
     if (progress != NULL)
@@ -8136,6 +8149,9 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       CLog::Log(LOGDEBUG, "%s: Cleaning stacktimes table", __FUNCTION__);
       sql = "DELETE FROM stacktimes WHERE idFile IN " + filesToDelete;
       m_pDS->exec(sql.c_str());
+
+      CLog::Log(LOGNOTICE, "%s: Deleting all non-existing files took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
     }
 
     if (!movieIDs.empty())
@@ -8172,6 +8188,9 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       CLog::Log(LOGDEBUG, "%s: Cleaning studiolinkmovie table", __FUNCTION__);
       sql = "DELETE FROM studiolinkmovie WHERE idMovie IN " + moviesToDelete;
       m_pDS->exec(sql.c_str());
+
+      CLog::Log(LOGNOTICE, "%s: Deleting all non-existing movies took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
     }
 
     if (!episodeIDs.empty())
@@ -8196,6 +8215,9 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       CLog::Log(LOGDEBUG, "%s: Cleaning writerlinkepisode table", __FUNCTION__);
       sql = "DELETE FROM writerlinkepisode WHERE idEpisode IN " + episodesToDelete;
       m_pDS->exec(sql.c_str());
+
+      CLog::Log(LOGNOTICE, "%s: Deleting all non-existing episodes took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
     }
 
     CLog::Log(LOGDEBUG, "%s: Cleaning paths that don't exist and have content set...", __FUNCTION__);
@@ -8216,6 +8238,8 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       m_pDS->next();
     }
     m_pDS->close();
+    CLog::Log(LOGNOTICE, "%s: Getting all non-existing sources from the database took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     if (!strIds.empty())
     {
@@ -8223,6 +8247,9 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       m_pDS->exec(sql.c_str());
       sql = "DELETE FROM tvshowlinkpath WHERE NOT EXISTS (SELECT 1 FROM path WHERE path.idPath = tvshowlinkpath.idPath)";
       m_pDS->exec(sql.c_str());
+
+      CLog::Log(LOGNOTICE, "%s: Deleting all non-existing sources took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
     }
 
     CLog::Log(LOGDEBUG, "%s: Cleaning tvshow table", __FUNCTION__);
@@ -8274,6 +8301,8 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       sql = "DELETE FROM movielinktvshow WHERE NOT EXISTS (SELECT 1 FROM movie WHERE movie.idMovie = movielinktvshow.idMovie)";
       m_pDS->exec(sql.c_str());
     }
+    CLog::Log(LOGNOTICE, "%s: Deleting all non-existing tvshows took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     if (!musicVideoIDs.empty())
     {
@@ -8301,6 +8330,9 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
       CLog::Log(LOGDEBUG, "%s: Cleaning studiolinkmusicvideo table", __FUNCTION__);
       sql = "DELETE FROM studiolinkmusicvideo WHERE idMVideo IN " + musicVideosToDelete;
       m_pDS->exec(sql.c_str());
+
+      CLog::Log(LOGNOTICE, "%s: Deleting all non-existing musicvideos took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+      parttime = XbmcThreads::SystemClockMillis();
     }
 
     CLog::Log(LOGDEBUG, "%s: Cleaning path table", __FUNCTION__);
@@ -8317,6 +8349,8 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
                                   "AND NOT EXISTS (SELECT 1 FROM musicvideo WHERE musicvideo.c%02d = path.idPath)"
                 , VIDEODB_ID_PARENTPATHID, VIDEODB_ID_TV_PARENTPATHID, VIDEODB_ID_EPISODE_PARENTPATHID, VIDEODB_ID_MUSICVIDEO_PARENTPATHID );
     m_pDS->exec(sql.c_str());
+    CLog::Log(LOGNOTICE, "%s: Cleaning path table took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     CLog::Log(LOGDEBUG, "%s: Cleaning genre table", __FUNCTION__);
     sql = "DELETE FROM genre "
@@ -8353,15 +8387,23 @@ void CVideoDatabase::CleanDatabase(CGUIDialogProgressBarHandle* handle, const se
     CLog::Log(LOGDEBUG, "%s: Cleaning set table", __FUNCTION__);
     sql = "DELETE FROM sets WHERE NOT EXISTS (SELECT 1 FROM movie WHERE movie.idSet = sets.idSet)";
     m_pDS->exec(sql.c_str());
+    CLog::Log(LOGNOTICE, "%s: Cleaning any additional tables took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     CommitTransaction();
+    CLog::Log(LOGNOTICE, "%s: Committing the database transaction took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     if (handle)
       handle->SetTitle(g_localizeStrings.Get(331));
 
     Compress(false);
+    CLog::Log(LOGNOTICE, "%s: Compressing the database took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     CUtil::DeleteVideoDatabaseDirectoryCache();
+    CLog::Log(LOGNOTICE, "%s: Deleting the videodb directory cache took %s", __FUNCTION__, StringUtils::SecondsToTimeString((XbmcThreads::SystemClockMillis() - parttime) / 1000).c_str());
+    parttime = XbmcThreads::SystemClockMillis();
 
     time = XbmcThreads::SystemClockMillis() - time;
     CLog::Log(LOGNOTICE, "%s: Cleaning videodatabase done. Operation took %s", __FUNCTION__, StringUtils::SecondsToTimeString(time / 1000).c_str());
