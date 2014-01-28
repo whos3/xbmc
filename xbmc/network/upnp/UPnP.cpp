@@ -28,6 +28,7 @@
 #include "threads/SystemClock.h"
 #include "UPnP.h"
 #include "UPnPInternal.h"
+#include "UPnPMediaImporter.h"
 #include "UPnPRenderer.h"
 #include "UPnPServer.h"
 #include "UPnPSettings.h"
@@ -44,10 +45,12 @@
 #include "FileItem.h"
 #include "guilib/GUIWindowManager.h"
 #include "GUIInfoManager.h"
+#include "utils/StringUtils.h"
 #include "utils/TimeUtils.h"
 #include "video/VideoInfoTag.h"
 #include "guilib/Key.h"
 #include "Util.h"
+#include "media/import/MediaImportManager.h"
 
 using namespace std;
 using namespace UPNP;
@@ -188,6 +191,16 @@ public:
         message.SetStringParam("upnp://");
         g_windowManager.SendThreadMessage(message);
 
+        if (CSettings::Get().GetBool("services.upnpimport"))
+        {
+          std::string sourceID = getSourceID(device);
+          std::set<MediaType> mediaTypes;
+          mediaTypes.insert(MediaTypeMovie); mediaTypes.insert(MediaTypeMusicVideo);
+          mediaTypes.insert(MediaTypeTvShow); mediaTypes.insert(MediaTypeSeason); mediaTypes.insert(MediaTypeEpisode);
+          mediaTypes.insert(MediaTypeArtist); mediaTypes.insert(MediaTypeAlbum); mediaTypes.insert(MediaTypeSong);
+          CMediaImportManager::Get().RegisterSource(sourceID, device->GetFriendlyName().GetChars(), device->GetIconUrl("image/png").GetChars(), mediaTypes);
+        }
+
         return PLT_SyncMediaBrowser::OnMSAdded(device);
     }
     virtual void OnMSRemoved(PLT_DeviceDataReference& device)
@@ -197,6 +210,8 @@ public:
         CGUIMessage message(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UPDATE_PATH);
         message.SetStringParam("upnp://");
         g_windowManager.SendThreadMessage(message);
+
+        CMediaImportManager::Get().UnregisterSource(getSourceID(device));
 
         PLT_SyncMediaBrowser::OnMSRemoved(device);
     }
@@ -351,6 +366,12 @@ public:
         CLog::Log(LOGINFO, "UPNP: invoking UpdateObject failed");
         return false;
     }
+
+private:
+    std::string getSourceID(const PLT_DeviceDataReference& device)
+    {
+      return StringUtils::Format("upnp://%s", device->GetUUID().GetChars());
+    }
 };
 
 
@@ -475,7 +496,8 @@ CUPnP::CUPnP() :
     m_LogHandler(NULL),
     m_ServerHolder(new CDeviceHostReferenceHolder()),
     m_RendererHolder(new CRendererReferenceHolder()),
-    m_CtrlPointHolder(new CCtrlPointReferenceHolder())
+    m_CtrlPointHolder(new CCtrlPointReferenceHolder()),
+    m_mediaImporter()
 {
     NPT_LogManager::GetDefault().Configure("plist:.level=FINE;.handlers=CustomHandler;");
     NPT_LogHandler::Create("CustomHandler", "xbmc", m_LogHandler);
@@ -623,6 +645,11 @@ CUPnP::StartClient()
         CSettings::Get().GetBool("services.upnpserver")) {
         m_MediaController = new CMediaController(m_CtrlPointHolder->m_CtrlPoint);
     }
+
+    // register the upnp media importer
+    if (m_mediaImporter == NULL)
+      m_mediaImporter = MediaImporterPtr(new CUPnPMediaImporter());
+    CMediaImportManager::Get().RegisterImporter(m_mediaImporter);
 }
 
 /*----------------------------------------------------------------------
@@ -632,6 +659,10 @@ void
 CUPnP::StopClient()
 {
     if (m_CtrlPointHolder->m_CtrlPoint.IsNull()) return;
+
+    // unregister the upnp media importer
+    if (m_mediaImporter != NULL)
+      CMediaImportManager::Get().UnregisterImporter(m_mediaImporter);
 
     m_UPnP->RemoveCtrlPoint(m_CtrlPointHolder->m_CtrlPoint);
     m_CtrlPointHolder->m_CtrlPoint = NULL;
