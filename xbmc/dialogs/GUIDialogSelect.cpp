@@ -19,11 +19,11 @@
  */
 
 #include "GUIDialogSelect.h"
-#include "guilib/GUIWindowManager.h"
 #include "FileItem.h"
 #include "guilib/GUIEditControl.h"
 #include "guilib/Key.h"
 #include "guilib/LocalizeStrings.h"
+#include "guilib/GUIWindowManager.h"
 #include "utils/StringUtils.h"
 
 #define CONTROL_HEADING       1
@@ -58,7 +58,7 @@ CGUIDialogSelect::~CGUIDialogSelect(void)
 
 bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
 {
-  switch ( message.GetMessage() )
+  switch (message.GetMessage())
   {
   case GUI_MSG_WINDOW_DEINIT:
     {
@@ -113,7 +113,7 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
         if (ACTION_SELECT_ITEM == iAction || ACTION_MOUSE_LEFT_CLICK == iAction)
         {
           int iSelected = m_viewControl.GetSelectedItem();
-          if(iSelected >= 0 && iSelected < (int)m_vecList->Size())
+          if (iSelected >= 0 && iSelected < (int)m_vecList->Size())
           {
             CFileItemPtr item(m_vecList->Get(iSelected));
             if (m_multiSelection)
@@ -129,7 +129,7 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
           }
         }
       }
-      if (CONTROL_BUTTON == iControl)
+      if (iControl == CONTROL_BUTTON)
       {
         m_iSelected = -1;
         m_bButtonPressed = true;
