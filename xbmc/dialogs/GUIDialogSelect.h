@@ -47,6 +47,9 @@ public:
   const CFileItemList& GetSelectedItems() const;
   void EnableButton(bool enable, int string);
   bool IsButtonPressed();
+  void AllowNewItem(bool allow);
+  bool IsNewItem() { return !m_strNewItem.empty(); }
+  const CStdString& GetNewItem() { return m_strNewItem; }
   void Sort(bool bSortOrder = true);
   void SetSelected(int iSelected);
   void SetSelected(const CStdString &strSelectedLabel);
@@ -67,8 +70,11 @@ protected:
   int m_iSelected;
   bool m_useDetails;
   bool m_multiSelection;
+  bool m_bAllowNewItem;
+  CStdString m_strNewItem;
 
   CFileItemList* m_selectedItems;
   CFileItemList* m_vecList;
+  CFileItemList* m_unfilteredList;
   CGUIViewControl m_viewControl;
 };
