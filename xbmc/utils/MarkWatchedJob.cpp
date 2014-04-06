@@ -23,6 +23,7 @@
 #include "GUIUserMessages.h"
 #include "guilib/GUIWindowManager.h"
 #include "MarkWatchedJob.h"
+#include "media/import/MediaImportManager.h"
 #include "profiles/ProfilesManager.h"
 #include "Util.h"
 #include "utils/URIUtils.h"
@@ -104,6 +105,9 @@ bool CMarkWatchedJob::DoWork()
       }
       else
         database.SetPlayCount(*pItem, 0);
+
+      if (pItem->IsImported())
+        CMediaImportManager::Get().UpdateImportedItem(*pItem);
     }
 
     database.CommitTransaction();
