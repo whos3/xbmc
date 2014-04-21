@@ -9,6 +9,7 @@ SRCS= MediaImport.cpp \
       handler/TvShowImportHandler.cpp \
       handler/VideoImportHandler.cpp \
       repositories/GenericMediaImportRepository.cpp \
+      repositories/MusicImportRepository.cpp \
       repositories/VideoImportRepository.cpp \
       task/MediaImportChangesetTask.cpp \
       task/MediaImportCleanupTask.cpp \
