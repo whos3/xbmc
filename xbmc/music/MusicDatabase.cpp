@@ -66,6 +66,8 @@
 #include "utils/XMLUtils.h"
 #include "URL.h"
 #include "playlists/SmartPlayList.h"
+#include "media/import/MediaImport.h"
+#include "media/import/MediaImportSource.h"
 
 using namespace std;
 using namespace AUTOPTR;
@@ -157,7 +159,8 @@ void CMusicDatabase::CreateTables()
               " iTimesPlayed integer, iStartOffset integer, iEndOffset integer, "
               " idThumb integer, "
               " lastplayed varchar(20) default NULL, "
-              " rating char default '0', comment text)");
+              " rating char default '0', comment text, "
+              " enabled bool NOT NULL DEFAULT 1, idImport integer)");
   CLog::Log(LOGINFO, "create song_artist table");
   m_pDS->exec("CREATE TABLE song_artist (idArtist integer, idSong integer, strJoinPhrase text, boolFeatured integer, iOrder integer, strArtist text)");
   CLog::Log(LOGINFO, "create song_genre table");
@@ -177,6 +180,16 @@ void CMusicDatabase::CreateTables()
 
   CLog::Log(LOGINFO, "create art table");
   m_pDS->exec("CREATE TABLE art(art_id INTEGER PRIMARY KEY, media_id INTEGER, media_type TEXT, type TEXT, url TEXT)");
+
+  CLog::Log(LOGINFO, "create sources table");
+  m_pDS->exec("CREATE TABLE sources (idSource integer primary key, "
+              " identifier text NOT NULL, name text NOT NULL, "
+              " availableMediaTypes text NOT NULL)");
+
+  CLog::Log(LOGINFO, "create imports table");
+  m_pDS->exec("CREATE TABLE imports (idImport integer primary key, "
+              " idPath integer NOT NULL, idSource integer NOT NULL, "
+              " mediaType text NOT NULL, lastSync text, settings text)");
 
   // Add 'Karaoke' genre
   AddGenre( "Karaoke" );
@@ -209,6 +222,8 @@ void CMusicDatabase::CreateAnalytics()
   m_pDS->exec("CREATE INDEX idxSong3 ON song(idAlbum)");
   m_pDS->exec("CREATE INDEX idxSong6 ON song( idPath, strFileName(255) )");
   m_pDS->exec("CREATE UNIQUE INDEX idxSong7 ON song( idAlbum, strMusicBrainzTrackID(36) )");
+  m_pDS->exec("CREATE INDEX idxSongEnabled ON song(enabled)");
+  m_pDS->exec("CREATE INDEX idxSongImport ON song(idImport)");
 
   m_pDS->exec("CREATE UNIQUE INDEX idxSongArtist_1 ON song_artist ( idSong, idArtist )");
   m_pDS->exec("CREATE UNIQUE INDEX idxSongArtist_2 ON song_artist ( idArtist, idSong )");
@@ -225,6 +240,10 @@ void CMusicDatabase::CreateAnalytics()
   m_pDS->exec("CREATE INDEX idxDiscography_1 ON discography ( idArtist )");
 
   m_pDS->exec("CREATE INDEX ix_art ON art(media_id, media_type(20), type(20))");
+
+  m_pDS->exec("CREATE INDEX idxSources ON sources(identifier(255))");
+  m_pDS->exec("CREATE INDEX idxImportsPath ON imports(idPath)");
+  m_pDS->exec("CREATE INDEX idxImportsMediatype ON imports(mediaType(255))");
 
   CLog::Log(LOGINFO, "create triggers");
   m_pDS->exec("CREATE TRIGGER tgrDeleteAlbum AFTER delete ON album FOR EACH ROW BEGIN"
@@ -267,17 +286,26 @@ void CMusicDatabase::CreateViews()
               "        lastplayed, rating, comment, "
               "        song.idAlbum AS idAlbum, "
               "        strAlbum, "
-              "        strPath, "
+              "        path.strPath AS strPath, "
               "        iKaraNumber, iKaraDelay, strKaraEncoding,"
               "        album.bCompilation AS bCompilation,"
-              "        album.strArtists AS strAlbumArtists "
+              "        album.strArtists AS strAlbumArtists, "
+              "        song.enabled AS enabled, "
+              "        sources.identifier AS strSource, "
+              "        importsPath.strPath AS importPath "
               "FROM song"
               "  JOIN album ON"
               "    song.idAlbum=album.idAlbum"
               "  JOIN path ON"
               "    song.idPath=path.idPath"
               "  LEFT OUTER JOIN karaokedata ON"
-              "    song.idSong=karaokedata.idSong");
+              "    song.idSong=karaokedata.idSong"
+              "  LEFT JOIN imports ON"
+              "    imports.idImport=song.idImport AND imports.mediaType = 'song'"
+              "  LEFT JOIN sources ON"
+              "    sources.idSource=imports.idSource"
+              "  LEFT JOIN path AS importsPath ON"
+              "    importsPath.idPath=imports.idPath");
 
   CLog::Log(LOGINFO, "create album view");
   m_pDS->exec("CREATE VIEW albumview AS SELECT "
@@ -296,10 +324,19 @@ void CMusicDatabase::CreateViews()
               "        album.strImage as strImage, "
               "        iRating, "
               "        bCompilation, "
-              "        MIN(song.iTimesPlayed) AS iTimesPlayed "
+              "        MIN(song.iTimesPlayed) AS iTimesPlayed, "
+              "        MAX(song.enabled) AS enabled, "
+              "        sources.identifier AS strSource, "
+              "        importsPath.strPath AS importPath "
               "FROM album"
               " LEFT OUTER JOIN song ON"
               "   album.idAlbum=song.idAlbum "
+              "  LEFT JOIN imports ON"
+              "    imports.idImport=song.idImport AND imports.mediaType = 'song'"
+              "  LEFT JOIN sources ON"
+              "    sources.idSource=imports.idSource"
+              "  LEFT JOIN path AS importsPath ON"
+              "    importsPath.idPath=imports.idPath "
               "GROUP BY album.idAlbum");
 
   CLog::Log(LOGINFO, "create artist view");
@@ -1597,6 +1634,9 @@ void CMusicDatabase::GetFileItemFromDataset(const dbiplus::sql_record* const rec
   item->GetMusicInfoTag()->SetURL(strRealPath);
   item->GetMusicInfoTag()->SetCompilation(record->at(song_bCompilation).get_asInt() == 1);
   item->GetMusicInfoTag()->SetAlbumArtist(record->at(song_strAlbumArtists).get_asString());
+  item->SetEnabled(record->at(song_enabled).get_asBool());
+  item->SetSource(record->at(song_strSource).get_asString());
+  item->SetImportPath(record->at(song_importPath).get_asString());
   item->GetMusicInfoTag()->SetLoaded(true);
   // Get filename with full path
   if (!baseUrl.IsValid())
@@ -1640,6 +1680,7 @@ CAlbum CMusicDatabase::GetAlbumFromDataset(const dbiplus::sql_record* const reco
   album.strType = record->at(offset + album_strType).get_asString();
   album.bCompilation = record->at(offset + album_bCompilation).get_asInt() == 1;
   album.iTimesPlayed = record->at(offset + album_iTimesPlayed).get_asInt();
+  album.enabled = record->at(offset + album_enabled).get_asBool();
   return album;
 }
 
@@ -3403,6 +3444,10 @@ bool CMusicDatabase::GetAlbumsByWhere(const CStdString &baseDir, const Filter &f
 
         CFileItemPtr pItem(new CFileItem(itemUrl.ToString(), GetAlbumFromDataset(record)));
         pItem->SetIconImage("DefaultAlbumCover.png");
+
+        pItem->SetSource(record->at(album_strSource).get_asString());
+        pItem->SetImportPath(record->at(album_importPath).get_asString());
+
         items.Add(pItem);
       }
       catch (...)
@@ -3922,11 +3967,20 @@ void CMusicDatabase::UpdateTables(int version)
     m_pDS->exec("UPDATE karaokedata SET strKaraLyrFileCRC=NULL");
     m_pDS->exec("UPDATE album SET idThumb=NULL");
   }
+  if (version < 49)
+  {
+    // add enabled flag and idImport to song table and new tables source and imports
+    m_pDS->exec("ALTER TABLE song ADD enabled bool NOT NULL DEFAULT 1");
+    m_pDS->exec("ALTER TABLE song ADD idImport integer");
+
+    m_pDS->exec("CREATE TABLE sources (idSource integer primary key, identifier text NOT NULL, name text NOT NULL, availableMediaTypes text NOT NULL)");
+    m_pDS->exec("CREATE TABLE imports (idImport integer primary key, idPath integer NOT NULL, idSource integer NOT NULL, mediaType text NOT NULL, lastSync text, settings text)");
+  }
 }
 
 int CMusicDatabase::GetSchemaVersion() const
 {
-  return 48;
+  return 49;
 }
 
 unsigned int CMusicDatabase::GetSongIDs(const Filter &filter, vector<pair<int,int> > &songIDs)
@@ -5471,6 +5525,884 @@ string CMusicDatabase::GetArtistArtForItem(int mediaId, const string &mediaType,
 {
   std::string query = PrepareSQL("SELECT url FROM art WHERE media_id=(SELECT idArtist from %s_artist WHERE id%s=%i AND iOrder=0) AND media_type='artist' AND type='%s'", mediaType.c_str(), mediaType.c_str(), mediaId, artType.c_str());
   return GetSingleValue(query, m_pDS2);
+}
+
+std::vector<CMediaImportSource> CMusicDatabase::GetSources()
+{
+  std::vector<CMediaImportSource> sources;
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL)
+      return sources;
+
+    strSQL = PrepareSQL("SELECT sources.*, art.url, MAX(imports.lastSync) AS lastSync FROM sources "
+                        "LEFT JOIN art ON art.media_type = 'source' AND art.media_id = sources.idSource "
+                        "LEFT JOIN imports ON imports.idSource = sources.idSource "
+                        "GROUP BY sources.idSource");
+    m_pDS->query(strSQL.c_str());
+    while (!m_pDS->eof())
+    {
+      std::vector<MediaType> vecMediaTypes;
+      std::string strMediaTypes = m_pDS->fv(3).get_asString();
+      if (!strMediaTypes.empty())
+        vecMediaTypes = StringUtils::Split(strMediaTypes, ",");
+      std::set<MediaType> availableMediaTypes(vecMediaTypes.begin(), vecMediaTypes.end());
+      CDateTime lastSynced; lastSynced.SetFromDBDateTime(m_pDS->fv(5).get_asString());
+      sources.push_back(CMediaImportSource(m_pDS->fv(1).get_asString(), m_pDS->fv(2).get_asString(), m_pDS->fv(4).get_asString(), availableMediaTypes, lastSynced));
+
+      m_pDS->next();
+    }
+    m_pDS->close();
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s unable to GetSources (%s)", __FUNCTION__, strSQL.c_str());
+  }
+  return sources;
+}
+
+int CMusicDatabase::AddSource(const CMediaImportSource &source)
+{
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        source.GetIdentifier().empty() || source.GetFriendlyName().empty())
+      return -1;
+
+    strSQL = PrepareSQL("SELECT idSource FROM sources WHERE identifier='%s'", source.GetIdentifier().c_str());
+
+    m_pDS->query(strSQL.c_str());
+    if (m_pDS->num_rows() > 0)
+    {
+      int idSource = m_pDS->fv(0).get_asInt();
+      m_pDS->close();
+
+      return idSource;
+    }
+    m_pDS->close();
+    
+    std::vector<MediaType> vecAvailableMediaTypes(source.GetAvailableMediaTypes().begin(), source.GetAvailableMediaTypes().end());
+    strSQL = PrepareSQL("INSERT INTO sources (idSource, identifier, name, availableMediaTypes) values(NULL, '%s', '%s', '%s')",
+                        source.GetIdentifier().c_str(), source.GetFriendlyName().c_str(),
+                        StringUtils::Join(vecAvailableMediaTypes, ",").c_str());
+    m_pDS->exec(strSQL.c_str());
+
+    int idSource = (int)m_pDS->lastinsertid();
+    if (idSource > 0 && !source.GetIconUrl().empty())
+      SetArtForItem(idSource, "source", "thumb", source.GetIconUrl());
+
+    return idSource;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s unable to AddSource (%s)", __FUNCTION__, strSQL.c_str());
+  }
+  return -1;
+}
+
+bool CMusicDatabase::SetDetailsForSource(const CMediaImportSource &source)
+{
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        source.GetIdentifier().empty() || source.GetFriendlyName().empty())
+      return false;
+
+    strSQL = PrepareSQL("SELECT idSource FROM sources WHERE identifier='%s'", source.GetIdentifier().c_str());
+
+    m_pDS->query(strSQL.c_str());
+    if (m_pDS->num_rows() != 1)
+    {
+      m_pDS->close();
+      return false;
+    }
+
+    int idSource = m_pDS->fv(0).get_asInt();
+    m_pDS->close();
+    
+    std::vector<MediaType> vecAvailableMediaTypes(source.GetAvailableMediaTypes().begin(), source.GetAvailableMediaTypes().end());
+    strSQL = PrepareSQL("UPDATE sources SET name='%s', availableMediaTypes='%s' WHERE idSource=%d",
+                        source.GetFriendlyName().c_str(),
+                        StringUtils::Join(vecAvailableMediaTypes, ",").c_str(),
+                        idSource);
+    m_pDS->exec(strSQL.c_str());
+
+    std::string oldIcon = GetArtForItem(idSource, "source", "thumb");
+    if (source.GetIconUrl().compare(oldIcon) != 0)
+      SetArtForItem(idSource, "source", "thumb", source.GetIconUrl());
+
+    return true;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s unable to SetDetailsForSource (%s)", __FUNCTION__, strSQL.c_str());
+  }
+  return false;
+}
+
+void CMusicDatabase::RemoveSource(const std::string& sourceIdentifier, CGUIDialogProgress *progress /* = NULL */)
+{
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        sourceIdentifier.empty())
+      return;
+
+    if (progress != NULL)
+    {
+      progress->StartModal();
+      progress->ShowProgressBar(true);
+    }
+
+    BeginTransaction();
+
+    int idSource = GetSourceId(sourceIdentifier);
+    if (idSource <= 0)
+    {
+      RollbackTransaction();
+      return;
+    }
+
+    bool result = true;
+    std::vector<CMediaImport> imports = GetImports();
+    for (std::vector<CMediaImport>::const_iterator itImport = imports.begin(); itImport != imports.end(); ++itImport)
+    {
+      if (progress != NULL && progress->IsCanceled())
+      {
+        RollbackTransaction();
+        return;
+      }
+
+      if (itImport->GetSource().GetIdentifier() == sourceIdentifier)
+      {
+        if (!RemoveImport(*itImport, progress, false))
+        {
+          result = false;
+          break;
+        }
+      }
+    }
+
+    if (result)
+    {
+      // delete source
+      strSQL = PrepareSQL("DELETE FROM sources WHERE idSource = %d", idSource);
+      m_pDS->exec(strSQL);
+
+      if (progress != NULL)
+      {
+        progress->SetPercentage(100);
+        progress->Progress();
+      }
+
+      CommitTransaction();
+
+      Compress(false);
+    }
+    else
+      RollbackTransaction();
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
+    RollbackTransaction();
+  }
+
+  if (progress != NULL)
+    progress->Close();
+}
+
+std::vector<CMediaImport> CMusicDatabase::GetImports()
+{
+  std::vector<CMediaImport> imports;
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL)
+      return imports;
+
+    strSQL = PrepareSQL("SELECT path.strPath, sources.identifier, imports.mediaType, imports.lastSync, imports.settings FROM imports "
+                        "JOIN path ON path.idPath = imports.idPath "
+                        "JOIN sources ON sources.idSource = imports.idSource");
+    m_pDS->query(strSQL.c_str());
+    while (!m_pDS->eof())
+    {
+      CDateTime lastSynced; lastSynced.SetFromDBDateTime(m_pDS->fv(3).get_asString());
+      CMediaImport import(m_pDS->fv(0).get_asString(), m_pDS->fv(2).get_asString(), m_pDS->fv(1).get_asString(), lastSynced);
+      import.GetSettings().Deserialize(m_pDS->fv(4).get_asString());
+      imports.push_back(import);
+
+      m_pDS->next();
+    }
+    m_pDS->close();
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s unable to GetImports (%s)", __FUNCTION__, strSQL.c_str());
+  }
+  return imports;
+}
+
+int CMusicDatabase::AddImport(const CMediaImport &import)
+{
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        import.GetPath().empty() || import.GetSource().GetIdentifier().empty() ||
+        import.GetMediaType().empty())
+      return -1;
+
+    // check if the necessary source exists
+    int idSource = GetSourceId(import.GetSource().GetIdentifier());
+    if (idSource <= 0)
+      return -1;
+
+    // make sure the necessary path exists
+    int idPath = GetPathId(import.GetPath());
+    if (idPath <= 0)
+    {
+      idPath = AddPath(import.GetPath());
+      if (idPath <= 0)
+        return -1;
+    }
+
+    int idImport = GetImportId(idPath, import.GetMediaType(), idSource);
+    if (idImport > 0)
+      return idImport;
+    
+    strSQL = PrepareSQL("INSERT INTO imports (idImport, idPath, idSource, mediaType, settings) values(NULL, %d, %d, '%s', '%s')",
+                        idPath, idSource, import.GetMediaType().c_str(),
+                        import.GetSettings().Serialize().c_str());
+    m_pDS->exec(strSQL.c_str());
+
+    return (int)m_pDS->lastinsertid();
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s unable to AddImport (%s)", __FUNCTION__, strSQL.c_str());
+  }
+  return -1;
+}
+
+bool CMusicDatabase::SetDetailsForImport(const CMediaImport &import)
+{
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        import.GetPath().empty() || import.GetSource().GetIdentifier().empty() ||
+        import.GetMediaType().empty())
+      return false;
+
+    int idImport = GetImportId(import);
+    if (idImport <= 0)
+      return false;
+    
+    strSQL = PrepareSQL("UPDATE imports SET mediaType = '%s', lastSync = '%s', settings='%s' WHERE idImport = %d",
+                        import.GetMediaType().c_str(), import.GetLastSynced().GetAsDBDateTime().c_str(),
+                        import.GetSettings().Serialize().c_str(), idImport);
+    m_pDS->exec(strSQL.c_str());
+
+    return true;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s unable to SetDetailsForImport (%s)", __FUNCTION__, strSQL.c_str());
+  }
+  return false;
+}
+
+void CMusicDatabase::UpdateImportLastSynced(const CMediaImport &import, const CDateTime &lastSynced /* = CDateTime() */)
+{
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        import.GetPath().empty() || import.GetMediaType().empty() ||
+        import.GetMediaType().empty())
+      return;
+
+    int idImport = GetImportId(import);
+    if (idImport <= 0)
+      return;
+
+    CDateTime syncDate = lastSynced;
+    if (!syncDate.IsValid())
+      syncDate = CDateTime::GetCurrentDateTime();
+
+    strSQL = PrepareSQL("UPDATE imports SET lastSync = '%s' WHERE idImport = %d", syncDate.GetAsDBDateTime().c_str(), idImport);
+    m_pDS->exec(strSQL);
+    m_pDS->close();
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s unable to UpdateImportLastSynced (%s)", __FUNCTION__, strSQL.c_str());
+  }
+}
+
+bool CMusicDatabase::RemoveImport(const CMediaImport &import, CGUIDialogProgress *progress /* = NULL */, bool standalone /* = true */)
+{
+  if (import.GetPath().empty() || import.GetMediaType().empty() ||
+      import.GetMediaType().empty())
+    return false;
+
+  bool result = false;
+  /* TODO
+  CStdString strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL || m_pDS2.get() == NULL)
+      return false;
+
+    if (standalone)
+    {
+      if (progress != NULL)
+      {
+        progress->StartModal();
+        progress->ShowProgressBar(true);
+      }
+
+      BeginTransaction();
+    }
+
+    int idImport = GetImportId(import);
+    if (idImport <= 0)
+    {
+      if (standalone)
+        RollbackTransaction();
+      return false;
+    }
+    
+    std::string deleteFileIds, deletePathIds;
+    int total, index;
+
+    MediaType mediaType = import.GetMediaType();
+    if (mediaType == MediaTypeMovie)
+    {
+      if (progress != NULL)
+      {
+        if (progress->IsCanceled())
+        {
+          if (standalone)
+            RollbackTransaction();
+          return false;
+        }
+      
+        progress->SetLine(0, "Deleting movies..."); // TODO: localization
+        progress->SetPercentage(0);
+      }
+
+      // delete all movies imported from the import
+      strSQL = PrepareSQL("SELECT movie.idMovie, movie.idFile, path.idPath, movie.c%02d FROM movie "
+                          "JOIN files ON files.idFile = movie.idFile "
+                          "JOIN path ON path.idPath = files.idPath "
+                          "JOIN imports ON imports.idImport = files.idImport AND imports.mediaType = 'movie' "
+                          "WHERE imports.idImport = %d", VIDEODB_ID_TITLE, idImport);
+      m_pDS2->query(strSQL);
+      total = m_pDS2->num_rows();
+      index = 0;
+      while (!m_pDS2->eof())
+      {
+        if (progress != NULL)
+        {
+          if (progress->IsCanceled())
+          {
+            progress->Close();
+            if (standalone)
+              RollbackTransaction();
+            return false;
+          }
+
+          progress->SetLine(1, m_pDS2->fv(3).get_asString());
+          progress->SetPercentage((index * 100) / total);
+          progress->Progress();
+        }
+
+        DeleteMovie(m_pDS2->fv(0).get_asInt(), false);
+        deleteFileIds += m_pDS2->fv(1).get_asString() + ",";
+        deletePathIds += m_pDS2->fv(2).get_asString() + ",";
+
+        index += 1;
+        m_pDS2->next();
+      }
+      m_pDS2->close();
+    }
+    else if (mediaType == MediaTypeTvShow)
+    {
+      if (progress != NULL)
+      {
+        progress->SetPercentage(0);
+        progress->SetLine(0, "Deleting tv shows..."); // TODO: localization
+        progress->Progress();
+      }
+
+      // delete all tvshows imported from the import
+      strSQL = PrepareSQL("SELECT tvshow.idShow, path.idPath, tvshow.c%02d FROM tvshow "
+                          "JOIN tvshowlinkpath ON tvshowlinkpath.idShow = tvshow.idShow "
+                          "JOIN path ON path.idPath = tvshowlinkpath.idPath "
+                          "JOIN imports ON imports.idPath = tvshow.c%02d "
+                          "WHERE imports.idImport = %d "
+                          "GROUP BY tvshow.idShow", VIDEODB_ID_TV_TITLE, VIDEODB_ID_TV_PARENTPATHID, idImport);
+      m_pDS2->query(strSQL);
+      total = m_pDS2->num_rows();
+      index = 0;
+      while (!m_pDS2->eof())
+      {
+        if (progress != NULL)
+        {
+          if (progress->IsCanceled())
+          {
+            progress->Close();
+            if (standalone)
+              RollbackTransaction();
+            return false;
+          }
+
+          progress->SetLine(1, m_pDS2->fv(2).get_asString());
+          progress->SetPercentage((index * 100) / total);
+          progress->Progress();
+        }
+
+        DeleteTvShow(m_pDS2->fv(0).get_asInt(), false, false);
+        deletePathIds += m_pDS2->fv(1).get_asString() + ",";
+        
+        index += 1;
+        m_pDS2->next();
+      }
+      m_pDS2->close();
+    }
+    else if (mediaType == MediaTypeSeason)
+    {
+      if (progress != NULL)
+      {
+        progress->SetPercentage(0);
+        progress->SetLine(0, "Deleting seasons..."); // TODO: localization
+        progress->Progress();
+      }
+      
+      // delete all seasons imported from the import
+      strSQL = PrepareSQL("SELECT seasons.idSeason, seasons.season, tvshow.c%02d FROM seasons "
+                          "JOIN imports ON imports.idImport = %d "
+                          "LEFT JOIN tvshow ON tvshow.idShow = seasons.idShow "
+                          "GROUP BY seasons.idSeason", VIDEODB_ID_TV_TITLE, idImport);
+      m_pDS2->query(strSQL);
+      total = m_pDS2->num_rows();
+      index = 0;
+      while (!m_pDS2->eof())
+      {
+        if (progress != NULL)
+        {
+          if (progress->IsCanceled())
+          {
+            progress->Close();
+            if (standalone)
+              RollbackTransaction();
+            return false;
+          }
+
+          std::string showTitle = m_pDS2->fv(2).get_asString();
+          if (!showTitle.empty())
+            progress->SetLine(1, m_pDS2->fv(2).get_asString() + ": Season " + m_pDS2->fv(1).get_asString()); // TODO: localization
+          else
+            progress->SetLine(1, "Season " + m_pDS2->fv(1).get_asString()); // TODO: localization
+          progress->SetPercentage((index * 100) / total);
+          progress->Progress();
+        }
+
+        DeleteSeason(m_pDS2->fv(0).get_asInt());
+        
+        index += 1;
+        m_pDS2->next();
+      }
+      m_pDS2->close();
+    }
+    else if (mediaType == MediaTypeEpisode)
+    {
+      if (progress != NULL)
+      {
+        progress->SetPercentage(0);
+        progress->SetLine(0, "Deleting episodes..."); // TODO: localization
+        progress->Progress();
+      }
+
+      // get all file and path IDs for episodes imported from the import
+      strSQL = PrepareSQL("SELECT episode.idEpisode, episode.idFile, path.idPath, path.strPath, files.strFilename, episode.c%02d, tvshow.c%02d FROM episode "
+                          "JOIN files ON files.idFile = episode.idFile "
+                          "JOIN path ON path.idPath = files.idPath "
+                          "JOIN imports ON imports.idImport = files.idImport AND imports.mediaType = 'episode' "
+                          "LEFT JOIN tvshow ON tvshow.idShow = episode.idShow "
+                          "WHERE imports.idImport = %d", VIDEODB_ID_EPISODE_TITLE, VIDEODB_ID_TV_TITLE, idImport);
+      m_pDS2->query(strSQL);
+      total = m_pDS2->num_rows();
+      index = 0;
+      while (!m_pDS2->eof())
+      {
+        if (progress != NULL)
+        {
+          if (progress->IsCanceled())
+          {
+            progress->Close();
+            if (standalone)
+              RollbackTransaction();
+            return false;
+          }
+
+          std::string showTitle = m_pDS2->fv(6).get_asString();
+          if (!showTitle.empty())
+            progress->SetLine(1, showTitle + ": " + m_pDS2->fv(5).get_asString()); // TODO: localization
+          else
+            progress->SetLine(1, m_pDS2->fv(5).get_asString()); // TODO: localization
+          progress->SetPercentage((index * 100) / total);
+          progress->Progress();
+        }
+
+        CStdString strFilenameAndPath;
+        std::string strPath = m_pDS2->fv(3).get_asString();
+        std::string strFileName = m_pDS2->fv(4).get_asString();
+        ConstructPath(strFilenameAndPath, strPath, strFileName);
+        DeleteEpisode(strFilenameAndPath, m_pDS2->fv(0).get_asInt(), false);
+
+        deleteFileIds += m_pDS2->fv(1).get_asString() + ",";
+        deletePathIds += m_pDS2->fv(2).get_asString() + ",";
+
+        index += 1;
+        m_pDS2->next();
+      }
+      m_pDS2->close();
+    }
+    else if (mediaType == MediaTypeMusicVideo)
+    {
+      if (progress != NULL)
+      {
+        progress->SetPercentage(0);
+        progress->SetLine(0, "Deleting musicvideos..."); // TODO: localization
+        progress->Progress();
+      }
+
+      // delete all musicvideos imported from the import
+      strSQL = PrepareSQL("SELECT musicvideo.idMVideo, musicvideo.idFile, path.idPath, musicvideo.c%02d FROM musicvideo "
+                          "JOIN files ON files.idFile = musicvideo.idFile "
+                          "JOIN path ON path.idPath = files.idPath "
+                          "JOIN imports ON imports.idImport = files.idImport AND imports.mediaType = 'musicvideo' "
+                          "WHERE imports.idImport = %d", VIDEODB_ID_MUSICVIDEO_TITLE, idImport);
+      m_pDS2->query(strSQL);
+      total = m_pDS2->num_rows();
+      index = 0;
+      while (!m_pDS2->eof())
+      {
+        if (progress != NULL)
+        {
+          if (progress->IsCanceled())
+          {
+            progress->Close();
+            if (standalone)
+              RollbackTransaction();
+            return false;
+          }
+
+          progress->SetLine(1, m_pDS2->fv(3).get_asString());
+          progress->SetPercentage((index * 100) / total);
+          progress->Progress();
+        }
+
+        DeleteMusicVideo(m_pDS2->fv(0).get_asInt(), false);
+        deleteFileIds += m_pDS2->fv(1).get_asString() + ",";
+        deletePathIds += m_pDS2->fv(2).get_asString() + ",";
+
+        index += 1;
+        m_pDS2->next();
+      }
+      m_pDS2->close();
+    }
+    else
+    {
+      if (standalone)
+        RollbackTransaction();
+      return false;
+    }
+
+    if (progress != NULL)
+    {
+      progress->SetPercentage(0);
+      progress->SetText("Cleaning up..."); // TODO: localization
+      progress->Progress();
+    }
+    
+    // delete source, import and media item paths
+    StringUtils::TrimRight(deleteFileIds, ",");
+    StringUtils::TrimRight(deletePathIds, ",");
+    strSQL = PrepareSQL("DELETE FROM path WHERE path.idPath IN (%s) OR EXISTS "
+                        "(SELECT 1 FROM path AS importPath "
+                         "JOIN imports ON importPath.idPath = imports.idPath "
+                         "WHERE importPath.idPath = path.idPath AND imports.idImport = %d AND "
+                         "NOT EXISTS(SELECT 1 FROM imports WHERE imports.idImport != %d AND imports.idPath = importPath.idPath)) "
+                        "OR EXISTS (SELECT 1 FROM files "
+                         "JOIN path AS filesPath ON filesPath.idPath = files.idPath "
+                         "WHERE filesPath.idPath = path.idPath AND files.idFile IN (%s))",
+                        deletePathIds.c_str(), idImport, idImport, deleteFileIds.c_str());
+    m_pDS->exec(strSQL);
+
+    if (progress != NULL)
+    {
+      progress->SetPercentage(45);
+      progress->Progress();
+    }
+
+    // delete files imported from the source
+    strSQL = PrepareSQL("DELETE FROM files WHERE files.idFile IN (%s)", deleteFileIds.c_str());
+    m_pDS->exec(strSQL);
+
+    if (progress != NULL)
+    {
+      progress->SetPercentage(75);
+      progress->Progress();
+    }
+
+    // delete imports
+    strSQL = PrepareSQL("DELETE FROM imports WHERE idImport = %d", idImport);
+    m_pDS->exec(strSQL);
+
+    if (progress != NULL)
+    {
+      progress->SetPercentage(100);
+      progress->Progress();
+    }
+
+    if (standalone)
+    {
+      CommitTransaction();
+
+      Compress(false);
+      CUtil::DeleteVideoDatabaseDirectoryCache();
+    }
+    result = true;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
+    if (standalone)
+      RollbackTransaction();
+    result = false;
+  }
+  */
+
+  if (progress != NULL && standalone)
+    progress->Close();
+
+  return result;
+}
+
+bool CMusicDatabase::SetImportForItem(const std::string& strFileNameAndPath, const CMediaImport &import)
+{
+  if (strFileNameAndPath.empty() ||
+      import.GetPath().empty() || import.GetMediaType().empty() ||
+      import.GetMediaType().empty())
+    return false;
+
+  string strSQL = "";
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL)
+      return false;
+
+    int idSong = GetSongIDFromPath(strFileNameAndPath);
+    if (idSong <= 0)
+      return false;
+
+    int idImport = GetImportId(import);
+    if (idImport <= 0)
+      return false;
+
+    strSQL = PrepareSQL("UPDATE song SET idImport = %d WHERE idSong = %d", idImport, idSong);
+    m_pDS->exec(strSQL);
+    return true;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
+  }
+  return false;
+}
+
+void CMusicDatabase::SetImportItemsEnabled(bool enabled)
+{
+  string sql;
+  try
+  {
+    if (NULL == m_pDB.get() || NULL == m_pDS.get())
+      return;
+
+    sql = PrepareSQL("UPDATE song SET enabled = %d WHERE song.idImport IS NOT NULL", enabled ? 1 : 0);
+    m_pDS->exec(sql.c_str());
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, sql.c_str());
+  }
+}
+
+void CMusicDatabase::SetImportItemsEnabled(bool enabled, const CMediaImport &import)
+{
+  string sql;
+  try
+  {
+    if (NULL == m_pDB.get() || NULL == m_pDS.get())
+      return;
+
+    int idImport = GetImportId(import);
+    if (idImport <= 0)
+      return;
+
+    sql = PrepareSQL("UPDATE song SET enabled = %d WHERE song.idImport = %d", enabled ? 1 : 0, idImport);
+    if (!import.GetMediaType().empty())
+      sql += PrepareSQL(" AND EXISTS (SELECT 1 FROM imports WHERE imports.idImport = %d AND imports.mediaType = '%s')", idImport, import.GetMediaType().c_str());
+
+    m_pDS->exec(sql.c_str());
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, sql.c_str());
+  }
+}
+
+void CMusicDatabase::SetImportItemEnabled(const std::string& strFileNameAndPath, bool enabled)
+{
+  if (strFileNameAndPath.empty())
+    return;
+
+  string sql;
+  try
+  {
+    if (NULL == m_pDB.get() || NULL == m_pDS.get())
+      return;
+
+    int idSong = GetSongIDFromPath(strFileNameAndPath);
+    if (idSong <= 0)
+      return;
+
+    sql = PrepareSQL("UPDATE song SET enabled = %d WHERE song.idSong = %d AND idImport IS NOT NULL", enabled ? 1 : 0, idSong);
+    m_pDS->exec(sql.c_str());
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, sql.c_str());
+  }
+}
+
+int CMusicDatabase::GetPathId(const std::string& path)
+{
+  CStdString strSQL;
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL)
+      return -1;
+
+    CStdString strPath1(path);
+    if (URIUtils::IsStack(path) || StringUtils::StartsWithNoCase(path, "rar://") || StringUtils::StartsWithNoCase(path, "zip://"))
+      URIUtils::GetParentPath(path, strPath1);
+
+    URIUtils::AddSlashAtEnd(strPath1);
+    
+    int idPath = -1;
+    strSQL = PrepareSQL("select idPath from path where strPath='%s'", strPath1.c_str());
+    m_pDS->query(strSQL.c_str());
+    if (!m_pDS->eof())
+      idPath = m_pDS->fv(0).get_asInt();
+
+    m_pDS->close();
+    return idPath;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
+  }
+  return -1;
+}
+
+int CMusicDatabase::GetSourceId(const std::string& sourceIdentifier)
+{
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        sourceIdentifier.empty())
+      return -1;
+
+
+    CStdString strSQL = PrepareSQL("SELECT idSource FROM sources WHERE identifier='%s'", sourceIdentifier.c_str());
+    m_pDS->query(strSQL.c_str());
+    if (m_pDS->num_rows() > 0)
+    {
+      int idSource = m_pDS->fv(0).get_asInt();
+      m_pDS->close();
+      return idSource;
+    }
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, sourceIdentifier.c_str());
+  }
+  return -1;
+}
+
+int CMusicDatabase::GetImportId(const std::string& path, const MediaType& mediaType, const std::string &sourceIdentifier /* = "" */)
+{
+  if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+      path.empty() || mediaType.empty())
+    return -1;
+    
+  int idPath = GetPathId(path);
+  if (idPath <= 0)
+    return -1;
+
+  int idSource = -1;
+  if (!sourceIdentifier.empty())
+  {
+    idSource = GetSourceId(sourceIdentifier);
+    if (idSource <= 0)
+      return -1;
+  }
+
+  return GetImportId(idPath, mediaType, idSource);
+}
+
+int CMusicDatabase::GetImportId(const CMediaImport& import)
+{
+  return GetImportId(import.GetPath(), import.GetMediaType(), import.GetSource().GetIdentifier());
+}
+
+int CMusicDatabase::GetImportId(int idPath, const MediaType& mediaType, int idSource /* = -1 */)
+{
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
+        idPath <= 0)
+      return -1;
+
+    CStdString strSQL = PrepareSQL("SELECT idImport FROM imports WHERE idPath = %d AND mediaType = '%s'", idPath, mediaType.c_str());
+    if (idSource > 0)
+      strSQL += PrepareSQL(" AND idSource = %d", idSource);
+
+    m_pDS->query(strSQL.c_str());
+    if (m_pDS->num_rows() != 1)
+    {
+      m_pDS->close();
+      return -1;
+    }
+
+    int idImport = m_pDS->fv(0).get_asInt();
+    m_pDS->close();
+    return idImport;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s (%d, %s, %d) failed", __FUNCTION__, idPath, mediaType.c_str(), idSource);
+  }
+  return -1;
 }
 
 bool CMusicDatabase::GetFilter(CDbUrl &musicUrl, Filter &filter, SortDescription &sorting)

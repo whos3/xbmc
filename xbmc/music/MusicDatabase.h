@@ -30,6 +30,8 @@
 
 class CArtist;
 class CFileItem;
+class CMediaImport;
+class CMediaImportSource;
 
 namespace dbiplus
 {
@@ -458,6 +460,84 @@ public:
    */
   std::string GetArtistArtForItem(int mediaId, const std::string &mediaType, const std::string &artType);
 
+  std::vector<CMediaImportSource> GetSources();
+
+  /*! \brief Add a source to the database, if necessary
+   If the identifier is already in the database, we simply return its id.
+   \param source Source to be added
+   \return id of the source, -1 if it could not be added.
+   */
+  int AddSource(const CMediaImportSource &source);
+
+  /*! \brief Updates the values of the given source.
+   \param source Source with updated values
+   \return True if the update was successful, false otherwise
+   */
+  bool SetDetailsForSource(const CMediaImportSource &source);
+
+  /*! \brief sets the given media types for the source with the given identifier
+   \param sourceIDentifier identifier of the source
+   \param mediaTypes Media types to be set
+   */
+  void SetMediaTypesForSource(const std::string& sourceIdentifier, const std::set<MediaType> &mediaTypes);
+
+  /*! \brief Remove source with the given identifier from the database
+   \param sourceIdentifier identifier of the source
+   */
+  void RemoveSource(const std::string& sourceIdentifier, CGUIDialogProgress *progress = NULL);
+
+  std::vector<CMediaImport> GetImports();
+
+  /*! \brief Add an import to the database, if necessary
+   If the import is already in the database, we simply return its id.
+   \param import Import to be added
+   \return id of the import, -1 if it could not be added.
+   */
+  int AddImport(const CMediaImport &import);
+
+  /*! \brief Updates the values of the given import.
+   \param import Import with updated values
+   \return True if the update was successful, false otherwise
+   */
+  bool SetDetailsForImport(const CMediaImport &import);
+
+  /*! \brief Update last synced date of the import with the given path
+   \param sourceIDentifier identifier of the source
+   */
+  void UpdateImportLastSynced(const CMediaImport& import, const CDateTime &lastSynced = CDateTime());
+
+  /*! \brief Remove the import with the given path from the database
+   \param path Path of the import
+   */
+  bool RemoveImport(const CMediaImport& import, CGUIDialogProgress *progress = NULL, bool standalone = true);
+
+  /*! \brief Remove the import with the given ID from the database
+   \param idImport ID of the import
+   */
+  void RemoveImport(int idImport, CGUIDialogProgress *progress = NULL);
+
+  /*! \brief Set the import of a path
+   \param strFileNameAndPath File of the item belonging to the import
+   \param importPath Path of the import
+   */
+  bool SetImportForItem(const std::string& strFileNameAndPath, const CMediaImport& import);
+
+  /*! \brief Enable/Disable all import items from the given import path
+   \param enabled Whether to enable or disable the items
+   */
+  void SetImportItemsEnabled(bool enabled);
+
+  /*! \brief Enable/Disable all import items from the given import path
+   \param enabled Whether to enable or disable the items
+   */
+  void SetImportItemsEnabled(bool enabled, const CMediaImport& import);
+
+  /*! \brief Enable/Disable all import items from the given import path
+   \param enabled Whether to enable or disable the items
+   \param importPath Path of the import
+   */
+  void SetImportItemEnabled(const std::string& strFileNameAndPath, bool enabled);
+
 protected:
   std::map<CStdString, int> m_artistCache;
   std::map<CStdString, int> m_genreCache;
@@ -500,6 +580,24 @@ private:
   bool SearchSongs(const CStdString& strSearch, CFileItemList &songs);
   int GetSongIDFromPath(const CStdString &filePath);
 
+  int GetPathId(const std::string& path);
+
+  /*! \brief Get the id of a source from its identifier
+   \param sourceIdentifier identifier of the source
+   \return id of the source, -1 if it is not in the db.
+   */
+  int GetSourceId(const std::string& sourceIdentifier);
+
+  /*! \brief Get the id of an import from its path
+   \param path path of the import
+   \param mediaType media type of the import
+   \param sourceIdentifier optional source identifier
+   \return id of the import, -1 if it is not in the db.
+   */
+  int GetImportId(const std::string& path, const MediaType& mediaType, const std::string &sourceIdentifier = "");
+  int GetImportId(const CMediaImport& import);
+  int GetImportId(int idPath, const MediaType& mediaType, int idSource = -1);
+
   // Fields should be ordered as they
   // appear in the songview
   enum _SongFields
@@ -527,6 +625,9 @@ private:
     song_strKarEncoding,
     song_bCompilation,
     song_strAlbumArtists,
+    song_enabled,
+    song_strSource,
+    song_importPath,
     song_enumCount // end of the enum, do not add past here
   } SongFields;
 
@@ -550,6 +651,9 @@ private:
     album_iRating,
     album_bCompilation,
     album_iTimesPlayed,
+    album_enabled,
+    album_strSource,
+    album_importPath,
     album_enumCount // end of the enum, do not add past here
   } AlbumFields;
 

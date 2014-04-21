@@ -64,6 +64,7 @@ public:
     iTimesPlayed = 0;
     songs.clear();
     infoSongs.clear();
+    enabled = true;
   }
 
   CStdString GetArtistString() const;
@@ -101,6 +102,7 @@ public:
   int iTimesPlayed;
   VECSONGS songs;     ///< Local songs
   VECSONGS infoSongs; ///< Scraped songs
+  bool enabled;
 };
 
 typedef std::vector<CAlbum> VECALBUMS;
