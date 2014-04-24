@@ -98,6 +98,11 @@ public:
   std::vector<std::pair<CStdString,CStdString> > discography;
 };
 
+class CArtistCredit;
+
+typedef std::vector<CArtist> VECARTISTS;
+typedef std::vector<CArtistCredit> VECARTISTCREDITS;
+
 class CArtistCredit
 {
   friend class CAlbum;
@@ -131,6 +136,14 @@ public:
   void SetJoinPhrase(const std::string &strJoinPhrase) { m_strJoinPhrase = strJoinPhrase; }
   void SetArtistId(int idArtist)               { this->idArtist = idArtist; }
 
+  static std::string GetArtistString(const VECARTISTCREDITS &credits)
+  {
+    std::string artistString;
+    for (VECARTISTCREDITS::const_iterator i = credits.begin(); i != credits.end(); ++i)
+      artistString += i->GetArtist() + i->GetJoinPhrase();
+    return artistString;
+  }
+
 private:
   long idArtist;
   std::string m_strArtist;
@@ -138,7 +151,4 @@ private:
   std::string m_strJoinPhrase;
   bool m_boolFeatured;
 };
-
-typedef std::vector<CArtist> VECARTISTS;
-typedef std::vector<CArtistCredit> VECARTISTCREDITS;
 

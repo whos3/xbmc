@@ -420,21 +420,13 @@ int CMusicDatabase::AddAlbumInfoSong(int idAlbum, const CSong& song)
   }
 }
 
-std::string GetArtistString(const VECARTISTCREDITS &credits)
-{
-  std::string artistString;
-  for (VECARTISTCREDITS::const_iterator i = credits.begin(); i != credits.end(); ++i)
-    artistString += i->GetArtist() + i->GetJoinPhrase();
-  return artistString;
-}
-
 bool CMusicDatabase::AddAlbum(CAlbum& album)
 {
   BeginTransaction();
 
   album.idAlbum = AddAlbum(album.strAlbum,
                            album.strMusicBrainzAlbumID,
-                           GetArtistString(album.artistCredits),
+                           CArtistCredit::GetArtistString(album.artistCredits),
                            album.GetGenreString(),
                            album.iYear,
                            album.bCompilation);
@@ -458,7 +450,7 @@ bool CMusicDatabase::AddAlbum(CAlbum& album)
                            song->strTitle, song->strMusicBrainzTrackID,
                            song->strFileName, song->strComment,
                            song->strThumb,
-                           GetArtistString(song->artistCredits), song->genre,
+                           CArtistCredit::GetArtistString(song->artistCredits), song->genre,
                            song->iTrack, song->iDuration, song->iYear,
                            song->iTimesPlayed, song->iStartOffset,
                            song->iEndOffset,
@@ -495,7 +487,7 @@ bool CMusicDatabase::UpdateAlbum(CAlbum& album)
 
   UpdateAlbum(album.idAlbum,
               album.strAlbum, album.strMusicBrainzAlbumID,
-              GetArtistString(album.artistCredits), album.GetGenreString(),
+              CArtistCredit::GetArtistString(album.artistCredits), album.GetGenreString(),
               StringUtils::Join(album.moods, g_advancedSettings.m_musicItemSeparator).c_str(),
               StringUtils::Join(album.styles, g_advancedSettings.m_musicItemSeparator).c_str(),
               StringUtils::Join(album.themes, g_advancedSettings.m_musicItemSeparator).c_str(),
@@ -526,7 +518,7 @@ bool CMusicDatabase::UpdateAlbum(CAlbum& album)
                song->strFileName,
                song->strComment,
                song->strThumb,
-               GetArtistString(song->artistCredits),
+               CArtistCredit::GetArtistString(song->artistCredits),
                song->genre,
                song->iTrack,
                song->iDuration,
