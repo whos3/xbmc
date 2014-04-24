@@ -2169,6 +2169,38 @@ void CMusicDatabase::IncrementPlayCount(const CFileItem& item)
   }
 }
 
+void CMusicDatabase::SetPlayCount(const CFileItem &item, int count, const CDateTime &date /* = CDateTime() */)
+{
+  try
+  {
+    if (NULL == m_pDB.get()) return;
+    if (NULL == m_pDS.get()) return;
+
+    int idSong = GetSongIDFromPath(item.GetPath());
+
+    CStdString sql;
+    if (count)
+    {
+      if (!date.IsValid())
+        sql = PrepareSQL("UPDATE song SET iTimesPlayed=%i, lastplayed='%s' where idSong=%i", count, CDateTime::GetCurrentDateTime().GetAsDBDateTime().c_str(), idSong);
+      else
+        sql = PrepareSQL("UPDATE song SET iTimesPlayed=%i, lastplayed='%s' where idSong=%i", count, date.GetAsDBDateTime().c_str(), idSong);
+    }
+    else
+    {
+      if (!date.IsValid())
+        sql = PrepareSQL("UPDATE song SET iTimesPlayed=0, lastplayed=NULL where idSong=%i", idSong);
+      else
+        sql = PrepareSQL("UPDATE song SET iTimesPlayed=0, lastplayed='%s' where idSong=%i", date.GetAsDBDateTime().c_str(), idSong);
+    }
+    m_pDS->exec(sql.c_str());
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s(%s) failed", __FUNCTION__, item.GetPath().c_str());
+  }
+}
+
 bool CMusicDatabase::GetSongsByPath(const CStdString& strPath1, MAPSONGS& songs, bool bAppendToMap)
 {
   CStdString strPath(strPath1);
