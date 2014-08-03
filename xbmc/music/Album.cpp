@@ -79,6 +79,10 @@ CAlbum::CAlbum(const CFileItem& item)
   iYear = stTime.wYear;
   bCompilation = tag.GetCompilation();
   iTimesPlayed = 0;
+
+  const CGUIListItem::ArtMap& artMap = item.GetArt();
+  for (CGUIListItem::ArtMap::const_iterator itArt = artMap.begin(); itArt != artMap.end(); ++itArt)
+    art.insert(std::make_pair(itArt->first, itArt->second));
 }
 
 void CAlbum::MergeScrapedAlbum(const CAlbum& source, bool override /* = true */)
