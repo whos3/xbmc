@@ -159,8 +159,7 @@ void CMusicDatabase::CreateTables()
               " iTimesPlayed integer, iStartOffset integer, iEndOffset integer, "
               " idThumb integer, "
               " lastplayed varchar(20) default NULL, "
-              " rating char default '0', comment text, "
-              " enabled bool NOT NULL DEFAULT 1, idImport integer)");
+              " rating char default '0', comment text)");
   CLog::Log(LOGINFO, "create song_artist table");
   m_pDS->exec("CREATE TABLE song_artist (idArtist integer, idSong integer, strJoinPhrase text, boolFeatured integer, iOrder integer, strArtist text)");
   CLog::Log(LOGINFO, "create song_genre table");
@@ -190,6 +189,11 @@ void CMusicDatabase::CreateTables()
   m_pDS->exec("CREATE TABLE imports (idImport integer primary key, "
               " idPath integer NOT NULL, idSource integer NOT NULL, "
               " mediaType text NOT NULL, lastSync text, settings text)");
+
+  CLog::Log(LOGINFO, "create importlinks table");
+  m_pDS->exec("CREATE TABLE importlinks (idImport integer NOT NULL, "
+              " idMedia integer NOT NULL, media_type text NOT NULL, "
+              " enabled bool NOT NULL DEFAULT 1)");
 
   // Add 'Karaoke' genre
   AddGenre( "Karaoke" );
@@ -222,8 +226,6 @@ void CMusicDatabase::CreateAnalytics()
   m_pDS->exec("CREATE INDEX idxSong3 ON song(idAlbum)");
   m_pDS->exec("CREATE INDEX idxSong6 ON song( idPath, strFileName(255) )");
   m_pDS->exec("CREATE UNIQUE INDEX idxSong7 ON song( idAlbum, strMusicBrainzTrackID(36) )");
-  m_pDS->exec("CREATE INDEX idxSongEnabled ON song(enabled)");
-  m_pDS->exec("CREATE INDEX idxSongImport ON song(idImport)");
 
   m_pDS->exec("CREATE UNIQUE INDEX idxSongArtist_1 ON song_artist ( idSong, idArtist )");
   m_pDS->exec("CREATE UNIQUE INDEX idxSongArtist_2 ON song_artist ( idArtist, idSong )");
@@ -245,6 +247,10 @@ void CMusicDatabase::CreateAnalytics()
   m_pDS->exec("CREATE INDEX idxImportsPath ON imports(idPath)");
   m_pDS->exec("CREATE INDEX idxImportsMediatype ON imports(mediaType(255))");
 
+  m_pDS->exec("CREATE UNIQUE INDEX ix_importlinks_1 ON importlinks (idImport, media_type(20), idMedia)");
+  m_pDS->exec("CREATE UNIQUE INDEX ix_importlinks_2 ON importlinks (idMedia, media_type(20), idImport)");
+  m_pDS->exec("CREATE INDEX ix_importlinks_3 ON importlinks (media_type(20))");
+
   CLog::Log(LOGINFO, "create triggers");
   m_pDS->exec("CREATE TRIGGER tgrDeleteAlbum AFTER delete ON album FOR EACH ROW BEGIN"
               "  DELETE FROM song WHERE song.idAlbum = old.idAlbum;"
@@ -252,18 +258,21 @@ void CMusicDatabase::CreateAnalytics()
               "  DELETE FROM album_genre WHERE album_genre.idAlbum = old.idAlbum;"
               "  DELETE FROM albuminfosong WHERE albuminfosong.idAlbumInfo=old.idAlbum;"
               "  DELETE FROM art WHERE media_id=old.idAlbum AND media_type='album';"
+              "  DELETE FROM importlinks WHERE idMedia=old.idAlbum AND media_type='album';"
               " END");
   m_pDS->exec("CREATE TRIGGER tgrDeleteArtist AFTER delete ON artist FOR EACH ROW BEGIN"
               "  DELETE FROM album_artist WHERE album_artist.idArtist = old.idArtist;"
               "  DELETE FROM song_artist WHERE song_artist.idArtist = old.idArtist;"
               "  DELETE FROM discography WHERE discography.idArtist = old.idArtist;"
               "  DELETE FROM art WHERE media_id=old.idArtist AND media_type='artist';"
+              "  DELETE FROM importlinks WHERE idMedia=old.idArtist AND media_type='artist';"
               " END");
   m_pDS->exec("CREATE TRIGGER tgrDeleteSong AFTER delete ON song FOR EACH ROW BEGIN"
               "  DELETE FROM song_artist WHERE song_artist.idSong = old.idSong;"
               "  DELETE FROM song_genre WHERE song_genre.idSong = old.idSong;"
               "  DELETE FROM karaokedata WHERE karaokedata.idSong = old.idSong;"
               "  DELETE FROM art WHERE media_id=old.idSong AND media_type='song';"
+              "  DELETE FROM importlinks WHERE idMedia=old.idSong AND media_type='song';"
               " END");
 
   // we create views last to ensure all indexes are rolled in
@@ -290,8 +299,8 @@ void CMusicDatabase::CreateViews()
               "        iKaraNumber, iKaraDelay, strKaraEncoding,"
               "        album.bCompilation AS bCompilation,"
               "        album.strArtists AS strAlbumArtists, "
-              "        song.enabled AS enabled, "
-              "        sources.identifier AS strSource, "
+              "        importlinks.enabled AS enabled,"
+              "        sources.identifier AS strSource,"
               "        importsPath.strPath AS importPath "
               "FROM song"
               "  JOIN album ON"
@@ -300,8 +309,10 @@ void CMusicDatabase::CreateViews()
               "    song.idPath=path.idPath"
               "  LEFT OUTER JOIN karaokedata ON"
               "    song.idSong=karaokedata.idSong"
+              "  LEFT JOIN importlinks ON"
+              "    importlinks.idMedia=song.idSong AND importlinks.media_type='song'"
               "  LEFT JOIN imports ON"
-              "    imports.idImport=song.idImport AND imports.mediaType = 'song'"
+              "    imports.idImport=importlinks.idImport AND imports.mediaType='song'"
               "  LEFT JOIN sources ON"
               "    sources.idSource=imports.idSource"
               "  LEFT JOIN path AS importsPath ON"
@@ -325,14 +336,16 @@ void CMusicDatabase::CreateViews()
               "        iRating, "
               "        bCompilation, "
               "        MIN(song.iTimesPlayed) AS iTimesPlayed, "
-              "        MAX(song.enabled) AS enabled, "
-              "        sources.identifier AS strSource, "
+              "        importlinks.enabled AS enabled,"
+              "        sources.identifier AS strSource,"
               "        importsPath.strPath AS importPath "
               "FROM album"
               " LEFT OUTER JOIN song ON"
               "   album.idAlbum=song.idAlbum "
+              "  LEFT JOIN importlinks ON"
+              "    importlinks.idMedia=album.idAlbum AND importlinks.media_type='album'"
               "  LEFT JOIN imports ON"
-              "    imports.idImport=song.idImport AND imports.mediaType = 'song'"
+              "    imports.idImport=importlinks.idImport AND imports.mediaType = 'album'"
               "  LEFT JOIN sources ON"
               "    sources.idSource=imports.idSource"
               "  LEFT JOIN path AS importsPath ON"
@@ -346,8 +359,19 @@ void CMusicDatabase::CreateViews()
               "  strBorn, strFormed, strGenres,"
               "  strMoods, strStyles, strInstruments, "
               "  strBiography, strDied, strDisbanded, "
-              "  strYearsActive, strImage, strFanart "
-              "FROM artist");
+              "  strYearsActive, strImage, strFanart, "
+              "  importlinks.enabled AS enabled,"
+              "  sources.identifier AS strSource,"
+              "  importsPath.strPath AS importPath "
+              "FROM artist"
+              "  LEFT JOIN importlinks ON"
+              "    importlinks.idMedia=artist.idArtist AND importlinks.media_type='artist'"
+              "  LEFT JOIN imports ON"
+              "    imports.idImport=importlinks.idImport AND imports.mediaType = 'artist'"
+              "  LEFT JOIN sources ON"
+              "    sources.idSource=imports.idSource"
+              "  LEFT JOIN path AS importsPath ON"
+              "    importsPath.idPath=imports.idPath");
 
   CLog::Log(LOGINFO, "create albumartist view");
   m_pDS->exec("CREATE VIEW albumartistview AS SELECT"
@@ -4001,12 +4025,9 @@ void CMusicDatabase::UpdateTables(int version)
   }
   if (version < 49)
   {
-    // add enabled flag and idImport to song table and new tables source and imports
-    m_pDS->exec("ALTER TABLE song ADD enabled bool NOT NULL DEFAULT 1");
-    m_pDS->exec("ALTER TABLE song ADD idImport integer");
-
     m_pDS->exec("CREATE TABLE sources (idSource integer primary key, identifier text NOT NULL, name text NOT NULL, availableMediaTypes text NOT NULL)");
     m_pDS->exec("CREATE TABLE imports (idImport integer primary key, idPath integer NOT NULL, idSource integer NOT NULL, mediaType text NOT NULL, lastSync text, settings text)");
+    m_pDS->exec("CREATE TABLE importlinks (idImport integer NOT NULL, idMedia integer NOT NULL, media_type text NOT NULL, enabled bool NOT NULL DEFAULT 1)");
   }
 }
 
@@ -5855,7 +5876,7 @@ void CMusicDatabase::UpdateImportLastSynced(const CMediaImport &import, const CD
   try
   {
     if (m_pDB.get() == NULL || m_pDS.get() == NULL ||
-        import.GetPath().empty() || import.GetMediaType().empty() ||
+        import.GetPath().empty() ||
         import.GetMediaType().empty())
       return;
 
@@ -5879,7 +5900,7 @@ void CMusicDatabase::UpdateImportLastSynced(const CMediaImport &import, const CD
 
 bool CMusicDatabase::RemoveImport(const CMediaImport &import, CGUIDialogProgress *progress /* = NULL */, bool standalone /* = true */)
 {
-  if (import.GetPath().empty() || import.GetMediaType().empty() ||
+  if (import.GetPath().empty() ||
       import.GetMediaType().empty())
     return false;
 
@@ -6229,34 +6250,35 @@ bool CMusicDatabase::RemoveImport(const CMediaImport &import, CGUIDialogProgress
   return result;
 }
 
-bool CMusicDatabase::SetImportForItem(const std::string& strFileNameAndPath, const CMediaImport &import)
+bool CMusicDatabase::SetImportForItem(int idMedia, const CMediaImport &import)
 {
-  if (strFileNameAndPath.empty() ||
-      import.GetPath().empty() || import.GetMediaType().empty() ||
+  if (idMedia <= 0 ||
+      import.GetPath().empty() ||
       import.GetMediaType().empty())
     return false;
 
-  string strSQL = "";
+  string sql = "";
   try
   {
     if (m_pDB.get() == NULL || m_pDS.get() == NULL)
-      return false;
-
-    int idSong = GetSongIDFromPath(strFileNameAndPath);
-    if (idSong <= 0)
       return false;
 
     int idImport = GetImportId(import);
     if (idImport <= 0)
       return false;
 
-    strSQL = PrepareSQL("UPDATE song SET idImport = %d WHERE idSong = %d", idImport, idSong);
-    m_pDS->exec(strSQL);
+    sql = PrepareSQL("SELECT 1 FROM importlinks WHERE idImport = %d AND idMedia = %d AND media_type = '%s'", idImport, idMedia, import.GetMediaType().c_str());
+    m_pDS->query(sql.c_str());
+    if (m_pDS->num_rows() > 0)
+      return true;
+
+    sql = PrepareSQL("INSERT INTO importlinks (idImport, idMedia, media_type) VALUES (%d, %d, '%s')", idImport, idMedia, import.GetMediaType().c_str());
+    m_pDS->exec(sql.c_str());
     return true;
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, strSQL.c_str());
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, sql.c_str());
   }
   return false;
 }
@@ -6269,7 +6291,7 @@ void CMusicDatabase::SetImportItemsEnabled(bool enabled)
     if (NULL == m_pDB.get() || NULL == m_pDS.get())
       return;
 
-    sql = PrepareSQL("UPDATE song SET enabled = %d WHERE song.idImport IS NOT NULL", enabled ? 1 : 0);
+    sql = PrepareSQL("UPDATE importlinks SET enabled = %d", enabled ? 1 : 0);
     m_pDS->exec(sql.c_str());
   }
   catch (...)
@@ -6290,34 +6312,10 @@ void CMusicDatabase::SetImportItemsEnabled(bool enabled, const CMediaImport &imp
     if (idImport <= 0)
       return;
 
-    sql = PrepareSQL("UPDATE song SET enabled = %d WHERE song.idImport = %d", enabled ? 1 : 0, idImport);
+    sql = PrepareSQL("UPDATE importlinks SET enabled = %d WHERE importlinks.idImport = %d", enabled ? 1 : 0, idImport);
     if (!import.GetMediaType().empty())
-      sql += PrepareSQL(" AND EXISTS (SELECT 1 FROM imports WHERE imports.idImport = %d AND imports.mediaType = '%s')", idImport, import.GetMediaType().c_str());
+      sql += PrepareSQL(" AND importlinks.media_type = '%s'", idImport, import.GetMediaType().c_str());
 
-    m_pDS->exec(sql.c_str());
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, sql.c_str());
-  }
-}
-
-void CMusicDatabase::SetImportItemEnabled(const std::string& strFileNameAndPath, bool enabled)
-{
-  if (strFileNameAndPath.empty())
-    return;
-
-  string sql;
-  try
-  {
-    if (NULL == m_pDB.get() || NULL == m_pDS.get())
-      return;
-
-    int idSong = GetSongIDFromPath(strFileNameAndPath);
-    if (idSong <= 0)
-      return;
-
-    sql = PrepareSQL("UPDATE song SET enabled = %d WHERE song.idSong = %d AND idImport IS NOT NULL", enabled ? 1 : 0, idSong);
     m_pDS->exec(sql.c_str());
   }
   catch (...)

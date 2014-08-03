@@ -530,7 +530,7 @@ public:
    \param strFileNameAndPath File of the item belonging to the import
    \param importPath Path of the import
    */
-  bool SetImportForItem(const std::string& strFileNameAndPath, const CMediaImport& import);
+  bool SetImportForItem(int idMedia, const CMediaImport& import);
 
   /*! \brief Enable/Disable all import items from the given import path
    \param enabled Whether to enable or disable the items
@@ -541,12 +541,6 @@ public:
    \param enabled Whether to enable or disable the items
    */
   void SetImportItemsEnabled(bool enabled, const CMediaImport& import);
-
-  /*! \brief Enable/Disable all import items from the given import path
-   \param enabled Whether to enable or disable the items
-   \param importPath Path of the import
-   */
-  void SetImportItemEnabled(const std::string& strFileNameAndPath, bool enabled);
 
 protected:
   std::map<CStdString, int> m_artistCache;
@@ -697,6 +691,9 @@ private:
     artist_strYearsActive,
     artist_strImage,
     artist_strFanart,
+    artist_enabled,
+    artist_strSource,
+    artist_importPath,
     artist_enumCount // end of the enum, do not add past here
   } ArtistFields;
 

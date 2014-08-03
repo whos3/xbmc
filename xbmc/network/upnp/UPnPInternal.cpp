@@ -223,32 +223,72 @@ PopulateObjectFromTag(CMusicInfoTag&         tag,
     if (!tag.GetURL().empty() && file_path)
       *file_path = tag.GetURL();
 
-    std::vector<std::string> genres = tag.GetGenre();
-    for (unsigned int index = 0; index < genres.size(); index++)
-      object.m_Affiliation.genres.Add(genres.at(index).c_str());
-    object.m_Title = tag.GetTitle();
-    object.m_Affiliation.album = tag.GetAlbum();
-    for (unsigned int index = 0; index < tag.GetArtist().size(); index++)
+    if (tag.GetType() == MediaTypeArtist)
     {
-      object.m_People.artists.Add(tag.GetArtist().at(index).c_str());
-      object.m_People.artists.Add(tag.GetArtist().at(index).c_str(), "Performer");
+      object.m_ObjectClass.type = "object.container.person.musicArtist";
+      if (tag.GetDatabaseId() >= 0)
+        object.m_ReferenceID = NPT_String::Format("musicdb://artists/%i", tag.GetDatabaseId());
+
+      object.m_Title = StringUtils::Join(tag.GetArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
+      // TODO: artist serialization
     }
-    object.m_People.artists.Add(StringUtils::Join(!tag.GetAlbumArtist().empty() ? tag.GetAlbumArtist() : tag.GetArtist(), g_advancedSettings.m_musicItemSeparator).c_str(), "AlbumArtist");
-    if(tag.GetAlbumArtist().empty())
-        object.m_Creator = StringUtils::Join(tag.GetArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
     else
-        object.m_Creator = StringUtils::Join(tag.GetAlbumArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
-    object.m_MiscInfo.original_track_number = tag.GetTrackNumber();
-    if(tag.GetDatabaseId() >= 0) {
-      object.m_ReferenceID = NPT_String::Format("musicdb://songs/%i%s", tag.GetDatabaseId(), URIUtils::GetExtension(tag.GetURL()).c_str());
+    {
+      object.m_Title = tag.GetTitle();
+      object.m_Affiliation.album = tag.GetAlbum();
+
+      if (tag.GetType() == MediaTypeAlbum)
+      {
+        object.m_ObjectClass.type = "object.container.album.musicAlbum";
+        if (tag.GetDatabaseId() >= 0)
+          object.m_ReferenceID = NPT_String::Format("musicdb://albums/%i", tag.GetDatabaseId());
+
+        if (!tag.GetAlbumArtist().empty())
+          object.m_Creator = StringUtils::Join(tag.GetAlbumArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
+        else if (!tag.GetArtist().empty())
+          object.m_Creator = StringUtils::Join(tag.GetArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
+
+        // TODO: album serialization
+      }
+      else
+      {
+        object.m_ObjectClass.type = "object.item.audioItem.musicTrack";
+        if (tag.GetDatabaseId() >= 0)
+          object.m_ReferenceID = NPT_String::Format("musicdb://songs/%i%s", tag.GetDatabaseId(), URIUtils::GetExtension(tag.GetURL()).c_str());
+
+        object.m_Creator = StringUtils::Join(tag.GetArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
+
+        object.m_MiscInfo.original_track_number = tag.GetTrackNumber();
+
+        object.m_MiscInfo.last_time = tag.GetLastPlayed().GetAsW3CDateTime().c_str();
+        object.m_MiscInfo.play_count = tag.GetPlayCount();
+
+        if (resource != NULL)
+          resource->m_Duration = tag.GetDuration();
+
+        // TODO: song serialization
+      }
     }
+
+    const std::vector<std::string>& artists = tag.GetArtist();
+    const std::vector<std::string>& albumArtists = tag.GetAlbumArtist();
+    for (std::vector<std::string>::const_iterator it = artists.begin(); it != artists.end(); ++it)
+    {
+      object.m_People.artists.Add(it->c_str());
+      object.m_People.artists.Add(it->c_str(), "Performer");
+      if (albumArtists.empty())
+        object.m_People.artists.Add(it->c_str(), "AlbumArtist");
+    }
+
+    for (std::vector<std::string>::const_iterator it = albumArtists.begin(); it != albumArtists.end(); ++it)
+      object.m_People.artists.Add(it->c_str(), "AlbumArtist");
+
+    const std::vector<std::string>& genres = tag.GetGenre();
+    for (std::vector<std::string>::const_iterator it = genres.begin(); it != genres.end(); ++it)
+      object.m_Affiliation.genres.Add(it->c_str());
+
     if (object.m_ReferenceID == object.m_ObjectID)
-        object.m_ReferenceID = "";
-
-    object.m_MiscInfo.last_time = tag.GetLastPlayed().GetAsW3CDateTime().c_str();
-    object.m_MiscInfo.play_count = tag.GetPlayCount();
-
-    if (resource) resource->m_Duration = tag.GetDuration();
+      object.m_ReferenceID = "";
 
     return NPT_SUCCESS;
 }
@@ -482,12 +522,15 @@ BuildObject(CFileItem&                    item,
             switch(node) {
                 case MUSICDATABASEDIRECTORY::NODE_TYPE_ARTIST: {
                       container->m_ObjectClass.type += ".person.musicArtist";
-                      CMusicInfoTag *tag = (CMusicInfoTag*)item.GetMusicInfoTag();
-                      if (tag) {
+                      if (item.HasMusicInfoTag())
+                      {
+                          CMusicInfoTag *tag = (CMusicInfoTag*)item.GetMusicInfoTag();
                           container->m_People.artists.Add(
                               CorrectAllItemsSortHack(StringUtils::Join(tag->GetArtist(), g_advancedSettings.m_musicItemSeparator)).c_str(), "Performer");
                           container->m_People.artists.Add(
                               CorrectAllItemsSortHack(StringUtils::Join(!tag->GetAlbumArtist().empty() ? tag->GetAlbumArtist() : tag->GetArtist(), g_advancedSettings.m_musicItemSeparator)).c_str(), "AlbumArtist");
+
+                          PopulateObjectFromTag(*tag, *container, &file_path, &resource, quirks);
                       }
 #ifdef WMP_ID_MAPPING
                       // Some upnp clients expect all artists to have parent root id 107
@@ -500,14 +543,17 @@ BuildObject(CFileItem&                    item,
                 case MUSICDATABASEDIRECTORY::NODE_TYPE_ALBUM_RECENTLY_ADDED:
                 case MUSICDATABASEDIRECTORY::NODE_TYPE_YEAR_ALBUM: {
                       container->m_ObjectClass.type += ".album.musicAlbum";
-                      // for Sonos to be happy
-                      CMusicInfoTag *tag = (CMusicInfoTag*)item.GetMusicInfoTag();
-                      if (tag) {
+                      if (item.HasMusicInfoTag())
+                      {
+                          // for Sonos to be happy
+                          CMusicInfoTag *tag = (CMusicInfoTag*)item.GetMusicInfoTag();
                           container->m_People.artists.Add(
                               CorrectAllItemsSortHack(StringUtils::Join(tag->GetArtist(), g_advancedSettings.m_musicItemSeparator)).c_str(), "Performer");
                           container->m_People.artists.Add(
                               CorrectAllItemsSortHack(StringUtils::Join(!tag->GetAlbumArtist().empty() ? tag->GetAlbumArtist() : tag->GetArtist(), g_advancedSettings.m_musicItemSeparator)).c_str(), "AlbumArtist");
                           container->m_Affiliation.album = CorrectAllItemsSortHack(tag->GetAlbum()).c_str();
+
+                          PopulateObjectFromTag(*tag, *container, &file_path, &resource, quirks);
                       }
 #ifdef WMP_ID_MAPPING
                       // Some upnp clients expect all albums to have parent root id 7
@@ -642,31 +688,65 @@ PopulateTagFromObject(CMusicInfoTag&          tag,
                       PLT_MediaObject&       object,
                       PLT_MediaItemResource* resource /* = NULL */)
 {
-    tag.SetTitle((const char*)object.m_Title);
-    tag.SetArtist((const char*)object.m_Creator);
-    for(PLT_PersonRoles::Iterator it = object.m_People.artists.GetFirstItem(); it; it++) {
-        if     (it->role == "")            tag.SetArtist((const char*)it->name);
-        else if(it->role == "Performer")   tag.SetArtist((const char*)it->name);
-        else if(it->role == "AlbumArtist") tag.SetAlbumArtist((const char*)it->name);
-    }
-    tag.SetTrackNumber(object.m_MiscInfo.original_track_number);
+    // deserialize an artist
+    if (object.m_ObjectClass.type == "object.container.person.musicArtist") {
+        tag.SetArtist((const char*)object.m_Title);
 
-    for (NPT_List<NPT_String>::Iterator it = object.m_Affiliation.genres.GetFirstItem(); it; it++) {
+        // TODO: artist deserialization
+    }
+    else {
+        tag.SetTitle((const char*)object.m_Title);
+
+        // deserialize (album) artists
+        for (PLT_PersonRoles::Iterator it = object.m_People.artists.GetFirstItem(); it; ++it) {
+            if (it->role == "AlbumArtist")
+                tag.AppendAlbumArtist((const char*)it->name);
+            else
+                tag.AppendArtist((const char*)it->name);
+        }
+
+        // deserialize an album
+        if (object.m_ObjectClass.type == "object.container.album.musicAlbum") {
+            tag.SetAlbum((const char*)object.m_Title);
+
+            if (tag.GetAlbumArtist().empty() && !object.m_Creator.IsEmpty() && object.m_Creator != "Unknown")
+                tag.SetAlbumArtist((const char*)object.m_Creator);
+            if (tag.GetArtist().empty())
+                tag.SetArtist(tag.GetAlbumArtist());
+
+            // TODO: album deserialization
+        }
+        else { // deserialize a song
+            tag.SetTrackNumber(object.m_MiscInfo.original_track_number);
+
+            if (tag.GetArtist().empty() && !object.m_Creator.IsEmpty() && object.m_Creator != "Unknown")
+                tag.SetArtist((const char*)object.m_Creator);
+            if (tag.GetAlbumArtist().empty())
+                tag.SetAlbumArtist(tag.GetArtist());
+
+            tag.SetAlbum((const char*)object.m_Affiliation.album);
+
+            CDateTime last; last.SetFromW3CDateTime((const char*)object.m_MiscInfo.last_time);
+            tag.SetLastPlayed(last);
+            tag.SetPlayCount(object.m_MiscInfo.play_count);
+
+            if (resource != NULL)
+               tag.SetDuration(resource->m_Duration);
+
+            // TODO: song deserialization
+        }
+    }
+
+    // deserialize genres
+    for (NPT_List<NPT_String>::Iterator it = object.m_Affiliation.genres.GetFirstItem(); it; ++it) {
         // ignore single "Unknown" genre inserted by Platinum
         if (it == object.m_Affiliation.genres.GetFirstItem() && object.m_Affiliation.genres.GetItemCount() == 1 &&
             *it == "Unknown")
             break;
 
-        tag.SetGenre((const char*) *it);
+        tag.AppendGenre((const char*) *it);
     }
 
-    tag.SetAlbum((const char*)object.m_Affiliation.album);
-    CDateTime last;
-    last.SetFromW3CDateTime((const char*)object.m_MiscInfo.last_time);
-    tag.SetLastPlayed(last);
-    tag.SetPlayCount(object.m_MiscInfo.play_count);
-    if(resource)
-        tag.SetDuration(resource->m_Duration);
     tag.SetLoaded();
     return NPT_SUCCESS;
 }
@@ -835,7 +915,8 @@ CFileItemPtr BuildObject(PLT_MediaObject* entry)
     } else if( ObjectClass.StartsWith("object.container.album.photoalbum")) {
       //CPictureInfoTag* tag = pItem->GetPictureInfoTag();
 
-    } else if( ObjectClass.StartsWith("object.container.album") ) {
+    } else if( ObjectClass.StartsWith("object.container.album") ||
+               ObjectClass.StartsWith("object.container.person.musicartist")) {
       pItem->SetLabelPreformated(false);
       UPNP::PopulateTagFromObject(*pItem->GetMusicInfoTag(), *entry, NULL);
     }
