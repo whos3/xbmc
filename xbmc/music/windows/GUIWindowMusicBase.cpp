@@ -188,27 +188,31 @@ bool CGUIWindowMusicBase::OnMessage(CGUIMessage& message)
         int iItem = m_viewControl.GetSelectedItem();
         int iAction = message.GetParam1();
 
+        CFileItemPtr pItem;
+        if (iItem >= 0 && iItem < m_vecItems->Size())
+          pItem = m_vecItems->Get(iItem);
+
         // iItem is checked for validity inside these routines
         if (iAction == ACTION_QUEUE_ITEM || iAction == ACTION_MOUSE_MIDDLE_CLICK)
         {
-          OnQueueItem(iItem);
+          OnQueueItem(pItem);
         }
         else if (iAction == ACTION_SHOW_INFO)
         {
-          OnInfo(iItem);
+          OnInfo(pItem);
         }
         else if (iAction == ACTION_DELETE_ITEM)
         {
           // is delete allowed?
           // must be at the playlists directory
           if (m_vecItems->IsPath("special://musicplaylists/"))
-            OnDeleteItem(iItem);
+            OnDeleteItem(pItem);
 
           // or be at the files window and have file deletion enabled
           else if (GetID() == WINDOW_MUSIC_FILES &&
                    CSettings::Get().GetBool("filelists.allowfiledeletion"))
           {
-            OnDeleteItem(iItem);
+            OnDeleteItem(pItem);
           }
 
           else
@@ -227,7 +231,7 @@ bool CGUIWindowMusicBase::OnMessage(CGUIMessage& message)
           }
 
           // not playing audio, or playback speed == 1
-          PlayItem(iItem);
+          PlayItem(pItem);
 
           return true;
         }
@@ -270,16 +274,14 @@ void CGUIWindowMusicBase::OnInfoAll(int iItem, bool bCurrent /* = false */, bool
 
 /// \brief Retrieves music info for albums from allmusic.com and displays them in CGUIDialogMusicInfo
 /// \param iItem Item in list/thumb control
-void CGUIWindowMusicBase::OnInfo(int iItem, bool bShowInfo)
+void CGUIWindowMusicBase::OnInfo(CFileItemPtr item, bool bShowInfo)
 {
-  if ( iItem < 0 || iItem >= m_vecItems->Size() )
+  if (item == NULL)
     return;
-
-  CFileItemPtr item = m_vecItems->Get(iItem);
 
   if (item->IsVideoDb())
   { // music video
-    OnContextButton(iItem, CONTEXT_BUTTON_INFO);
+    OnContextButton(item, CONTEXT_BUTTON_INFO);
     return;
   }
 
@@ -525,15 +527,15 @@ void CGUIWindowMusicBase::RetrieveMusicInfo()
 
 /// \brief Add selected list/thumb control item to playlist and start playing
 /// \param iItem Selected Item in list/thumb control
-void CGUIWindowMusicBase::OnQueueItem(int iItem)
+void CGUIWindowMusicBase::OnQueueItem(CFileItemPtr pItem)
 {
   // don't re-queue items from playlist window
-  if ( iItem < 0 || iItem >= m_vecItems->Size() || GetID() == WINDOW_MUSIC_PLAYLIST) return ;
+  if (pItem == NULL || GetID() == WINDOW_MUSIC_PLAYLIST) return;
 
   int iOldSize=g_playlistPlayer.GetPlaylist(PLAYLIST_MUSIC).size();
 
   // add item 2 playlist (make a copy as we alter the queuing state)
-  CFileItemPtr item(new CFileItem(*m_vecItems->Get(iItem)));
+  CFileItemPtr item(new CFileItem(*pItem));
 
   if (item->IsRAR() || item->IsZIP())
     return;
@@ -548,7 +550,7 @@ void CGUIWindowMusicBase::OnQueueItem(int iItem)
   AddItemToPlayList(item, queuedItems);
 
   // select next item
-  m_viewControl.SetSelectedItem(iItem + 1);
+  m_viewControl.SetSelectedItem(m_vecItems->GetIndex(item) + 1);
 
   // if party mode, add items but DONT start playing
   if (g_partyModeManager.IsEnabled())
@@ -681,12 +683,8 @@ void CGUIWindowMusicBase::UpdateButtons()
   CGUIMediaWindow::UpdateButtons();
 }
 
-void CGUIWindowMusicBase::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowMusicBase::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
-
   if (item && !item->GetProperty("pluginreplacecontextitems").asBoolean())
   {
     if (item && !item->IsParentFolder())
@@ -722,7 +720,8 @@ void CGUIWindowMusicBase::GetContextButtons(int itemNumber, CContextButtons &but
       }
     }
   }
-  CGUIMediaWindow::GetContextButtons(itemNumber, buttons);
+
+  CGUIMediaWindow::GetContextButtons(item, buttons);
 }
 
 void CGUIWindowMusicBase::GetNonContextButtons(CContextButtons &buttons)
@@ -732,20 +731,16 @@ void CGUIWindowMusicBase::GetNonContextButtons(CContextButtons &buttons)
   buttons.Add(CONTEXT_BUTTON_SETTINGS, 5);
 }
 
-bool CGUIWindowMusicBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowMusicBase::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
-
   switch (button)
   {
   case CONTEXT_BUTTON_QUEUE_ITEM:
-    OnQueueItem(itemNumber);
+    OnQueueItem(item);
     return true;
 
   case CONTEXT_BUTTON_INFO:
-    OnInfo(itemNumber);
+    OnInfo(item);
     return true;
 
   case CONTEXT_BUTTON_SONG_INFO:
@@ -772,7 +767,7 @@ bool CGUIWindowMusicBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     }
 
   case CONTEXT_BUTTON_PLAY_ITEM:
-    PlayItem(itemNumber);
+    PlayItem(item);
     return true;
 
   case CONTEXT_BUTTON_PLAY_WITH:
@@ -781,7 +776,7 @@ bool CGUIWindowMusicBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       CPlayerCoreFactory::Get().GetPlayers(*item, vecCores);
       g_application.m_eForcedNextPlayer = CPlayerCoreFactory::Get().SelectPlayerDialog(vecCores);
       if( g_application.m_eForcedNextPlayer != EPC_NONE )
-        OnClick(itemNumber);
+        OnClick(item);
       return true;
     }
 
@@ -806,7 +801,7 @@ bool CGUIWindowMusicBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     break;
   }
 
-  return CGUIMediaWindow::OnContextButton(itemNumber, button);
+  return CGUIMediaWindow::OnContextButton(item, button);
 }
 
 void CGUIWindowMusicBase::OnRipCD()
@@ -824,14 +819,16 @@ void CGUIWindowMusicBase::OnRipCD()
   }
 }
 
-void CGUIWindowMusicBase::OnRipTrack(int iItem)
+void CGUIWindowMusicBase::OnRipTrack(CFileItemPtr item)
 {
+  if (item == NULL)
+    return;
+
   if(g_mediaManager.IsAudio())
   {
     if (!g_application.CurrentFileItem().IsCDDA())
     {
 #ifdef HAS_CDDA_RIPPER
-      CFileItemPtr item = m_vecItems->Get(iItem);
       CCDDARipper::GetInstance().RipTrack(item.get());
 #endif
     }
@@ -840,13 +837,14 @@ void CGUIWindowMusicBase::OnRipTrack(int iItem)
   }
 }
 
-void CGUIWindowMusicBase::PlayItem(int iItem)
+void CGUIWindowMusicBase::PlayItem(CFileItemPtr pItem)
 {
   // restrictions should be placed in the appropiate window code
   // only call the base code if the item passes since this clears
   // the current playlist
 
-  const CFileItemPtr pItem = m_vecItems->Get(iItem);
+  if (pItem == NULL)
+    return;
 
   // special case for DAAP playlist folders
   bool bIsDAAPplaylist = false;
@@ -862,7 +860,7 @@ void CGUIWindowMusicBase::PlayItem(int iItem)
   if ((pItem->m_bIsFolder && !pItem->IsPlugin()) || (g_windowManager.GetActiveWindow() == WINDOW_MUSIC_NAV && pItem->IsPlayList()))
   {
     // make a copy so that we can alter the queue state
-    CFileItemPtr item(new CFileItem(*m_vecItems->Get(iItem)));
+    CFileItemPtr item(new CFileItem(*pItem));
 
     //  Allow queuing of unqueueable items
     //  when we try to queue them directly
@@ -907,7 +905,7 @@ void CGUIWindowMusicBase::PlayItem(int iItem)
   {
     // just a single item, play it
     // TODO: Add music-specific code for single playback of an item here (See OnClick in MediaWindow, and OnPlayMedia below)
-    OnClick(iItem);
+    OnClick(pItem);
   }
 }
 
@@ -943,9 +941,10 @@ void CGUIWindowMusicBase::LoadPlayList(const std::string& strPlayList)
   }
 }
 
-bool CGUIWindowMusicBase::OnPlayMedia(int iItem)
+bool CGUIWindowMusicBase::OnPlayMedia(CFileItemPtr pItem)
 {
-  CFileItemPtr pItem = m_vecItems->Get(iItem);
+  if (pItem == NULL)
+    return false;
 
   // party mode
   if (g_partyModeManager.IsEnabled())
@@ -964,7 +963,7 @@ bool CGUIWindowMusicBase::OnPlayMedia(int iItem)
        || pItem->IsKaraoke() )
     {
       // TODO: Should the playlist be cleared if nothing is already playing?
-      OnQueueItem(iItem);
+      OnQueueItem(pItem);
       return true;
     }
     g_playlistPlayer.Reset();
@@ -974,7 +973,7 @@ bool CGUIWindowMusicBase::OnPlayMedia(int iItem)
     g_playlistPlayer.Play();
     return true;
   }
-  return CGUIMediaWindow::OnPlayMedia(iItem);
+  return CGUIMediaWindow::OnPlayMedia(pItem);
 }
 
 void CGUIWindowMusicBase::UpdateThumb(const CAlbum &album, const CStdString &path)

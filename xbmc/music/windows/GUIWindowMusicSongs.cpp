@@ -126,7 +126,7 @@ bool CGUIWindowMusicSongs::OnMessage(CGUIMessage& message)
       }
       else if (iControl == CONTROL_BTNSCAN)
       {
-        OnScan(-1);
+        OnScan(CFileItemPtr());
       }
       else if (iControl == CONTROL_BTNREC)
       {
@@ -157,7 +157,7 @@ bool CGUIWindowMusicSongs::OnAction(const CAction& action)
   {
     int item = m_viewControl.GetSelectedItem();
     if (item > -1 && m_vecItems->Get(item)->m_bIsFolder)
-      OnScan(item);
+      OnScan(m_vecItems->Get(item));
 
     return true;
   }
@@ -165,13 +165,13 @@ bool CGUIWindowMusicSongs::OnAction(const CAction& action)
   return CGUIWindowMusicBase::OnAction(action);
 }
 
-void CGUIWindowMusicSongs::OnScan(int iItem)
+void CGUIWindowMusicSongs::OnScan(CFileItemPtr pItem)
 {
   CStdString strPath;
-  if (iItem < 0 || iItem >= m_vecItems->Size())
+  if (pItem == NULL)
     strPath = m_vecItems->GetPath();
-  else if (m_vecItems->Get(iItem)->m_bIsFolder)
-    strPath = m_vecItems->Get(iItem)->GetPath();
+  else if (pItem->m_bIsFolder)
+    strPath = pItem->GetPath();
   else
   { // TODO: MUSICDB - should we allow scanning a single item into the database?
     //       This will require changes to the info scanner, which assumes we're running on a folder
@@ -287,12 +287,8 @@ void CGUIWindowMusicSongs::UpdateButtons()
   SET_CONTROL_LABEL(CONTROL_LABELFILES, items);
 }
 
-void CGUIWindowMusicSongs::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowMusicSongs::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
-
   if (item)
   {
     // are we in the playlists location?
@@ -318,11 +314,11 @@ void CGUIWindowMusicSongs::GetContextButtons(int itemNumber, CContextButtons &bu
         }
       }
 #endif
-      CGUIMediaWindow::GetContextButtons(itemNumber, buttons);
+      CGUIMediaWindow::GetContextButtons(item, buttons);
     }
     else
     {
-      CGUIWindowMusicBase::GetContextButtons(itemNumber, buttons);
+      CGUIWindowMusicBase::GetContextButtons(item, buttons);
       if (item->GetProperty("pluginreplacecontextitems").asBoolean())
         return;
       if (!item->IsPlayList() && !item->IsPlugin() && !item->IsScript())
@@ -385,15 +381,12 @@ void CGUIWindowMusicSongs::GetContextButtons(int itemNumber, CContextButtons &bu
   CGUIWindowMusicBase::GetNonContextButtons(buttons);
 }
 
-bool CGUIWindowMusicSongs::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowMusicSongs::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
   if (CGUIDialogContextMenu::OnContextButton("music", item, button))
   {
     if (button == CONTEXT_BUTTON_REMOVE_SOURCE)
-      OnRemoveSource(itemNumber);
+      OnRemoveSource(item);
 
     Update("");
     return true;
@@ -402,11 +395,11 @@ bool CGUIWindowMusicSongs::OnContextButton(int itemNumber, CONTEXT_BUTTON button
   switch (button)
   {
   case CONTEXT_BUTTON_SCAN:
-    OnScan(itemNumber);
+    OnScan(item);
     return true;
 
   case CONTEXT_BUTTON_RIP_TRACK:
-    OnRipTrack(itemNumber);
+    OnRipTrack(item);
     return true;
 
   case CONTEXT_BUTTON_RIP_CD:
@@ -425,11 +418,11 @@ bool CGUIWindowMusicSongs::OnContextButton(int itemNumber, CONTEXT_BUTTON button
     return true;
 
   case CONTEXT_BUTTON_DELETE:
-    OnDeleteItem(itemNumber);
+    OnDeleteItem(item);
     return true;
 
   case CONTEXT_BUTTON_RENAME:
-    OnRenameItem(itemNumber);
+    OnRenameItem(item);
     return true;
 
   case CONTEXT_BUTTON_SWITCH_MEDIA:
@@ -438,7 +431,7 @@ bool CGUIWindowMusicSongs::OnContextButton(int itemNumber, CONTEXT_BUTTON button
   default:
     break;
   }
-  return CGUIWindowMusicBase::OnContextButton(itemNumber, button);
+  return CGUIWindowMusicBase::OnContextButton(item, button);
 }
 
 void CGUIWindowMusicSongs::DeleteRemoveableMediaDirectoryCache()
@@ -446,22 +439,23 @@ void CGUIWindowMusicSongs::DeleteRemoveableMediaDirectoryCache()
   CUtil::DeleteDirectoryCache("r-");
 }
 
-void CGUIWindowMusicSongs::PlayItem(int iItem)
+void CGUIWindowMusicSongs::PlayItem(CFileItemPtr pItem)
 {
   // unlike additemtoplaylist, we need to check the items here
   // before calling it since the current playlist will be stopped
   // and cleared!
 
   // we're at the root source listing
-  if (m_vecItems->IsVirtualDirectoryRoot() && !m_vecItems->Get(iItem)->IsDVD())
+  if (pItem == NULL ||
+     (m_vecItems->IsVirtualDirectoryRoot() && !pItem->IsDVD()))
     return;
 
 #ifdef HAS_DVD_DRIVE
-  if (m_vecItems->Get(iItem)->IsDVD())
-    MEDIA_DETECT::CAutorun::PlayDiscAskResume(m_vecItems->Get(iItem)->GetPath());
+  if (pItem->IsDVD())
+    MEDIA_DETECT::CAutorun::PlayDiscAskResume(pItem->GetPath());
   else
 #endif
-    CGUIWindowMusicBase::PlayItem(iItem);
+    CGUIWindowMusicBase::PlayItem(pItem);
 }
 
 bool CGUIWindowMusicSongs::Update(const std::string &strDirectory, bool updateFilterPath /* = true */)
@@ -479,15 +473,18 @@ bool CGUIWindowMusicSongs::Update(const std::string &strDirectory, bool updateFi
   return true;
 }
 
-void CGUIWindowMusicSongs::OnRemoveSource(int iItem)
+void CGUIWindowMusicSongs::OnRemoveSource(CFileItemPtr pItem)
 {
+  if (pItem == NULL)
+    return;
+
   bool bCanceled;
   if (CGUIDialogYesNo::ShowAndGetInput(522,20340,20341,20022,bCanceled))
   {
     MAPSONGS songs;
     CMusicDatabase database;
     database.Open();
-    database.RemoveSongsFromPath(m_vecItems->Get(iItem)->GetPath(),songs,false);
+    database.RemoveSongsFromPath(pItem->GetPath(),songs,false);
     database.CleanupOrphanedItems();
     g_infoManager.ResetLibraryBools();
   }

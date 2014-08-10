@@ -33,8 +33,8 @@ namespace PVR
 
     bool OnMessage(CGUIMessage& message);
     void OnWindowLoaded();
-    void GetContextButtons(int itemNumber, CContextButtons &buttons);
-    bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+    void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+    bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
     bool OnContextButton(const CFileItem &item, CONTEXT_BUTTON button);
 
   protected:

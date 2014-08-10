@@ -33,12 +33,12 @@ public:
   virtual bool OnBack(int actionID);
 
 protected:
-  virtual bool OnPlayMedia(int iItem);
+  virtual bool OnPlayMedia(CFileItemPtr pItem);
   virtual void UpdateButtons();
   void MarkPlaying();
 
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
 
   void OnMove(int iItem, int iAction);
 

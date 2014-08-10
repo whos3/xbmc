@@ -187,22 +187,23 @@ void CGUIWindowMusicPlaylistEditor::DeleteRemoveableMediaDirectoryCache()
   CUtil::DeleteDirectoryCache("r-");
 }
 
-void CGUIWindowMusicPlaylistEditor::PlayItem(int iItem)
+void CGUIWindowMusicPlaylistEditor::PlayItem(CFileItemPtr pItem)
 {
   // unlike additemtoplaylist, we need to check the items here
   // before calling it since the current playlist will be stopped
   // and cleared!
 
   // we're at the root source listing
-  if (m_vecItems->IsVirtualDirectoryRoot() && !m_vecItems->Get(iItem)->IsDVD())
+  if (pItem == NULL ||
+     (m_vecItems->IsVirtualDirectoryRoot() && !pItem->IsDVD()))
     return;
 
 #ifdef HAS_DVD_DRIVE
-  if (m_vecItems->Get(iItem)->IsDVD())
-    MEDIA_DETECT::CAutorun::PlayDiscAskResume(m_vecItems->Get(iItem)->GetPath());
+  if (pItem->IsDVD())
+    MEDIA_DETECT::CAutorun::PlayDiscAskResume(pItem->GetPath());
   else
 #endif
-    CGUIWindowMusicBase::PlayItem(iItem);
+    CGUIWindowMusicBase::PlayItem(pItem);
 }
 
 void CGUIWindowMusicPlaylistEditor::OnQueueItem(int iItem)
@@ -293,12 +294,8 @@ void CGUIWindowMusicPlaylistEditor::OnMovePlaylistItem(int item, int direction)
   OnMessage(msg);
 }
 
-void CGUIWindowMusicPlaylistEditor::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowMusicPlaylistEditor::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
-
   if (GetFocusedControlID() == CONTROL_PLAYLIST)
   {
     int playlistItem = GetCurrentPlaylistItem();
@@ -320,7 +317,7 @@ void CGUIWindowMusicPlaylistEditor::GetContextButtons(int itemNumber, CContextBu
   buttons.Add(CONTEXT_BUTTON_LOAD, 21385);
 }
 
-bool CGUIWindowMusicPlaylistEditor::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowMusicPlaylistEditor::OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button)
 {
   switch (button)
   {
@@ -349,7 +346,7 @@ bool CGUIWindowMusicPlaylistEditor::OnContextButton(int itemNumber, CONTEXT_BUTT
   default:
     break;
   }
-  return CGUIWindowMusicBase::OnContextButton(itemNumber, button);
+  return CGUIWindowMusicBase::OnContextButton(pItem, button);
 }
 
 void CGUIWindowMusicPlaylistEditor::OnLoadPlaylist()
@@ -418,6 +415,6 @@ void CGUIWindowMusicPlaylistEditor::OnPlaylistContext()
   int item = GetCurrentPlaylistItem();
   if (item >= 0)
     m_playlist->Get(item)->Select(true);
-  if (!OnPopupMenu(-1) && item >= 0 && item < m_playlist->Size())
+  if (!OnPopupMenu(CFileItemPtr()) && item >= 0 && item < m_playlist->Size())
     m_playlist->Get(item)->Select(false);
 }

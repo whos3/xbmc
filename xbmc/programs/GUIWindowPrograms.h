@@ -31,14 +31,14 @@ public:
   CGUIWindowPrograms(void);
   virtual ~CGUIWindowPrograms(void);
   virtual bool OnMessage(CGUIMessage& message);
-  virtual void OnInfo(int iItem);
+  virtual void OnInfo(CFileItemPtr pItem);
 protected:
   virtual void OnItemLoaded(CFileItem* pItem) {};
   virtual bool Update(const std::string& strDirectory, bool updateFilterPath = true);
-  virtual bool OnPlayMedia(int iItem);
+  virtual bool OnPlayMedia(CFileItemPtr pItem);
   virtual bool GetDirectory(const std::string &strDirectory, CFileItemList &items);
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
   virtual std::string GetStartFolder(const std::string &dir);
 
   CGUIDialogProgress* m_dlgProgress;

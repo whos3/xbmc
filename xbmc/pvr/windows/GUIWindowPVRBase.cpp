@@ -163,17 +163,15 @@ bool CGUIWindowPVRBase::OnMessage(CGUIMessage& message)
   return CGUIMediaWindow::OnMessage(message);
 }
 
-bool CGUIWindowPVRBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPVRBase::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
   bool bReturn = false;
 
   switch(button)
   {
     case CONTEXT_BUTTON_MENU_HOOKS:
-      if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
+      if (item != NULL)
       {
-        CFileItemPtr item = m_vecItems->Get(itemNumber);
-
         if (item->IsEPG() && item->GetEPGInfoTag()->HasPVRChannel())
           g_PVRClients->ProcessMenuHooks(item->GetEPGInfoTag()->ChannelTag()->ClientID(), PVR_MENUHOOK_EPG, item.get());
         else if (item->IsPVRChannel())
@@ -190,9 +188,8 @@ bool CGUIWindowPVRBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     {
       int windowSearchId = m_bRadio ? WINDOW_RADIO_SEARCH : WINDOW_TV_SEARCH;
       CGUIWindowPVRBase *windowSearch = (CGUIWindowPVRBase*) g_windowManager.GetWindow(windowSearchId);
-      if (windowSearch && itemNumber >= 0 && itemNumber < m_vecItems->Size())
+      if (windowSearch && item != NULL)
       {
-        CFileItemPtr item = m_vecItems->Get(itemNumber);
         g_windowManager.ActivateWindow(windowSearchId);
         bReturn = windowSearch->OnContextButton(*item.get(), button);
       }
@@ -202,7 +199,7 @@ bool CGUIWindowPVRBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       bReturn = false;
   }
 
-  return bReturn || CGUIMediaWindow::OnContextButton(itemNumber, button);
+  return bReturn || CGUIMediaWindow::OnContextButton(item, button);
 }
 
 void CGUIWindowPVRBase::SetInvalid()

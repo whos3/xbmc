@@ -66,7 +66,7 @@ namespace XBMCAddon
       { XBMC_TRACE; if(up()) CGUIMediaWindow::AllocResources(forceLoad); else checkedv(AllocResources(forceLoad)); }
       virtual  void FreeResources(bool forceUnLoad = false)
       { XBMC_TRACE; if(up()) CGUIMediaWindow::FreeResources(forceUnLoad); else checkedv(FreeResources(forceUnLoad)); }
-      virtual bool OnClick(int iItem) { XBMC_TRACE; return up() ? CGUIMediaWindow::OnClick(iItem) : checkedb(OnClick(iItem)); }
+      virtual bool OnClick(CFileItemPtr pItem) { XBMC_TRACE; return up() ? CGUIMediaWindow::OnClick(pItem) : checkedb(OnClick(m_vecItems->GetIndex(pItem))); }
 
       virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
       { XBMC_TRACE; if(up()) CGUIMediaWindow::Process(currentTime,dirtyregions); else checkedv(Process(currentTime,dirtyregions)); }
@@ -81,8 +81,8 @@ namespace XBMCAddon
       { XBMC_TRACE; return up() ? CGUIMediaWindow::LoadXML(strPath,strPathLower) : xwin->LoadXML(strPath,strPathLower); }
 
       // CGUIMediaWindow
-      virtual void GetContextButtons(int itemNumber, CContextButtons &buttons)
-      { XBMC_TRACE; if (up()) CGUIMediaWindow::GetContextButtons(itemNumber,buttons); else xwin->GetContextButtons(itemNumber,buttons); }
+      virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons)
+      { XBMC_TRACE; if (up()) CGUIMediaWindow::GetContextButtons(pItem,buttons); else xwin->GetContextButtons(m_vecItems->GetIndex(pItem),buttons); }
       virtual bool Update(const std::string &strPath)
       { XBMC_TRACE; return up() ? CGUIMediaWindow::Update(strPath) : xwin->Update(strPath); }
       virtual void SetupShares() { XBMC_TRACE; if(up()) CGUIMediaWindow::SetupShares(); else checkedv(SetupShares()); }

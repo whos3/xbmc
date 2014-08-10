@@ -58,11 +58,10 @@ std::string CGUIWindowPVRTimers::GetDirectoryPath(void)
   return StringUtils::Format("pvr://timers/%s/", m_bRadio ? "radio" : "tv");
 }
 
-void CGUIWindowPVRTimers::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowPVRTimers::GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   /* Check for a empty file item list, means only a
      file item with the name "Add timer..." is present */
@@ -82,21 +81,20 @@ void CGUIWindowPVRTimers::GetContextButtons(int itemNumber, CContextButtons &but
       buttons.Add(CONTEXT_BUTTON_MENU_HOOKS, 19195);    /* PVR client specific action */
   }
 
-  CGUIWindowPVRBase::GetContextButtons(itemNumber, buttons);
+  CGUIWindowPVRBase::GetContextButtons(pItem, buttons);
 }
 
-bool CGUIWindowPVRTimers::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPVRTimers::OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return false;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   return OnContextButtonActivate(pItem.get(), button) ||
       OnContextButtonAdd(pItem.get(), button) ||
       OnContextButtonDelete(pItem.get(), button) ||
       OnContextButtonEdit(pItem.get(), button) ||
       OnContextButtonRename(pItem.get(), button) ||
-      CGUIWindowPVRBase::OnContextButton(itemNumber, button);
+      CGUIWindowPVRBase::OnContextButton(pItem, button);
 }
 
 bool CGUIWindowPVRTimers::Update(const std::string &strDirectory, bool updateFilterPath /* = true */)
@@ -125,7 +123,7 @@ bool CGUIWindowPVRTimers::OnMessage(CGUIMessage &message)
               break;
             case ACTION_CONTEXT_MENU:
             case ACTION_MOUSE_RIGHT_CLICK:
-              OnPopupMenu(iItem);
+              OnPopupMenu(m_vecItems->Get(iItem));
               break;
             case ACTION_DELETE_ITEM:
               ActionDeleteTimer(m_vecItems->Get(iItem).get());

@@ -59,11 +59,11 @@ protected:
   virtual bool GetDirectory(const std::string &strDirectory, CFileItemList &items);
   virtual void UpdateButtons();
   virtual void DoSearch(const CStdString& strSearch, CFileItemList& items);
-  virtual void PlayItem(int iItem);
+  virtual void PlayItem(CFileItemPtr pItem);
   virtual void OnDeleteItem(CFileItemPtr pItem);
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
-  virtual bool OnClick(int iItem);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
+  virtual bool OnClick(CFileItemPtr pItem);
   virtual std::string GetStartFolder(const std::string &dir);
 
   virtual CStdString GetQuickpathName(const CStdString& strPath) const;

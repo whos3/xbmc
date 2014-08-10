@@ -103,11 +103,10 @@ std::string CGUIWindowPVRRecordings::GetResumeString(const CFileItem& item)
   return resumeString;
 }
 
-void CGUIWindowPVRRecordings::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowPVRRecordings::GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   if (pItem->HasPVRRecordingInfoTag())
   {
@@ -142,7 +141,7 @@ void CGUIWindowPVRRecordings::GetContextButtons(int itemNumber, CContextButtons 
       g_PVRClients->HasMenuHooks(pItem->GetPVRRecordingInfoTag()->m_iClientId, PVR_MENUHOOK_RECORDING))
     buttons.Add(CONTEXT_BUTTON_MENU_HOOKS, 19195);      /* PVR client specific action */
 
-  CGUIWindowPVRBase::GetContextButtons(itemNumber, buttons);
+  CGUIWindowPVRBase::GetContextButtons(pItem, buttons);
 }
 
 bool CGUIWindowPVRRecordings::OnAction(const CAction &action)
@@ -159,18 +158,17 @@ bool CGUIWindowPVRRecordings::OnAction(const CAction &action)
   return CGUIWindowPVRBase::OnAction(action);
 }
 
-bool CGUIWindowPVRRecordings::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPVRRecordings::OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem)
     return false;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   return OnContextButtonPlay(pItem.get(), button) ||
       OnContextButtonRename(pItem.get(), button) ||
       OnContextButtonDelete(pItem.get(), button) ||
       OnContextButtonInfo(pItem.get(), button) ||
       OnContextButtonMarkWatched(pItem, button) ||
-      CGUIWindowPVRBase::OnContextButton(itemNumber, button);
+      CGUIWindowPVRBase::OnContextButton(pItem, button);
 }
 
 bool CGUIWindowPVRRecordings::Update(const std::string &strDirectory, bool updateFilterPath /* = true */)
@@ -213,7 +211,7 @@ bool CGUIWindowPVRRecordings::OnMessage(CGUIMessage &message)
             }
             case ACTION_CONTEXT_MENU:
             case ACTION_MOUSE_RIGHT_CLICK:
-              OnPopupMenu(iItem);
+              OnPopupMenu(m_vecItems->Get(iItem));
               bReturn = true;
               break;
             case ACTION_SHOW_INFO:

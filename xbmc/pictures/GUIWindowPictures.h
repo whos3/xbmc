@@ -37,18 +37,18 @@ public:
 
 protected:
   virtual bool GetDirectory(const std::string &strDirectory, CFileItemList& items);
-  virtual void OnInfo(int item);
-  virtual bool OnClick(int iItem);
+  virtual void OnInfo(CFileItemPtr pItem);
+  virtual bool OnClick(CFileItemPtr pItem);
   virtual void UpdateButtons();
   virtual void OnPrepareFileItems(CFileItemList& items);
   virtual bool Update(const std::string &strDirectory, bool updateFilterPath = true);
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
   virtual std::string GetStartFolder(const std::string &dir);
 
   void OnRegenerateThumbs();
-  virtual bool OnPlayMedia(int iItem);
-  bool ShowPicture(int iItem, bool startSlideShow);
+  virtual bool OnPlayMedia(CFileItemPtr pItem);
+  bool ShowPicture(CFileItemPtr pItem, bool startSlideShow);
   void OnShowPictureRecursive(const CStdString& strPath);
   void OnSlideShow(const CStdString& strPicture);
   void OnSlideShow();

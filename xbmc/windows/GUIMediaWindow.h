@@ -68,17 +68,17 @@ protected:
   // custom methods
   virtual void SetupShares();
   virtual void GoParentFolder();
-  virtual bool OnClick(int iItem);
+  virtual bool OnClick(CFileItemPtr pItem);
 
   /* \brief React to a "Select" action on an item in a view.
    \param item selected item.
    \return true if the action is handled, false otherwise.
    */
-  virtual bool OnSelect(int item);
-  virtual bool OnPopupMenu(int iItem);
+  virtual bool OnSelect(CFileItemPtr pItem);
+  virtual bool OnPopupMenu(CFileItemPtr pItem);
 
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
   virtual void FormatItemLabels(CFileItemList &items, const LABEL_MASKS &labelMasks);
   virtual void UpdateButtons();
 
@@ -149,11 +149,11 @@ protected:
   void GetDirectoryHistoryString(const CFileItem* pItem, std::string& strHistoryString);
   void SetHistoryForPath(const std::string& strDirectory);
   virtual void LoadPlayList(const std::string& strFileName) {}
-  virtual bool OnPlayMedia(int iItem);
+  virtual bool OnPlayMedia(CFileItemPtr pItem);
   virtual bool OnPlayAndQueueMedia(const CFileItemPtr &item);
   void UpdateFileList();
-  virtual void OnDeleteItem(int iItem);
-  void OnRenameItem(int iItem);
+  virtual void OnDeleteItem(CFileItemPtr pItem);
+  void OnRenameItem(CFileItemPtr pItem);
 
   bool WaitForNetwork() const;
 

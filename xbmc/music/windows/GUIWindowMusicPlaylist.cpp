@@ -412,8 +412,14 @@ void CGUIWindowMusicPlayList::UpdateButtons()
   MarkPlaying();
 }
 
-bool CGUIWindowMusicPlayList::OnPlayMedia(int iItem)
+bool CGUIWindowMusicPlayList::OnPlayMedia(CFileItemPtr pItem)
 {
+  if (pItem == NULL)
+    return false;
+
+  // get the index of the item in the list
+  int iItem = m_vecItems->GetIndex(pItem);
+
   if (g_partyModeManager.IsEnabled())
     g_partyModeManager.Play(iItem);
   else
@@ -493,15 +499,15 @@ bool CGUIWindowMusicPlayList::Update(const std::string& strDirectory, bool updat
   return true;
 }
 
-void CGUIWindowMusicPlayList::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowMusicPlayList::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
   // is this playlist playing?
   int itemPlaying = g_playlistPlayer.GetCurrentSong();
 
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
+  if (item != NULL)
   {
-    CFileItemPtr item;
-    item = m_vecItems->Get(itemNumber);
+    // get the index of the item in the list
+    int itemNumber = m_vecItems->GetIndex(item);
 
     if (m_movingFrom >= 0)
     {
@@ -542,15 +548,18 @@ void CGUIWindowMusicPlayList::GetContextButtons(int itemNumber, CContextButtons 
   }
 }
 
-bool CGUIWindowMusicPlayList::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowMusicPlayList::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
+  int itemNumber = -1;
+
+  // get the index of the item in the list
+  if (item != NULL)
+    itemNumber = m_vecItems->GetIndex(item);
+
   switch (button)
   {
   case CONTEXT_BUTTON_PLAY_WITH:
     {
-      CFileItemPtr item;
-      if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-        item = m_vecItems->Get(itemNumber);
       if (!item)
         break;
 
@@ -558,7 +567,7 @@ bool CGUIWindowMusicPlayList::OnContextButton(int itemNumber, CONTEXT_BUTTON but
       CPlayerCoreFactory::Get().GetPlayers(*item, vecCores);
       g_application.m_eForcedNextPlayer = CPlayerCoreFactory::Get().SelectPlayerDialog(vecCores);
       if( g_application.m_eForcedNextPlayer != EPC_NONE )
-        OnClick(itemNumber);
+        OnClick(item);
       return true;
     }
   case CONTEXT_BUTTON_MOVE_ITEM:
@@ -612,7 +621,7 @@ bool CGUIWindowMusicPlayList::OnContextButton(int itemNumber, CONTEXT_BUTTON but
   default:
     break;
   }
-  return CGUIWindowMusicBase::OnContextButton(itemNumber, button);
+  return CGUIWindowMusicBase::OnContextButton(item, button);
 }
 
 

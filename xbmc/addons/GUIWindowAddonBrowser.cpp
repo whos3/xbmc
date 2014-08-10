@@ -156,12 +156,11 @@ bool CGUIWindowAddonBrowser::OnMessage(CGUIMessage& message)
   return CGUIMediaWindow::OnMessage(message);
 }
 
-void CGUIWindowAddonBrowser::GetContextButtons(int itemNumber, CContextButtons& buttons)
+void CGUIWindowAddonBrowser::GetContextButtons(CFileItemPtr pItem, CContextButtons& buttons)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return;
 
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
   if (!pItem->IsPath("addons://enabled/"))
     buttons.Add(CONTEXT_BUTTON_SCAN,24034);
   
@@ -181,10 +180,12 @@ void CGUIWindowAddonBrowser::GetContextButtons(int itemNumber, CContextButtons& 
     buttons.Add(CONTEXT_BUTTON_SETTINGS,24020);
 }
 
-bool CGUIWindowAddonBrowser::OnContextButton(int itemNumber,
+bool CGUIWindowAddonBrowser::OnContextButton(CFileItemPtr pItem,
                                              CONTEXT_BUTTON button)
 {
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
+  if (pItem == NULL)
+    return false;
+
   if (pItem->IsPath("addons://enabled/"))
   {
     if (button == CONTEXT_BUTTON_SCAN)
@@ -221,7 +222,7 @@ bool CGUIWindowAddonBrowser::OnContextButton(int itemNumber,
     return true;
   }
 
-  return CGUIMediaWindow::OnContextButton(itemNumber, button);
+  return CGUIMediaWindow::OnContextButton(pItem, button);
 }
 
 class UpdateAddons : public IRunnable
@@ -246,9 +247,11 @@ class UpdateRepos : public IRunnable
   }
 };
 
-bool CGUIWindowAddonBrowser::OnClick(int iItem)
+bool CGUIWindowAddonBrowser::OnClick(CFileItemPtr item)
 {
-  CFileItemPtr item = m_vecItems->Get(iItem);
+  if (item == NULL)
+    return false;
+
   if (item->GetPath() == "addons://install/")
   {
     // pop up filebrowser to grab an installed folder
@@ -297,7 +300,7 @@ bool CGUIWindowAddonBrowser::OnClick(int iItem)
   if (item->IsPath("addons://search/"))
     return Update(item->GetPath());
 
-  return CGUIMediaWindow::OnClick(iItem);
+  return CGUIMediaWindow::OnClick(item);
 }
 
 void CGUIWindowAddonBrowser::UpdateButtons()

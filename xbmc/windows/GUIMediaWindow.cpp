@@ -175,7 +175,7 @@ bool CGUIMediaWindow::OnAction(const CAction &action)
   // the non-contextual menu can be called at any time
   if (action.GetID() == ACTION_CONTEXT_MENU && !m_viewControl.HasControl(GetFocusedControlID()))
   {
-    OnPopupMenu(-1);
+    OnPopupMenu(CFileItemPtr());
     return true;
   }
 
@@ -296,14 +296,15 @@ bool CGUIMediaWindow::OnMessage(CGUIMessage& message)
       {
         int iItem = m_viewControl.GetSelectedItem();
         int iAction = message.GetParam1();
-        if (iItem < 0) break;
+        if (iItem < 0)
+          break;
+
+        CFileItemPtr pItem = m_vecItems->Get(iItem);
         if (iAction == ACTION_SELECT_ITEM || iAction == ACTION_MOUSE_LEFT_CLICK)
-        {
-          OnSelect(iItem);
-        }
+          OnSelect(pItem);
         else if (iAction == ACTION_CONTEXT_MENU || iAction == ACTION_MOUSE_RIGHT_CLICK)
         {
-          OnPopupMenu(iItem);
+          OnPopupMenu(pItem);
           return true;
         }
       }
@@ -907,10 +908,10 @@ void CGUIMediaWindow::OnCacheFileItems(CFileItemList &items)
 // \brief With this function you can react on a users click in the list/thumb panel.
 // It returns true, if the click is handled.
 // This function calls OnPlayMedia()
-bool CGUIMediaWindow::OnClick(int iItem)
+bool CGUIMediaWindow::OnClick(CFileItemPtr pItem)
 {
-  if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return true;
-  CFileItemPtr pItem = m_vecItems->Get(iItem);
+  if (pItem == NULL)
+    return false;
 
   if (pItem->IsParentFolder())
   {
@@ -919,7 +920,7 @@ bool CGUIMediaWindow::OnClick(int iItem)
   }
   if (pItem->GetPath() == "add" || pItem->GetPath() == "sources://add/") // 'add source button' in empty root
   {
-    OnContextButton(iItem, CONTEXT_BUTTON_ADD_SOURCE);
+    OnContextButton(pItem, CONTEXT_BUTTON_ADD_SOURCE);
     return true;
   }
 
@@ -1058,16 +1059,16 @@ bool CGUIMediaWindow::OnClick(int iItem)
     }
     else
     {
-      return OnPlayMedia(iItem);
+      return OnPlayMedia(pItem);
     }
   }
 
   return false;
 }
 
-bool CGUIMediaWindow::OnSelect(int item)
+bool CGUIMediaWindow::OnSelect(CFileItemPtr pItem)
 {
-  return OnClick(item);
+  return OnClick(pItem);
 }
 
 // \brief Checks if there is a disc in the dvd drive and whether the
@@ -1291,13 +1292,15 @@ void CGUIMediaWindow::SetHistoryForPath(const std::string& strDirectory)
 // \brief Override if you want to change the default behavior, what is done
 // when the user clicks on a file.
 // This function is called by OnClick()
-bool CGUIMediaWindow::OnPlayMedia(int iItem)
+bool CGUIMediaWindow::OnPlayMedia(CFileItemPtr pItem)
 {
+  if (pItem == NULL)
+    return false;
+
   // Reset Playlistplayer, playback started now does
   // not use the playlistplayer.
   g_playlistPlayer.Reset();
   g_playlistPlayer.SetCurrentPlaylist(PLAYLIST_NONE);
-  CFileItemPtr pItem=m_vecItems->Get(iItem);
 
   CLog::Log(LOGDEBUG, "%s %s", __FUNCTION__, CURL::GetRedacted(pItem->GetPath()).c_str());
 
@@ -1419,10 +1422,13 @@ void CGUIMediaWindow::UpdateFileList()
   }
 }
 
-void CGUIMediaWindow::OnDeleteItem(int iItem)
+void CGUIMediaWindow::OnDeleteItem(CFileItemPtr item)
 {
-  if ( iItem < 0 || iItem >= m_vecItems->Size()) return;
-  CFileItemPtr item = m_vecItems->Get(iItem);
+  if (item == NULL)
+    return;
+
+  // get the index of the item in the list
+  int iItem = m_vecItems->GetIndex(item);
 
   if (item->IsPlayList())
     item->m_bIsFolder = false;
@@ -1437,15 +1443,19 @@ void CGUIMediaWindow::OnDeleteItem(int iItem)
   m_viewControl.SetSelectedItem(iItem);
 }
 
-void CGUIMediaWindow::OnRenameItem(int iItem)
+void CGUIMediaWindow::OnRenameItem(CFileItemPtr pItem)
 {
-  if ( iItem < 0 || iItem >= m_vecItems->Size()) return;
+  if (pItem == NULL)
+    return;
+
+  // get the index of the item in the list
+  int iItem = m_vecItems->GetIndex(pItem);
 
   if (CProfilesManager::Get().GetCurrentProfile().getLockMode() != LOCK_MODE_EVERYONE && CProfilesManager::Get().GetCurrentProfile().filesLocked())
     if (!g_passwordManager.IsMasterLockUnlocked(true))
       return;
 
-  if (!CFileUtils::RenameFile(m_vecItems->Get(iItem)->GetPath()))
+  if (!CFileUtils::RenameFile(pItem->GetPath()))
     return;
   Refresh(true);
   m_viewControl.SetSelectedItem(iItem);
@@ -1496,35 +1506,34 @@ void CGUIMediaWindow::SetupShares()
   }
 }
 
-bool CGUIMediaWindow::OnPopupMenu(int iItem)
+bool CGUIMediaWindow::OnPopupMenu(CFileItemPtr pItem)
 {
+  if (pItem == NULL)
+    return false;
+
   // popup the context menu
   // grab our context menu
   CContextButtons buttons;
-  GetContextButtons(iItem, buttons);
+  GetContextButtons(pItem, buttons);
 
   if (buttons.size())
   {
     // mark the item
-    if (iItem >= 0 && iItem < m_vecItems->Size())
-      m_vecItems->Get(iItem)->Select(true);
+    pItem->Select(true);
 
     int choice = CGUIDialogContextMenu::ShowAndGetChoice(buttons);
 
     // deselect our item
-    if (iItem >= 0 && iItem < m_vecItems->Size())
-      m_vecItems->Get(iItem)->Select(false);
+    pItem->Select(false);
 
     if (choice >= 0)
-      return OnContextButton(iItem, (CONTEXT_BUTTON)choice);
+      return OnContextButton(pItem, (CONTEXT_BUTTON)choice);
   }
   return false;
 }
 
-void CGUIMediaWindow::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIMediaWindow::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
-  CFileItemPtr item = (itemNumber >= 0 && itemNumber < m_vecItems->Size()) ? m_vecItems->Get(itemNumber) : CFileItemPtr();
-
   if (!item)
     return;
 
@@ -1563,27 +1572,27 @@ void CGUIMediaWindow::GetContextButtons(int itemNumber, CContextButtons &buttons
 
 }
 
-bool CGUIMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIMediaWindow::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
+  if (item == NULL)
+    return false;
+
   switch (button)
   {
   case CONTEXT_BUTTON_MARK_WATCHED:
   case CONTEXT_BUTTON_MARK_UNWATCHED:
     {
-      CFileItemPtr item = m_vecItems->Get(itemNumber);
       m_viewControl.SetSelectedItem(m_viewControl.GetSelectedItem() + 1);
       CMarkWatchedQueue::Get().AddJob(new CMarkWatchedJob(item, (button == CONTEXT_BUTTON_MARK_WATCHED)));
       return true;
     }
   case CONTEXT_BUTTON_ADD_FAVOURITE:
     {
-      CFileItemPtr item = m_vecItems->Get(itemNumber);
       XFILE::CFavouritesDirectory::AddOrRemove(item.get(), GetID());
       return true;
     }
   case CONTEXT_BUTTON_PLUGIN_SETTINGS:
     {
-      CFileItemPtr item = m_vecItems->Get(itemNumber);
       // CONTEXT_BUTTON_PLUGIN_SETTINGS can be called for plugin item
       // or script item; or for the plugin directory current listing.
       bool isPluginOrScriptItem = (item && (item->IsPlugin() || item->IsScript()));
@@ -1596,7 +1605,6 @@ bool CGUIMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     }
   case CONTEXT_BUTTON_BROWSE_INTO:
     {
-      CFileItemPtr item = m_vecItems->Get(itemNumber);
       if(Update(item->GetPath()))
         return true;
       return true;
@@ -1613,7 +1621,7 @@ bool CGUIMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   case CONTEXT_BUTTON_USER10:
     {
       std::string action = StringUtils::Format("contextmenuaction(%i)", button - CONTEXT_BUTTON_USER1);
-      CApplicationMessenger::Get().ExecBuiltIn(m_vecItems->Get(itemNumber)->GetProperty(action).asString());
+      CApplicationMessenger::Get().ExecBuiltIn(item->GetProperty(action).asString());
       return true;
     }
   default:

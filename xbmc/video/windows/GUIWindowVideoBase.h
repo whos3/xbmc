@@ -48,7 +48,7 @@ public:
   static void GetResumeItemOffset(const CFileItem *item, int& startoffset, int& partNumber);
   static bool HasResumeItemOffset(const CFileItem *item);
 
-  void AddToDatabase(int iItem);
+  void AddToDatabase(CFileItemPtr pItem);
   virtual void OnInfo(CFileItem* pItem, const ADDON::ScraperPtr& scraper);
 
   /*! \brief Show dialog allowing selection of wanted playback item */
@@ -101,32 +101,31 @@ protected:
   virtual bool CheckFilterAdvanced(CFileItemList &items) const;
   virtual bool CanContainFilter(const std::string &strDirectory) const;
 
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
-  virtual void OnQueueItem(int iItem);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
+  virtual void OnQueueItem(CFileItemPtr pItem);
   virtual void OnDeleteItem(CFileItemPtr pItem);
-  virtual void OnDeleteItem(int iItem);
   virtual void DoSearch(const CStdString& strSearch, CFileItemList& items) {};
   virtual std::string GetStartFolder(const std::string &dir);
 
-  bool OnClick(int iItem);
-  bool OnSelect(int iItem);
+  bool OnClick(CFileItemPtr pItem);
+  bool OnSelect(CFileItemPtr pItem);
   /*! \brief react to an Info action on a view item
    \param item the selected item
    \return true if the action is performed, false otherwise
    */
-  bool OnInfo(int item);
+  bool OnInfo(CFileItemPtr pItem);
   /*! \brief perform a given action on a file
    \param item the selected item
    \param action the action to perform
    \return true if the action is performed, false otherwise
    */
-  bool OnFileAction(int item, int action);
+  bool OnFileAction(CFileItemPtr pItem, int action);
 
-  void OnRestartItem(int iItem);
-  bool OnResumeItem(int iItem);
-  void PlayItem(int iItem);
-  virtual bool OnPlayMedia(int iItem);
+  void OnRestartItem(CFileItemPtr pItem);
+  bool OnResumeItem(CFileItemPtr pItem);
+  void PlayItem(CFileItemPtr pItem);
+  virtual bool OnPlayMedia(CFileItemPtr pItem);
   virtual bool OnPlayAndQueueMedia(const CFileItemPtr &item);
   void LoadPlayList(const std::string& strPlayList, int iPlayList = PLAYLIST_VIDEO);
 
@@ -142,7 +141,7 @@ protected:
 
   static bool StackingAvailable(const CFileItemList &items);
 
-  bool OnPlayStackPart(int item);
+  bool OnPlayStackPart(CFileItemPtr stack);
 
   CGUIDialogProgress* m_dlgProgress;
   CVideoDatabase m_database;

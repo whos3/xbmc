@@ -63,11 +63,10 @@ void CGUIWindowPVRGuide::UnregisterObservers(void)
   g_EpgContainer.UnregisterObserver(this);
 }
 
-void CGUIWindowPVRGuide::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowPVRGuide::GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   buttons.Add(CONTEXT_BUTTON_PLAY_ITEM, 19000);         /* switch channel */
 
@@ -101,7 +100,7 @@ void CGUIWindowPVRGuide::GetContextButtons(int itemNumber, CContextButtons &butt
       g_PVRClients->HasMenuHooks(pItem->GetEPGInfoTag()->ChannelTag()->ClientID(), PVR_MENUHOOK_EPG))
     buttons.Add(CONTEXT_BUTTON_MENU_HOOKS, 19195);      /* PVR client specific action */
 
-  CGUIWindowPVRBase::GetContextButtons(itemNumber, buttons);
+  CGUIWindowPVRBase::GetContextButtons(pItem, buttons);
 }
 
 void CGUIWindowPVRGuide::UpdateSelectedItemPath()
@@ -163,7 +162,7 @@ bool CGUIWindowPVRGuide::OnMessage(CGUIMessage& message)
               switch(CSettings::Get().GetInt("epg.selectaction"))
               {
                 case EPG_SELECT_ACTION_CONTEXT_MENU:
-                  OnPopupMenu(iItem);
+                  OnPopupMenu(pItem);
                   bReturn = true;
                   break;
                 case EPG_SELECT_ACTION_SWITCH:
@@ -194,7 +193,7 @@ bool CGUIWindowPVRGuide::OnMessage(CGUIMessage& message)
               break;
             case ACTION_CONTEXT_MENU:
             case ACTION_MOUSE_RIGHT_CLICK:
-              OnPopupMenu(iItem);
+              OnPopupMenu(pItem);
               bReturn = true;
               break;
           }
@@ -239,11 +238,10 @@ bool CGUIWindowPVRGuide::OnMessage(CGUIMessage& message)
   return bReturn || CGUIWindowPVRBase::OnMessage(message);
 }
 
-bool CGUIWindowPVRGuide::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPVRGuide::OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return false;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   return OnContextButtonPlay(pItem.get(), button) ||
       OnContextButtonInfo(pItem.get(), button) ||
@@ -252,7 +250,7 @@ bool CGUIWindowPVRGuide::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       OnContextButtonBegin(pItem.get(), button) ||
       OnContextButtonEnd(pItem.get(), button) ||
       OnContextButtonNow(pItem.get(), button) ||
-      CGUIWindowPVRBase::OnContextButton(itemNumber, button);
+      CGUIWindowPVRBase::OnContextButton(pItem, button);
 }
 
 void CGUIWindowPVRGuide::UpdateViewChannel()

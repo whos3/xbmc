@@ -31,8 +31,8 @@ namespace PVR
     virtual ~CGUIWindowPVRTimers(void) {};
 
     bool OnMessage(CGUIMessage& message);
-    void GetContextButtons(int itemNumber, CContextButtons &buttons);
-    bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+    void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+    bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
     bool Update(const std::string &strDirectory, bool updateFilterPath = true);
     void UnregisterObservers(void);
     void ResetObservers(void);

@@ -68,11 +68,11 @@ void CGUIWindowPVRChannels::UnregisterObservers(void)
   g_infoManager.UnregisterObserver(this);
 }
 
-void CGUIWindowPVRChannels::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowPVRChannels::GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
+
   CPVRChannel *channel = pItem->GetPVRChannelInfoTag();
 
   if (pItem->GetPath() == "pvr://channels/.add.channel")
@@ -106,7 +106,7 @@ void CGUIWindowPVRChannels::GetContextButtons(int itemNumber, CContextButtons &b
     buttons.Add(CONTEXT_BUTTON_UPDATE_EPG, 19251);                                    /* update EPG information */
   }
 
-  CGUIWindowPVRBase::GetContextButtons(itemNumber, buttons);
+  CGUIWindowPVRBase::GetContextButtons(pItem, buttons);
 }
 
 std::string CGUIWindowPVRChannels::GetDirectoryPath(void)
@@ -116,11 +116,10 @@ std::string CGUIWindowPVRChannels::GetDirectoryPath(void)
       m_bShowHiddenChannels ? ".hidden" : GetGroup()->GroupName().c_str());
 }
 
-bool CGUIWindowPVRChannels::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPVRChannels::OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return false;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   return OnContextButtonPlay(pItem.get(), button) ||
       OnContextButtonMove(pItem.get(), button) ||
@@ -134,7 +133,7 @@ bool CGUIWindowPVRChannels::OnContextButton(int itemNumber, CONTEXT_BUTTON butto
       OnContextButtonUpdateEpg(pItem.get(), button) ||
       OnContextButtonRecord(pItem.get(), button) ||
       OnContextButtonLock(pItem.get(), button) ||
-      CGUIWindowPVRBase::OnContextButton(itemNumber, button);
+      CGUIWindowPVRBase::OnContextButton(pItem, button);
 }
 
 bool CGUIWindowPVRChannels::Update(const std::string &strDirectory, bool updateFilterPath /* = true */)
@@ -207,7 +206,7 @@ bool CGUIWindowPVRChannels::OnMessage(CGUIMessage& message)
              break;
            case ACTION_CONTEXT_MENU:
            case ACTION_MOUSE_RIGHT_CLICK:
-             OnPopupMenu(iItem);
+             OnPopupMenu(m_vecItems->Get(iItem));
              break;
            default:
              bReturn = false;

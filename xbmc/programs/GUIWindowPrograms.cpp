@@ -78,14 +78,19 @@ bool CGUIWindowPrograms::OnMessage(CGUIMessage& message)
       {
         int iAction = message.GetParam1();
         int iItem = m_viewControl.GetSelectedItem();
+
+        CFileItemPtr item;
+        if (iItem >= 0 && iItem < m_vecItems->Size())
+          item = m_vecItems->Get(iItem);
+
         if (iAction == ACTION_PLAYER_PLAY)
         {
-          OnPlayMedia(iItem);
+          OnPlayMedia(item);
           return true;
         }
         else if (iAction == ACTION_SHOW_INFO)
         {
-          OnInfo(iItem);
+          OnInfo(item);
           return true;
         }
       }
@@ -96,11 +101,11 @@ bool CGUIWindowPrograms::OnMessage(CGUIMessage& message)
   return CGUIMediaWindow::OnMessage(message);
 }
 
-void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowPrograms::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (item == NULL)
     return;
-  CFileItemPtr item = m_vecItems->Get(itemNumber);
+
   if (item && !item->GetProperty("pluginreplacecontextitems").asBoolean())
   {
     if ( m_vecItems->IsVirtualDirectoryRoot() || m_vecItems->GetPath() == "sources://programs/" )
@@ -117,13 +122,11 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
       buttons.Add(CONTEXT_BUTTON_GOTO_ROOT, 20128); // Go to Root
     }
   }
-  CGUIMediaWindow::GetContextButtons(itemNumber, buttons);
+  CGUIMediaWindow::GetContextButtons(item, buttons);
 }
 
-bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPrograms::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
-  CFileItemPtr item = (itemNumber >= 0 && itemNumber < m_vecItems->Size()) ? m_vecItems->Get(itemNumber) : CFileItemPtr();
-
   if (CGUIDialogContextMenu::OnContextButton("programs", item, button))
   {
     Update("");
@@ -136,13 +139,13 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     return true;
 
   case CONTEXT_BUTTON_INFO:
-    OnInfo(itemNumber);
+    OnInfo(item);
     return true;
 
   default:
     break;
   }
-  return CGUIMediaWindow::OnContextButton(itemNumber, button);
+  return CGUIMediaWindow::OnContextButton(item, button);
 }
 
 bool CGUIWindowPrograms::Update(const std::string &strDirectory, bool updateFilterPath /* = true */)
@@ -157,14 +160,14 @@ bool CGUIWindowPrograms::Update(const std::string &strDirectory, bool updateFilt
   return true;
 }
 
-bool CGUIWindowPrograms::OnPlayMedia(int iItem)
+bool CGUIWindowPrograms::OnPlayMedia(CFileItemPtr pItem)
 {
-  if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return false;
-  CFileItemPtr pItem = m_vecItems->Get(iItem);
+  if (pItem == NULL)
+    return false;
 
 #ifdef HAS_DVD_DRIVE
   if (pItem->IsDVD())
-    return MEDIA_DETECT::CAutorun::PlayDiscAskResume(m_vecItems->Get(iItem)->GetPath());
+    return MEDIA_DETECT::CAutorun::PlayDiscAskResume(pItem->GetPath());
 #endif
 
   if (pItem->m_bIsFolder) return false;
@@ -218,12 +221,11 @@ std::string CGUIWindowPrograms::GetStartFolder(const std::string &dir)
   return CGUIMediaWindow::GetStartFolder(dir);
 }
 
-void CGUIWindowPrograms::OnInfo(int iItem)
+void CGUIWindowPrograms::OnInfo(CFileItemPtr item)
 {
-  if (iItem < 0 || iItem >= m_vecItems->Size())
+  if (item == NULL)
     return;
 
-  CFileItemPtr item = m_vecItems->Get(iItem);
   if (!m_vecItems->IsPlugin() && (item->IsPlugin() || item->IsScript()))
   {
     CGUIDialogAddonInfo::ShowForItem(item);

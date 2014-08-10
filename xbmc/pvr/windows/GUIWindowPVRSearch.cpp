@@ -41,11 +41,10 @@ CGUIWindowPVRSearch::CGUIWindowPVRSearch(bool bRadio) :
 {
 }
 
-void CGUIWindowPVRSearch::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowPVRSearch::GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   if (pItem->HasEPGInfoTag())
   {
@@ -75,7 +74,7 @@ void CGUIWindowPVRSearch::GetContextButtons(int itemNumber, CContextButtons &but
 
   buttons.Add(CONTEXT_BUTTON_CLEAR, 19232);             /* Clear search results */
 
-  CGUIWindowPVRBase::GetContextButtons(itemNumber, buttons);
+  CGUIWindowPVRBase::GetContextButtons(pItem, buttons);
 }
 
 void CGUIWindowPVRSearch::OnWindowLoaded()
@@ -84,17 +83,16 @@ void CGUIWindowPVRSearch::OnWindowLoaded()
   m_searchfilter.Reset();
 }
 
-bool CGUIWindowPVRSearch::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPVRSearch::OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button)
 {
-  if (itemNumber < 0 || itemNumber >= m_vecItems->Size())
+  if (pItem == NULL)
     return false;
-  CFileItemPtr pItem = m_vecItems->Get(itemNumber);
 
   return OnContextButtonClear(pItem.get(), button) ||
       OnContextButtonInfo(pItem.get(), button) ||
       OnContextButtonStopRecord(pItem.get(), button) ||
       OnContextButtonStartRecord(pItem.get(), button) ||
-      CGUIWindowPVRBase::OnContextButton(itemNumber, button);
+      CGUIWindowPVRBase::OnContextButton(pItem, button);
 }
 
 bool CGUIWindowPVRSearch::OnContextButton(const CFileItem &item, CONTEXT_BUTTON button)
@@ -192,7 +190,7 @@ bool CGUIWindowPVRSearch::OnMessage(CGUIMessage &message)
 
           case ACTION_CONTEXT_MENU:
           case ACTION_MOUSE_RIGHT_CLICK:
-            OnPopupMenu(iItem);
+            OnPopupMenu(pItem);
             return true;
 
           case ACTION_RECORD:

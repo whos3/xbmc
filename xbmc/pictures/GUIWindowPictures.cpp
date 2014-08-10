@@ -146,23 +146,27 @@ bool CGUIWindowPictures::OnMessage(CGUIMessage& message)
         int iItem = m_viewControl.GetSelectedItem();
         int iAction = message.GetParam1();
 
+        CFileItemPtr item;
+        if (iItem >= 0 && iItem < m_vecItems->Size())
+          item = m_vecItems->Get(iItem);
+
         // iItem is checked for validity inside these routines
         if (iAction == ACTION_DELETE_ITEM)
         {
           // is delete allowed?
           if (CSettings::Get().GetBool("filelists.allowfiledeletion"))
-            OnDeleteItem(iItem);
+            OnDeleteItem(item);
           else
             return false;
         }
         else if (iAction == ACTION_PLAYER_PLAY)
         {
-          ShowPicture(iItem, true);
+          ShowPicture(item, true);
           return true;
         }
         else if (iAction == ACTION_SHOW_INFO)
         {
-          OnInfo(iItem);
+          OnInfo(item);
           return true;
         }
       }
@@ -274,10 +278,10 @@ bool CGUIWindowPictures::Update(const std::string &strDirectory, bool updateFilt
   return true;
 }
 
-bool CGUIWindowPictures::OnClick(int iItem)
+bool CGUIWindowPictures::OnClick(CFileItemPtr pItem)
 {
-  if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return true;
-  CFileItemPtr pItem = m_vecItems->Get(iItem);
+  if (pItem == NULL)
+    return true;
 
   if (pItem->IsCBZ() || pItem->IsCBR())
   {
@@ -290,7 +294,7 @@ bool CGUIWindowPictures::OnClick(int iItem)
     OnShowPictureRecursive(pathToUrl.Get());
     return true;
   }
-  else if (CGUIMediaWindow::OnClick(iItem))
+  else if (CGUIMediaWindow::OnClick(pItem))
     return true;
 
   return false;
@@ -308,23 +312,27 @@ bool CGUIWindowPictures::GetDirectory(const std::string &strDirectory, CFileItem
   return true;
 }
 
-bool CGUIWindowPictures::OnPlayMedia(int iItem)
+bool CGUIWindowPictures::OnPlayMedia(CFileItemPtr pItem)
 {
-  if (m_vecItems->Get(iItem)->IsVideo())
-    return CGUIMediaWindow::OnPlayMedia(iItem);
+  if (pItem == NULL)
+    return false;
 
-  return ShowPicture(iItem, false);
+  if (pItem->IsVideo())
+    return CGUIMediaWindow::OnPlayMedia(pItem);
+
+  return ShowPicture(pItem, false);
 }
 
-bool CGUIWindowPictures::ShowPicture(int iItem, bool startSlideShow)
+bool CGUIWindowPictures::ShowPicture(CFileItemPtr pItem, bool startSlideShow)
 {
-  if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return false;
-  CFileItemPtr pItem = m_vecItems->Get(iItem);
+  if (pItem == NULL)
+    return false;
+
   CStdString strPicture = pItem->GetPath();
 
 #ifdef HAS_DVD_DRIVE
   if (pItem->IsDVD())
-    return MEDIA_DETECT::CAutorun::PlayDiscAskResume(m_vecItems->Get(iItem)->GetPath());
+    return MEDIA_DETECT::CAutorun::PlayDiscAskResume(pItem->GetPath());
 #endif
 
   if (pItem->m_bIsShareOrDrive)
@@ -455,12 +463,8 @@ void CGUIWindowPictures::OnRegenerateThumbs()
   m_thumbLoader.Load(*m_vecItems);
 }
 
-void CGUIWindowPictures::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowPictures::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
-
   if (item && !item->GetProperty("pluginreplacecontextitems").asBoolean())
   {
     if ( m_vecItems->IsVirtualDirectoryRoot() || m_vecItems->GetPath() == "sources://pictures/" )
@@ -499,14 +503,13 @@ void CGUIWindowPictures::GetContextButtons(int itemNumber, CContextButtons &butt
       }
     }
   }
-  CGUIMediaWindow::GetContextButtons(itemNumber, buttons);
+  CGUIMediaWindow::GetContextButtons(item, buttons);
   if (item && !item->GetProperty("pluginreplacecontextitems").asBoolean())
     buttons.Add(CONTEXT_BUTTON_SETTINGS, 5);                  // Settings
 }
 
-bool CGUIWindowPictures::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowPictures::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
-  CFileItemPtr item = (itemNumber >= 0 && itemNumber < m_vecItems->Size()) ? m_vecItems->Get(itemNumber) : CFileItemPtr();
   if (CGUIDialogContextMenu::OnContextButton("pictures", item, button))
   {
     Update("");
@@ -518,23 +521,23 @@ bool CGUIWindowPictures::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     if (item && item->m_bIsFolder)
       OnSlideShow(item->GetPath());
     else
-      ShowPicture(itemNumber, true);
+      ShowPicture(item, true);
     return true;
   case CONTEXT_BUTTON_RECURSIVE_SLIDESHOW:
     if (item)
       OnSlideShowRecursive(item->GetPath());
     return true;
   case CONTEXT_BUTTON_INFO:
-    OnInfo(itemNumber);
+    OnInfo(item);
     return true;
   case CONTEXT_BUTTON_REFRESH_THUMBS:
     OnRegenerateThumbs();
     return true;
   case CONTEXT_BUTTON_DELETE:
-    OnDeleteItem(itemNumber);
+    OnDeleteItem(item);
     return true;
   case CONTEXT_BUTTON_RENAME:
-    OnRenameItem(itemNumber);
+    OnRenameItem(item);
     return true;
   case CONTEXT_BUTTON_SETTINGS:
     g_windowManager.ActivateWindow(WINDOW_SETTINGS_MYPICTURES);
@@ -548,7 +551,7 @@ bool CGUIWindowPictures::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   default:
     break;
   }
-  return CGUIMediaWindow::OnContextButton(itemNumber, button);
+  return CGUIMediaWindow::OnContextButton(item, button);
 }
 
 void CGUIWindowPictures::OnItemLoaded(CFileItem *pItem)
@@ -596,9 +599,8 @@ void CGUIWindowPictures::LoadPlayList(const std::string& strPlayList)
   }
 }
 
-void CGUIWindowPictures::OnInfo(int itemNumber)
+void CGUIWindowPictures::OnInfo(CFileItemPtr item)
 {
-  CFileItemPtr item = (itemNumber >= 0 && itemNumber < m_vecItems->Size()) ? m_vecItems->Get(itemNumber) : CFileItemPtr();
   if (!item)
     return;
   if (!m_vecItems->IsPlugin() && (item->IsPlugin() || item->IsScript()))

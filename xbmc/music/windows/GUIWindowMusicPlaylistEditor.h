@@ -39,8 +39,8 @@ protected:
   virtual void UpdateButtons();
   virtual bool Update(const std::string &strDirectory, bool updateFilterPath = true);
   virtual void OnPrepareFileItems(CFileItemList &items);
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
   virtual void OnQueueItem(int iItem);
   virtual std::string GetStartFolder(const std::string &dir) { return ""; };
 
@@ -57,7 +57,7 @@ protected:
   void LoadPlaylist(const std::string &playlist);
 
   // new method
-  virtual void PlayItem(int iItem);
+  virtual void PlayItem(CFileItemPtr pItem);
 
   void DeleteRemoveableMediaDirectoryCache();
 

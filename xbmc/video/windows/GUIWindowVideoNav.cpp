@@ -100,9 +100,9 @@ bool CGUIWindowVideoNav::OnAction(const CAction &action)
     if (pItem->IsParentFolder())
       return false;
     if (pItem && pItem->GetVideoInfoTag()->m_playCount == 0)
-      return OnContextButton(m_viewControl.GetSelectedItem(),CONTEXT_BUTTON_MARK_WATCHED);
+      return OnContextButton(pItem, CONTEXT_BUTTON_MARK_WATCHED);
     if (pItem && pItem->GetVideoInfoTag()->m_playCount > 0)
-      return OnContextButton(m_viewControl.GetSelectedItem(),CONTEXT_BUTTON_MARK_UNWATCHED);
+      return OnContextButton(pItem, CONTEXT_BUTTON_MARK_UNWATCHED);
   }
   return CGUIWindowVideoBase::OnAction(action);
 }
@@ -673,7 +673,7 @@ void CGUIWindowVideoNav::DoSearch(const CStdString& strSearch, CFileItemList& it
   AppendAndClearSearchItems(tempItems, "[" + g_localizeStrings.Get(20323) + "] ", items);
 }
 
-void CGUIWindowVideoNav::PlayItem(int iItem)
+void CGUIWindowVideoNav::PlayItem(CFileItemPtr pItem)
 {
   // unlike additemtoplaylist, we need to check the items here
   // before calling it since the current playlist will be stopped
@@ -683,7 +683,7 @@ void CGUIWindowVideoNav::PlayItem(int iItem)
   if (m_vecItems->IsVirtualDirectoryRoot())
     return;
 
-  CGUIWindowVideoBase::PlayItem(iItem);
+  CGUIWindowVideoBase::PlayItem(pItem);
 }
 
 void CGUIWindowVideoNav::OnInfo(CFileItem* pItem, ADDON::ScraperPtr& scraper)
@@ -770,13 +770,9 @@ void CGUIWindowVideoNav::OnDeleteItem(CFileItemPtr pItem)
   CUtil::DeleteVideoDatabaseDirectoryCache();
 }
 
-void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowVideoNav::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
-
-  CGUIWindowVideoBase::GetContextButtons(itemNumber, buttons);
+  CGUIWindowVideoBase::GetContextButtons(item, buttons);
 
   if (item && item->GetProperty("pluginreplacecontextitems").asBoolean())
     return;
@@ -948,11 +944,8 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
   }
 }
 
-bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowVideoNav::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
-  CFileItemPtr item;
-  if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-    item = m_vecItems->Get(itemNumber);
   if (CGUIDialogContextMenu::OnContextButton("video", item, button))
   {
     //TODO should we search DB for entries from plugins?
@@ -968,6 +961,7 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   {
   case CONTEXT_BUTTON_EDIT:
     {
+      int itemNumber = m_vecItems->GetIndex(item);
       CONTEXT_BUTTON ret = (CONTEXT_BUTTON)CGUIDialogVideoInfo::ManageVideoItem(item);
       if (ret >= 0)
       {
@@ -994,7 +988,7 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       else if (button == CONTEXT_BUTTON_SET_ARTIST_THUMB)
         type = MediaTypeArtist;
       
-      bool result = CGUIDialogVideoInfo::ManageVideoItemArtwork(m_vecItems->Get(itemNumber), type);
+      bool result = CGUIDialogVideoInfo::ManageVideoItemArtwork(item, type);
       Refresh();
 
       return result;
@@ -1005,7 +999,7 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       CMusicDatabase database;
       database.Open();
       strPath = StringUtils::Format("musicdb://artists/%i/",
-                                    database.GetArtistByName(StringUtils::Join(m_vecItems->Get(itemNumber)->GetVideoInfoTag()->m_artist, g_advancedSettings.m_videoItemSeparator)));
+                                    database.GetArtistByName(StringUtils::Join(item->GetVideoInfoTag()->m_artist, g_advancedSettings.m_videoItemSeparator)));
       g_windowManager.ActivateWindow(WINDOW_MUSIC_NAV,strPath);
       return true;
     }
@@ -1015,7 +1009,7 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       CMusicDatabase database;
       database.Open();
       strPath = StringUtils::Format("musicdb://albums/%i/",
-                                    database.GetAlbumByName(m_vecItems->Get(itemNumber)->GetVideoInfoTag()->m_strAlbum));
+                                    database.GetAlbumByName(item->GetVideoInfoTag()->m_strAlbum));
       g_windowManager.ActivateWindow(WINDOW_MUSIC_NAV,strPath);
       return true;
     }
@@ -1024,8 +1018,8 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       CMusicDatabase database;
       database.Open();
       CSong song;
-      if (database.GetSong(database.GetSongByArtistAndAlbumAndTitle(StringUtils::Join(m_vecItems->Get(itemNumber)->GetVideoInfoTag()->m_artist, g_advancedSettings.m_videoItemSeparator),m_vecItems->Get(itemNumber)->GetVideoInfoTag()->m_strAlbum,
-                                                                        m_vecItems->Get(itemNumber)->GetVideoInfoTag()->m_strTitle),
+      if (database.GetSong(database.GetSongByArtistAndAlbumAndTitle(StringUtils::Join(item->GetVideoInfoTag()->m_artist, g_advancedSettings.m_videoItemSeparator), item->GetVideoInfoTag()->m_strAlbum,
+                                                                        item->GetVideoInfoTag()->m_strTitle),
                                                                         song))
       {
         CApplicationMessenger::Get().PlayFile(song);
@@ -1037,14 +1031,15 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     break;
 
   }
-  return CGUIWindowVideoBase::OnContextButton(itemNumber, button);
+  return CGUIWindowVideoBase::OnContextButton(item, button);
 }
 
-bool CGUIWindowVideoNav::OnClick(int iItem)
+bool CGUIWindowVideoNav::OnClick(CFileItemPtr item)
 {
-  CFileItemPtr item = m_vecItems->Get(iItem);
   if (!item->m_bIsFolder && item->IsVideoDb() && !item->Exists())
   {
+    int iItem = m_vecItems->GetIndex(item);
+
     CLog::Log(LOGDEBUG, "%s called on '%s' but file doesn't exist", __FUNCTION__, item->GetPath().c_str());
     if (!CGUIDialogVideoInfo::DeleteVideoItemFromDatabase(item, true))
       return true;
@@ -1104,7 +1099,7 @@ bool CGUIWindowVideoNav::OnClick(int iItem)
     return true;
   }
 
-  return CGUIWindowVideoBase::OnClick(iItem);
+  return CGUIWindowVideoBase::OnClick(item);
 }
 
 std::string CGUIWindowVideoNav::GetStartFolder(const std::string &dir)

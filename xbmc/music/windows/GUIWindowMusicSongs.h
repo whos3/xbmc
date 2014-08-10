@@ -37,14 +37,14 @@ protected:
   virtual void UpdateButtons();
   virtual bool Update(const std::string &strDirectory, bool updateFilterPath = true);
   virtual void OnPrepareFileItems(CFileItemList &items);
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
-  virtual void OnScan(int iItem);
-  virtual void OnRemoveSource(int iItem);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
+  virtual void OnScan(CFileItemPtr pItem);
+  virtual void OnRemoveSource(CFileItemPtr pItem);
   virtual std::string GetStartFolder(const std::string &dir);
 
   // new method
-  virtual void PlayItem(int iItem);
+  virtual void PlayItem(CFileItemPtr pItem);
 
   void DeleteRemoveableMediaDirectoryCache();
 

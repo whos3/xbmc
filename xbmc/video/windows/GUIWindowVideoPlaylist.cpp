@@ -321,14 +321,16 @@ void CGUIWindowVideoPlaylist::UpdateButtons()
   MarkPlaying();
 }
 
-bool CGUIWindowVideoPlaylist::OnPlayMedia(int iItem)
+bool CGUIWindowVideoPlaylist::OnPlayMedia(CFileItemPtr pItem)
 {
-  if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return false;
+  if (pItem == NULL)
+    return false;
+
+  int iItem = m_vecItems->GetIndex(pItem);
   if (g_partyModeManager.IsEnabled())
     g_partyModeManager.Play(iItem);
   else
   {
-    CFileItemPtr pItem = m_vecItems->Get(iItem);
     CStdString strPath = pItem->GetPath();
     g_playlistPlayer.SetCurrentPlaylist(PLAYLIST_VIDEO);
     // need to update Playlist FileItem's startOffset and resumePoint based on GUIWindowVideoPlaylist FileItem
@@ -340,7 +342,7 @@ bool CGUIWindowVideoPlaylist::OnPlayMedia(int iItem)
         pPlaylistItem->GetVideoInfoTag()->m_resumePoint = pItem->GetVideoInfoTag()->m_resumePoint;
     }
     // now play item
-    g_playlistPlayer.Play( iItem );
+    g_playlistPlayer.Play(iItem);
   }
   return true;
 }
@@ -388,8 +390,9 @@ void CGUIWindowVideoPlaylist::SavePlayList()
   }
 }
 
-void CGUIWindowVideoPlaylist::GetContextButtons(int itemNumber, CContextButtons &buttons)
+void CGUIWindowVideoPlaylist::GetContextButtons(CFileItemPtr item, CContextButtons &buttons)
 {
+  int itemNumber = m_vecItems->GetIndex(item);
   int itemPlaying = g_playlistPlayer.GetCurrentSong();
   if (m_movingFrom >= 0)
   {
@@ -400,9 +403,8 @@ void CGUIWindowVideoPlaylist::GetContextButtons(int itemNumber, CContextButtons 
   }
   else
   {
-    if (itemNumber > -1)
+    if (item != NULL)
     {
-      CFileItemPtr item = m_vecItems->Get(itemNumber);
       // check what players we have, if we have multiple display play with option
       VECPLAYERCORES vecCores;
       if (item->IsVideoDb())
@@ -437,15 +439,12 @@ void CGUIWindowVideoPlaylist::GetContextButtons(int itemNumber, CContextButtons 
   }
 }
 
-bool CGUIWindowVideoPlaylist::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+bool CGUIWindowVideoPlaylist::OnContextButton(CFileItemPtr item, CONTEXT_BUTTON button)
 {
   switch (button)
   {
   case CONTEXT_BUTTON_PLAY_WITH:
     {
-      CFileItemPtr item;
-      if (itemNumber >= 0 && itemNumber < m_vecItems->Size())
-        item = m_vecItems->Get(itemNumber);
       if (!item)
         break;
 
@@ -459,17 +458,17 @@ bool CGUIWindowVideoPlaylist::OnContextButton(int itemNumber, CONTEXT_BUTTON but
         CPlayerCoreFactory::Get().GetPlayers(*item, vecCores);
       g_application.m_eForcedNextPlayer = CPlayerCoreFactory::Get().SelectPlayerDialog(vecCores);
       if (g_application.m_eForcedNextPlayer != EPC_NONE)
-        OnClick(itemNumber);
+        OnClick(item);
       return true;
     }
 
   case CONTEXT_BUTTON_MOVE_ITEM:
-    m_movingFrom = itemNumber;
+    m_movingFrom = m_vecItems->GetIndex(item);
     return true;
 
   case CONTEXT_BUTTON_MOVE_HERE:
     if (m_movingFrom >= 0)
-      MoveItem(m_movingFrom, itemNumber);
+      MoveItem(m_movingFrom, m_vecItems->GetIndex(item));
     m_movingFrom = -1;
     return true;
 
@@ -478,19 +477,18 @@ bool CGUIWindowVideoPlaylist::OnContextButton(int itemNumber, CONTEXT_BUTTON but
     return true;
 
   case CONTEXT_BUTTON_MOVE_ITEM_UP:
-    OnMove(itemNumber, ACTION_MOVE_ITEM_UP);
+    OnMove(m_vecItems->GetIndex(item), ACTION_MOVE_ITEM_UP);
     return true;
 
   case CONTEXT_BUTTON_MOVE_ITEM_DOWN:
-    OnMove(itemNumber, ACTION_MOVE_ITEM_DOWN);
+    OnMove(m_vecItems->GetIndex(item), ACTION_MOVE_ITEM_DOWN);
     return true;
 
   case CONTEXT_BUTTON_DELETE:
-    RemovePlayListItem(itemNumber);
+    RemovePlayListItem(m_vecItems->GetIndex(item));
     return true;
   case CONTEXT_BUTTON_ADD_FAVOURITE:
     {
-      CFileItemPtr item = m_vecItems->Get(itemNumber);
       XFILE::CFavouritesDirectory::AddOrRemove(item.get(), GetID());
       return true;
     }
@@ -512,7 +510,7 @@ bool CGUIWindowVideoPlaylist::OnContextButton(int itemNumber, CONTEXT_BUTTON but
     break;
   }
 
-  return CGUIWindowVideoBase::OnContextButton(itemNumber, button);
+  return CGUIWindowVideoBase::OnContextButton(item, button);
 }
 
 void CGUIWindowVideoPlaylist::OnMove(int iItem, int iAction)

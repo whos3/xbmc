@@ -55,9 +55,9 @@ protected:
   \brief Will be called when an popup context menu has been asked for
   \param itemNumber List/thumb control item that has been clicked on
   */
-  virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
+  virtual void GetContextButtons(CFileItemPtr pItem, CContextButtons &buttons);
   void GetNonContextButtons(CContextButtons &buttons);
-  virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
+  virtual bool OnContextButton(CFileItemPtr pItem, CONTEXT_BUTTON button);
   /*!
   \brief Overwrite to update your gui buttons (visible, enable,...)
   */
@@ -66,7 +66,7 @@ protected:
   virtual bool GetDirectory(const std::string &strDirectory, CFileItemList &items);
   virtual void OnRetrieveMusicInfo(CFileItemList& items);
   void AddItemToPlayList(const CFileItemPtr &pItem, CFileItemList &queuedItems);
-  virtual void OnScan(int iItem) {};
+  virtual void OnScan(CFileItemPtr pItem) {};
   void OnRipCD();
   virtual std::string GetStartFolder(const std::string &dir);
 
@@ -74,13 +74,13 @@ protected:
   virtual bool CanContainFilter(const std::string &strDirectory) const;
 
   // new methods
-  virtual void PlayItem(int iItem);
-  virtual bool OnPlayMedia(int iItem);
+  virtual void PlayItem(CFileItemPtr pItem);
+  virtual bool OnPlayMedia(CFileItemPtr pItem);
 
   void RetrieveMusicInfo();
-  void OnInfo(int iItem, bool bShowInfo = true);
+  void OnInfo(CFileItemPtr pItem, bool bShowInfo = true);
   void OnInfoAll(int iItem, bool bCurrent=false, bool refresh=false);
-  virtual void OnQueueItem(int iItem);
+  virtual void OnQueueItem(CFileItemPtr pItem);
   enum ALLOW_SELECTION { SELECTION_ALLOWED = 0, SELECTION_AUTO, SELECTION_FORCED };
   bool FindAlbumInfo(const CFileItem* album, MUSIC_GRABBER::CMusicAlbumInfo& albumInfo, ALLOW_SELECTION allowSelection);
   bool FindArtistInfo(const CFileItem* artist, MUSIC_GRABBER::CMusicArtistInfo& artistInfo, ALLOW_SELECTION allowSelection);
@@ -90,7 +90,7 @@ protected:
   void ShowSongInfo(CFileItem* pItem);
   void UpdateThumb(const CAlbum &album, const CStdString &path);
 
-  void OnRipTrack(int iItem);
+  void OnRipTrack(CFileItemPtr pItem);
   void OnSearch();
   virtual void LoadPlayList(const std::string& strPlayList);
 
