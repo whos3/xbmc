@@ -553,6 +553,7 @@ public:
   const VECFILEITEMS GetList() const { return m_items; }
   CFileItemPtr Get(const std::string& strPath);
   const CFileItemPtr Get(const std::string& strPath) const;
+  int GetIndex(const CFileItemPtr &pItem) const;
   int Size() const;
   bool IsEmpty() const;
   void Append(const CFileItemList& itemlist);

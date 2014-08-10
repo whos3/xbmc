@@ -1830,6 +1830,21 @@ const CFileItemPtr CFileItemList::Get(const std::string& strPath) const
   return CFileItemPtr();
 }
 
+int CFileItemList::GetIndex(const CFileItemPtr &pItem) const
+{
+  if (pItem == NULL)
+    return -1;
+
+  CSingleLock lock(m_lock);
+  for (unsigned int i = 0; i < m_items.size(); i++)
+  {
+    if (m_items[i] == pItem)
+      return i;
+  }
+
+  return -1;
+}
+
 int CFileItemList::Size() const
 {
   CSingleLock lock(m_lock);
