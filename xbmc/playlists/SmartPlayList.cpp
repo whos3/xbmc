@@ -658,14 +658,14 @@ std::string CSmartPlaylistRule::GetBooleanQuery(const std::string &negate, const
   if (strType == "movies")
   {
     if (m_field == FieldInProgress)
-      return "movie_view.idFile " + negate + " IN (SELECT DISTINCT idFile FROM bookmark WHERE type = 1)";
+      return "movie_view.file_id " + negate + " IN (SELECT DISTINCT idFile FROM bookmark WHERE type = 1)";
     else if (m_field == FieldTrailer)
       return negate + GetField(m_field, strType) + "!= ''";
   }
   else if (strType == "episodes")
   {
     if (m_field == FieldInProgress)
-      return "episode_view.idFile " + negate + " IN (SELECT DISTINCT idFile FROM bookmark WHERE type = 1)";
+      return "episode_view.file_id " + negate + " IN (SELECT DISTINCT idFile FROM bookmark WHERE type = 1)";
   }
   else if (strType == "tvshows")
   {
@@ -831,19 +831,19 @@ std::string CSmartPlaylistRule::FormatWhereClause(const std::string &negate, con
       query = negate + " (" + GetField(m_field, strType) +  parameter + ")";
   }
   if (m_field == FieldVideoResolution)
-    query = table + ".idFile" + negate + GetVideoResolutionQuery(param);
+    query = table + ".file_id" + negate + GetVideoResolutionQuery(param);
   else if (m_field == FieldAudioChannels)
-    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".idFile AND iAudioChannels " + parameter + ")";
+    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".file_id AND iAudioChannels " + parameter + ")";
   else if (m_field == FieldVideoCodec)
-    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".idFile AND strVideoCodec " + parameter + ")";
+    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".file_id AND strVideoCodec " + parameter + ")";
   else if (m_field == FieldAudioCodec)
-    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".idFile AND strAudioCodec " + parameter + ")";
+    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".file_id AND strAudioCodec " + parameter + ")";
   else if (m_field == FieldAudioLanguage)
-    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".idFile AND strAudioLanguage " + parameter + ")";
+    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".file_id AND strAudioLanguage " + parameter + ")";
   else if (m_field == FieldSubtitleLanguage)
-    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".idFile AND strSubtitleLanguage " + parameter + ")";
+    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".file_id AND strSubtitleLanguage " + parameter + ")";
   else if (m_field == FieldVideoAspectRatio)
-    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".idFile AND fVideoAspect " + parameter + ")";
+    query = negate + " EXISTS (SELECT 1 FROM streamdetails WHERE streamdetails.idFile = " + table + ".file_id AND fVideoAspect " + parameter + ")";
   if (m_field == FieldPlaycount && strType != "songs" && strType != "albums" && strType != "tvshows")
   { // playcount IS stored as NULL OR number IN video db
     if ((m_operator == OPERATOR_EQUALS && param == "0") ||
