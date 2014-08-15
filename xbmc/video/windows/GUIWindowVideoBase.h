@@ -48,7 +48,6 @@ public:
   static void GetResumeItemOffset(const CFileItem *item, int& startoffset, int& partNumber);
   static bool HasResumeItemOffset(const CFileItem *item);
 
-  void AddToDatabase(CFileItemPtr pItem);
   virtual void OnInfo(CFileItem* pItem, const ADDON::ScraperPtr& scraper);
 
   /*! \brief Show dialog allowing selection of wanted playback item */
