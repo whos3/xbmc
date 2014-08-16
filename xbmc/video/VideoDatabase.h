@@ -577,6 +577,8 @@ public:
   bool GetPathHash(const CStdString &path, CStdString &hash);
   bool GetPaths(std::set<CStdString> &paths);
   bool GetPathsForTvShow(int idShow, std::set<int>& paths);
+  bool GetFilesForItem(int idMedia, const MediaType& mediaType, std::set<int>& files);
+  bool GetFilesForItem(int idMedia, const MediaType& mediaType, std::vector<CVideoInfoTag>& files);
 
   /*! \brief return the paths linked to a tvshow.
    \param idShow the id of the tvshow.

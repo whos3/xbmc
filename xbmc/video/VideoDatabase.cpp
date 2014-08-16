@@ -607,6 +607,59 @@ bool CVideoDatabase::GetPathsForTvShow(int idShow, set<int>& paths)
   return false;
 }
 
+bool CVideoDatabase::GetFilesForItem(int idMedia, const MediaType& mediaType, std::set<int>& files)
+{
+  if (idMedia <= 0 ||
+     (mediaType != MediaTypeMovie && mediaType != MediaTypeEpisode && mediaType != MediaTypeMusicVideo))
+    return false;
+
+  std::string sql;
+  try
+  {
+    if (m_pDB.get() == NULL || m_pDS.get() == NULL)
+      return false;
+
+    sql = PrepareSQL("SELECT DISTINCT file_link.file_id FROM file_link "
+                     "JOIN %s ON file_link.media_id = %d AND file_link.media_type = '%s'",
+                     mediaType.c_str(), idMedia, mediaType.c_str());
+    if (!m_pDS->query(sql.c_str()))
+      return false;
+
+    while (!m_pDS->eof())
+    {
+      files.insert(m_pDS->fv(0).get_asInt());
+      m_pDS->next();
+    }
+    m_pDS->close();
+
+    return true;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s error during query: %s", __FUNCTION__, sql.c_str());
+  }
+  return false;
+}
+
+bool CVideoDatabase::GetFilesForItem(int idMedia, const MediaType& mediaType, std::vector<CVideoInfoTag>& files)
+{
+  std::set<int> fileIds;
+  if (!GetFilesForItem(idMedia, mediaType, fileIds))
+    return false;
+
+  for (std::set<int>::const_iterator file = fileIds.begin(); file != fileIds.end(); ++file)
+  {
+    CVideoInfoTag fileInfo;
+    if (GetFileInfo("", fileInfo, *file))
+      files.push_back(fileInfo);
+  }
+
+  if (!fileIds.empty() && files.empty())
+    return false;
+
+  return true;
+}
+
 int CVideoDatabase::RunQuery(const CStdString &sql)
 {
   unsigned int time = XbmcThreads::SystemClockMillis();
