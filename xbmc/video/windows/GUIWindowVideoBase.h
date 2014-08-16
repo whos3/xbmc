@@ -108,7 +108,6 @@ protected:
   virtual void DoSearch(const CStdString& strSearch, CFileItemList& items) {};
   virtual std::string GetStartFolder(const std::string &dir);
 
-  bool OnClick(int iItem);
   bool OnSelect(int iItem);
   /*! \brief react to an Info action on a view item
    \param item the selected item
