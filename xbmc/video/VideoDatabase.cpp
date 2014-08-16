@@ -2304,12 +2304,9 @@ int CVideoDatabase::SetDetailsForMovieSet(const CVideoInfoTag& details, const st
 int CVideoDatabase::GetMatchingTvShow(const CVideoInfoTag &details)
 {
   // first try matching on VIDEODB_ID_TV_IDENT, then on title + year
-  int id = -1;
-  if (!details.m_strIMDBNumber.empty())
-    id = GetDbId(PrepareSQL("SELECT idShow from tvshow WHERE c%02d='%s'", VIDEODB_ID_TV_IDENT, details.m_strIMDBNumber.c_str()));
-  if (id < 0)
-    id = GetDbId(PrepareSQL("SELECT idShow FROM tvshow WHERE c%02d='%s' AND c%02d='%s'", VIDEODB_ID_TV_TITLE, details.m_strTitle.c_str(), VIDEODB_ID_TV_PREMIERED, details.m_premiered.GetAsDBDate().c_str()));
-  return id;
+ return GetDbId(PrepareSQL("SELECT idShow from tvshow "
+                            "WHERE c%02d='%s' OR (c%02d='%s' AND c%02d='%s')",
+                            VIDEODB_ID_TV_IDENT, details.m_strIMDBNumber.c_str(), VIDEODB_ID_TV_TITLE, details.m_strTitle.c_str(), VIDEODB_ID_TV_PREMIERED, details.m_premiered.GetAsDBDate().c_str()));
 }
 
 int CVideoDatabase::SetDetailsForTvShow(const vector< pair<string, string> > &paths, const CVideoInfoTag& details, const map<string, string> &artwork, const map<int, map<string, string> > &seasonArt, int idTvShow /*= -1 */)
