@@ -926,11 +926,6 @@ bool CGUIWindowVideoBase::HasResumeItemOffset(const CFileItem *item)
   return startoffset > 0;
 }
 
-bool CGUIWindowVideoBase::OnClick(CFileItemPtr pItem)
-{
-  return CGUIMediaWindow::OnClick(pItem);
-}
-
 bool CGUIWindowVideoBase::OnSelect(CFileItemPtr item)
 {
   if (item == NULL)
