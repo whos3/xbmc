@@ -1315,25 +1315,30 @@ int CVideoDatabase::GetMusicVideoId(const CStdString& strFilenameAndPath)
 }
 
 //********************************************************************************************************************************
-int CVideoDatabase::AddMovie(const CStdString& strFilenameAndPath)
+int CVideoDatabase::AddMovie(const CStdString& strFilenameAndPath, int idMovie /* = -1 */)
 {
   try
   {
     if (NULL == m_pDB.get()) return -1;
     if (NULL == m_pDS.get()) return -1;
 
-    int idMovie = GetMovieId(strFilenameAndPath);
-    if (idMovie < 0)
+    int idMovieFromFile = GetMovieId(strFilenameAndPath);
+    if (idMovieFromFile > 0)
+      return idMovieFromFile;
+
+    int idFile = AddFile(strFilenameAndPath);
+    if (idFile <= 0)
+      return -1;
+    UpdateFileDateAdded(idFile, strFilenameAndPath);
+
+    if (idMovie <= 0)
     {
-      int idFile = AddFile(strFilenameAndPath);
-      if (idFile < 0)
-        return -1;
-      UpdateFileDateAdded(idFile, strFilenameAndPath);
       m_pDS->exec("INSERT INTO movie (idMovie) VALUES (NULL)");
       idMovie = (int)m_pDS->lastinsertid();
-      if (idMovie > 0)
-        AddToLinkTable(idMovie, MediaTypeMovie, "file", idFile);
     }
+
+    if (idMovie > 0)
+      AddToLinkTable(idMovie, MediaTypeMovie, "file", idFile);
 
     return idMovie;
   }
@@ -1393,21 +1398,28 @@ int CVideoDatabase::AddTvShow()
 }
 
 //********************************************************************************************************************************
-int CVideoDatabase::AddEpisode(int idShow, const CStdString& strFilenameAndPath)
+int CVideoDatabase::AddEpisode(int idShow, const CStdString& strFilenameAndPath, int idEpisode /* = -1 */)
 {
   try
   {
     if (NULL == m_pDB.get()) return -1;
     if (NULL == m_pDS.get()) return -1;
 
+    int idEpisodeFromFile = GetEpisodeId(strFilenameAndPath);
+    if (idEpisodeFromFile > 0)
+      return idEpisodeFromFile;
+
     int idFile = AddFile(strFilenameAndPath);
     if (idFile < 0)
       return -1;
     UpdateFileDateAdded(idFile, strFilenameAndPath);
 
-    CStdString strSQL=PrepareSQL("INSERT INTO episode (idEpisode, idShow) VALUES (NULL, %i)", idShow);
-    m_pDS->exec(strSQL.c_str());
-    int idEpisode = (int)m_pDS->lastinsertid();
+    if (idEpisode <= 0)
+    {
+      m_pDS->exec(PrepareSQL("INSERT INTO episode (idEpisode, idShow) VALUES (NULL, %i)", idShow).c_str());
+      idEpisode = (int)m_pDS->lastinsertid();
+    }
+
     if (idEpisode > 0)
       AddToLinkTable(idEpisode, MediaTypeEpisode, "file", idFile);
 
@@ -1420,25 +1432,30 @@ int CVideoDatabase::AddEpisode(int idShow, const CStdString& strFilenameAndPath)
   return -1;
 }
 
-int CVideoDatabase::AddMusicVideo(const CStdString& strFilenameAndPath)
+int CVideoDatabase::AddMusicVideo(const CStdString& strFilenameAndPath, int idMVideo /* = -1 */)
 {
   try
   {
     if (NULL == m_pDB.get()) return -1;
     if (NULL == m_pDS.get()) return -1;
 
-    int idMVideo = GetMusicVideoId(strFilenameAndPath);
-    if (idMVideo < 0)
+    int idMVideoFromFile = GetMusicVideoId(strFilenameAndPath);
+    if (idMVideoFromFile > 0)
+      return idMVideoFromFile;
+
+    int idFile = AddFile(strFilenameAndPath);
+    if (idFile < 0)
+      return -1;
+    UpdateFileDateAdded(idFile, strFilenameAndPath);
+
+    if (idMVideo > 0)
     {
-      int idFile = AddFile(strFilenameAndPath);
-      if (idFile < 0)
-        return -1;
-      UpdateFileDateAdded(idFile, strFilenameAndPath);
       m_pDS->exec("INSERT INTO musicvideo (idMVideo) VALUES (NULL)");
       idMVideo = (int)m_pDS->lastinsertid();
-      if (idMVideo > 0)
-        AddToLinkTable(idMVideo, MediaTypeMusicVideo, "file", idFile);
     }
+
+    if (idMVideo > 0)
+      AddToLinkTable(idMVideo, MediaTypeMusicVideo, "file", idFile);
 
     return idMVideo;
   }

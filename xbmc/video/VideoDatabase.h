@@ -383,8 +383,8 @@ public:
   virtual bool Open();
   virtual bool CommitTransaction();
 
-  int AddMovie(const CStdString& strFilenameAndPath);
-  int AddEpisode(int idShow, const CStdString& strFilenameAndPath);
+  int AddMovie(const CStdString& strFilenameAndPath, int idMovie = -1);
+  int AddEpisode(int idShow, const CStdString& strFilenameAndPath, int idEpisode = -1);
 
   // editing functions
   /*! \brief Set the playcount of an item
@@ -786,7 +786,7 @@ protected:
   int AddActor(const CStdString& strActor, const CStdString& thumbURL, const CStdString &thumb = "");
 
   int AddTvShow();
-  int AddMusicVideo(const CStdString& strFilenameAndPath);
+  int AddMusicVideo(const CStdString& strFilenameAndPath, int idMVideo = -1);
   int AddSeason(int showID, int season);
 
   /*! \brief Adds a path to the tvshow link table.
