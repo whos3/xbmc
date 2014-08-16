@@ -804,6 +804,13 @@ protected:
    */
   int GetMatchingTvShow(const CVideoInfoTag &show);
 
+  /*! \brief Check whether a matching movie is already in the library.
+  Matches on unique identifier or matching title and year of release.
+  \param movie the details of the movie to check for.
+  \return the movie id if found, else -1.
+  */
+  int GetMatchingMovie(const CVideoInfoTag& movie);
+
   // link functions - these two do all the work
   void AddLinkToActor(int mediaId, const char *mediaType, int actorId, const CStdString &role, int order);
   void AddToLinkTable(int mediaId, const std::string& mediaType, const std::string& table, int valueId, const char *foreignKey = NULL);
