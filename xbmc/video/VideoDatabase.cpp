@@ -2107,6 +2107,17 @@ CStdString CVideoDatabase::GetValueString(const CVideoInfoTag &details, int min,
 }
 
 //********************************************************************************************************************************
+int CVideoDatabase::GetMatchingMovie(const CVideoInfoTag& movie)
+{
+  if (movie.m_strIMDBNumber.empty() &&
+     (movie.m_strTitle.empty() || movie.m_iYear <= 0))
+    return -1;
+
+  return GetDbId(PrepareSQL("SELECT idMovie FROM movie "
+                            "WHERE movie.c%02d = '%s' OR (movie.c%02d = '%s' AND movie.c%02d = %i)",
+                            VIDEODB_ID_IDENT, movie.m_strIMDBNumber.c_str(), VIDEODB_ID_TITLE, movie.m_strTitle.c_str(), VIDEODB_ID_YEAR, movie.m_iYear));
+}
+
 int CVideoDatabase::SetDetailsForMovie(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, const map<string, string> &artwork, int idMovie /* = -1 */)
 {
   try
@@ -2114,7 +2125,18 @@ int CVideoDatabase::SetDetailsForMovie(const CStdString& strFilenameAndPath, con
     BeginTransaction();
 
     if (idMovie < 0)
+    {
       idMovie = GetMovieId(strFilenameAndPath);
+
+      if (idMovie <= 0)
+      {
+        // check if we already have the same movie from a different file
+        idMovie = GetMatchingMovie(details);
+        // if the same movie already exists add the new file without adding the movie
+        if (idMovie > 0)
+          AddMovie(strFilenameAndPath, idMovie);
+      }
+    }
 
     if (idMovie > -1)
       DeleteMovie(idMovie, true); // true to keep the table entry
@@ -2155,31 +2177,6 @@ int CVideoDatabase::SetDetailsForMovie(const CStdString& strFilenameAndPath, con
 
     SetArtForItem(idMovie, MediaTypeMovie, artwork);
 
-    if (!details.m_strIMDBNumber.empty() && details.m_iYear)
-    { // query DB for any movies matching imdbid and year
-      CStdString strSQL = PrepareSQL("SELECT files.playCount, files.lastPlayed FROM movie "
-                                     "JOIN file_link ON file_link.media_id = movie.idMovie AND file_link.media_type = 'movie' "
-                                     "JOIN files ON files.idFile = file_link.idFile "
-                                     "WHERE movie.c%02d = '%s' AND movie.c%02d = %i AND movie.idMovie != %i and files.playCount > 0",
-                                     VIDEODB_ID_IDENT, details.m_strIMDBNumber.c_str(), VIDEODB_ID_YEAR, details.m_iYear, idMovie);
-      m_pDS->query(strSQL.c_str());
-
-      if (!m_pDS->eof())
-      {
-        int playCount = m_pDS->fv("files.playCount").get_asInt();
-
-        CDateTime lastPlayed;
-        lastPlayed.SetFromDBDateTime(m_pDS->fv("files.lastPlayed").get_asString());
-
-        int idFile = GetFileId(strFilenameAndPath);
-
-        // update with playCount and lastPlayed
-        strSQL = PrepareSQL("update files set playCount=%i,lastPlayed='%s' where idFile=%i", playCount, lastPlayed.GetAsDBDateTime().c_str(), idFile);
-        m_pDS->exec(strSQL.c_str());
-      }
-
-      m_pDS->close();
-    }
     // update our movie table (we know it was added already above)
     // and insert the new row
     CStdString sql = "update movie set " + GetValueString(details, VIDEODB_ID_MIN, VIDEODB_ID_MAX, DbMovieOffsets);
