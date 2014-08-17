@@ -318,9 +318,9 @@ void CVideoDatabase::CreateViews()
                                       "  episode.*,"
                                       "  files.strFileName AS strFileName,"
                                       "  path.strPath AS strPath,"
-                                      "  MAX(files.playCount) AS playCount,"
-                                      "  MAX(files.lastPlayed) AS lastPlayed,"
-                                      "  MAX(files.dateAdded) AS dateAdded,"
+                                      "  files.playCount AS playCount,"
+                                      "  files.lastPlayed AS lastPlayed,"
+                                      "  files.dateAdded AS dateAdded,"
                                       "  tvshow.c%02d AS strTitle,"
                                       "  tvshow.c%02d AS studio,"
                                       "  tvshow.c%02d AS premiered,"
@@ -341,8 +341,7 @@ void CVideoDatabase::CreateViews()
                                       "  JOIN path ON"
                                       "    files.idPath=path.idPath"
                                       "  LEFT JOIN bookmark ON"
-                                      "    bookmark.idFile=file_link.file_id AND bookmark.type=1 "
-                                      "GROUP BY episode.idEpisode",
+                                      "    bookmark.idFile=file_link.file_id AND bookmark.type=1",
                                       VIDEODB_ID_TV_TITLE, VIDEODB_ID_TV_STUDIOS, VIDEODB_ID_TV_PREMIERED, VIDEODB_ID_TV_MPAA,VIDEODB_ID_EPISODE_SEASON);
   m_pDS->exec(episodeview.c_str());
 
@@ -413,9 +412,9 @@ void CVideoDatabase::CreateViews()
               "  musicvideo.*,"
               "  files.strFileName as strFileName,"
               "  path.strPath as strPath,"
-              "  MAX(files.playCount) as playCount,"
-              "  MAX(files.lastPlayed) as lastPlayed,"
-              "  MAX(files.dateAdded) as dateAdded, "
+              "  files.playCount as playCount,"
+              "  files.lastPlayed as lastPlayed,"
+              "  files.dateAdded as dateAdded, "
               "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
               "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
               "  file_link.file_id AS file_id "
@@ -427,8 +426,7 @@ void CVideoDatabase::CreateViews()
               "  JOIN path ON"
               "    path.idPath=files.idPath"
               "  LEFT JOIN bookmark ON"
-              "    bookmark.idFile=file_link.file_id AND bookmark.type=1 "
-              "GROUP BY musicvideo.idMVideo");
+              "    bookmark.idFile=file_link.file_id AND bookmark.type=1");
 
   CLog::Log(LOGINFO, "create movie_view");
   m_pDS->exec("CREATE VIEW movie_view AS SELECT"
@@ -436,9 +434,9 @@ void CVideoDatabase::CreateViews()
               "  sets.strSet AS strSet,"
               "  files.strFileName AS strFileName,"
               "  path.strPath AS strPath,"
-              "  MAX(files.playCount) AS playCount,"
-              "  MAX(files.lastPlayed) AS lastPlayed, "
-              "  MAX(files.dateAdded) AS dateAdded, "
+              "  files.playCount AS playCount,"
+              "  files.lastPlayed AS lastPlayed, "
+              "  files.dateAdded AS dateAdded, "
               "  bookmark.timeInSeconds AS resumeTimeInSeconds, "
               "  bookmark.totalTimeInSeconds AS totalTimeInSeconds, "
               "  file_link.file_id AS file_id "
@@ -452,8 +450,7 @@ void CVideoDatabase::CreateViews()
               "  JOIN path ON"
               "    path.idPath=files.idPath"
               "  LEFT JOIN bookmark ON"
-              "    bookmark.idFile=file_link.file_id AND bookmark.type=1 "
-              "GROUP BY movie.idMovie");
+              "    bookmark.idFile=file_link.file_id AND bookmark.type=1");
 }
 
 //********************************************************************************************************************************
@@ -1871,7 +1868,15 @@ bool CVideoDatabase::GetMovieInfo(const CStdString& strFilenameAndPath, CVideoIn
       idMovie = GetMovieId(strFilenameAndPath);
     if (idMovie < 0) return false;
 
-    CStdString sql = PrepareSQL("select * from movie_view where idMovie=%i", idMovie);
+    CStdString sql = PrepareSQL("SELECT * FROM movie_view WHERE idMovie = %i", idMovie);
+    if (!strFilenameAndPath.empty())
+    {
+      int idFile = GetFileId(strFilenameAndPath);
+      if (idFile > 0)
+        sql += PrepareSQL(" AND file_id = %i", idFile);
+    }
+    sql += " GROUP BY idMovie";
+
     if (!m_pDS->query(sql.c_str()))
       return false;
     details = GetDetailsForMovie(m_pDS, true);
@@ -1959,7 +1964,15 @@ bool CVideoDatabase::GetEpisodeInfo(const CStdString& strFilenameAndPath, CVideo
       idEpisode = GetEpisodeId(strFilenameAndPath);
     if (idEpisode < 0) return false;
 
-    CStdString sql = PrepareSQL("select * from episode_view where idEpisode=%i",idEpisode);
+    CStdString sql = PrepareSQL("SELECT * FROM episode_view WHERE idEpisode = %i", idEpisode);
+    if (!strFilenameAndPath.empty())
+    {
+      int idFile = GetFileId(strFilenameAndPath);
+      if (idFile > 0)
+        sql += PrepareSQL(" AND file_id = %i", idFile);
+    }
+    sql += " GROUP BY idEpisode";
+
     if (!m_pDS->query(sql.c_str()))
       return false;
     details = GetDetailsForEpisode(m_pDS, true);
@@ -1981,7 +1994,15 @@ bool CVideoDatabase::GetMusicVideoInfo(const CStdString& strFilenameAndPath, CVi
       idMVideo = GetMusicVideoId(strFilenameAndPath);
     if (idMVideo < 0) return false;
 
-    CStdString sql = PrepareSQL("select * from musicvideo_view where idMVideo=%i", idMVideo);
+    CStdString sql = PrepareSQL("SELECT * FROM musicvideo_view WHERE idMVideo = %i", idMVideo);
+    if (!strFilenameAndPath.empty())
+    {
+      int idFile = GetFileId(strFilenameAndPath);
+      if (idFile > 0)
+        sql += PrepareSQL(" AND file_id = %i", idFile);
+    }
+    sql += " GROUP BY idMVideo";
+
     if (!m_pDS->query(sql.c_str()))
       return false;
     details = GetDetailsForMusicVideo(m_pDS, true);
