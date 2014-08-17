@@ -1267,7 +1267,8 @@ void CGUIWindowVideoBase::GetContextButtons(int itemNumber, CContextButtons &but
       // if autoresume is enabled then add restart video button
       // check to see if the Resume Video button is applicable
       // only if the video is NOT a DVD (in that case the resume button will be added by CGUIDialogContextMenu::GetContextButtons)
-      if (!item->IsDVD() && HasResumeItemOffset(item.get()))
+      // and NOT a folder (those can't be resumed)
+      if (!item->IsDVD() && !item->m_bIsFolder && HasResumeItemOffset(item.get()))
         buttons.Add(CONTEXT_BUTTON_RESUME_ITEM, GetResumeString(*(item.get())));     // Resume Video
 
       //if the item isn't a folder or script, is a member of a list rather than a single item
