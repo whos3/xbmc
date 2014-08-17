@@ -380,16 +380,37 @@ bool CVideoThumbLoader::LoadItemLookup(CFileItem* pItem)
     }
 
     // flag extraction
-    if (CSettings::Get().GetBool("myvideos.extractflags") &&
-       (!pItem->HasVideoInfoTag()                     ||
-        !pItem->GetVideoInfoTag()->HasStreamDetails() ) )
+    if (CSettings::Get().GetBool("myvideos.extractflags"))
     {
-      CFileItem item(*pItem);
-      CStdString path(item.GetPath());
-      if (URIUtils::IsInRAR(item.GetPath()))
-        SetupRarOptions(item,path);
-      CThumbExtractor* extract = new CThumbExtractor(item,path,false);
-      AddJob(extract);
+      std::vector<CFileItem> items;
+      if (!pItem->HasVideoInfoTag() || pItem->GetVideoInfoTag()->m_iDbId <= 0)
+        items.push_back(CFileItem(*pItem));
+      else
+      {
+        // handle media items with multiple files
+        std::vector<CVideoInfoTag> files;
+        if (m_videoDatabase->GetFilesForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, files) && files.size() >= 0)
+        {
+          for (std::vector<CVideoInfoTag>::const_iterator file = files.begin(); file != files.end(); ++file)
+          {
+            CFileItem item(*pItem);
+            item.GetVideoInfoTag()->SetFileDetails(*file);
+            items.push_back(item);
+          }
+        }
+      }
+
+      for (std::vector<CFileItem>::iterator item = items.begin(); item != items.end(); ++item)
+      {
+        if (!item->HasVideoInfoTag() || !item->GetVideoInfoTag()->HasStreamDetails())
+        {
+          CStdString path(item->GetPath());
+          if (URIUtils::IsInRAR(item->GetPath()))
+            SetupRarOptions(*item, path);
+          CThumbExtractor* extract = new CThumbExtractor(*item, path, false);
+          AddJob(extract);
+        }
+      }
     }
   }
 
