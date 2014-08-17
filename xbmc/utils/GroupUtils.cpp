@@ -32,7 +32,7 @@
 
 using namespace std;
 
-typedef map<int, set<CFileItemPtr> > SetMap;
+typedef map<int, set<CFileItemPtr> > GroupMap;
 
 bool GroupUtils::Group(GroupBy groupBy, const std::string &baseDir, const CFileItemList &items, CFileItemList &groupedItems, GroupAttribute groupAttributes /* = GroupAttributeNone */)
 {
@@ -43,7 +43,8 @@ bool GroupUtils::Group(GroupBy groupBy, const std::string &baseDir, const CFileI
   if (items.Size() <= 0)
     return true;
 
-  SetMap setMap;
+  GroupMap setMap;
+  GroupMap itemMap;
   for (int index = 0; index < items.Size(); index++)
   {
     bool add = true;
@@ -56,6 +57,12 @@ bool GroupUtils::Group(GroupBy groupBy, const std::string &baseDir, const CFileI
       add = false;
       setMap[item->GetVideoInfoTag()->m_iSetId].insert(item);
     }
+    if (add && (groupBy & GroupByItem) &&
+        item->HasVideoInfoTag() && item->GetVideoInfoTag()->m_iDbId > 0)
+    {
+      add = false;
+      itemMap[item->GetVideoInfoTag()->m_iDbId].insert(item);
+    }
 
     if (add)
       groupedItems.Add(item);
@@ -67,7 +74,7 @@ bool GroupUtils::Group(GroupBy groupBy, const std::string &baseDir, const CFileI
     if (!itemsUrl.FromString(baseDir))
       return false;
 
-    for (SetMap::const_iterator set = setMap.begin(); set != setMap.end(); ++set)
+    for (GroupMap::const_iterator set = setMap.begin(); set != setMap.end(); ++set)
     {
       // only one item in the set, so just re-add it
       if (set->second.size() == 1 && (groupAttributes & GroupAttributeIgnoreSingleItems))
@@ -142,6 +149,89 @@ bool GroupUtils::Group(GroupBy groupBy, const std::string &baseDir, const CFileI
       pItem->SetProperty("watched", iWatched);
       pItem->SetProperty("unwatched", (int)set->second.size() - iWatched);
       pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, setInfo->m_playCount > 0);
+
+      groupedItems.Add(pItem);
+    }
+  }
+
+  if ((groupBy & GroupByItem) && !itemMap.empty())
+  {
+    std::set<CStreamDetail::StreamType> streamTypes;
+    streamTypes.insert(CStreamDetail::VIDEO);
+    streamTypes.insert(CStreamDetail::AUDIO);
+    streamTypes.insert(CStreamDetail::SUBTITLE);
+
+    for (GroupMap::const_iterator itItem = itemMap.begin(); itItem != itemMap.end(); ++itItem)
+    {
+      // only one item in the set, so just re-add it
+      if (itItem->second.size() == 1)
+      {
+        groupedItems.Add(*itItem->second.begin());
+        continue;
+      }
+
+      CFileItemPtr pItem(*itItem->second.begin());
+      CVideoInfoTag* info = pItem->GetVideoInfoTag();
+      pItem->m_bIsFolder = true;
+
+      int iWatched = 0; // have all the items been played at least once?
+
+      // go through all items that are the same (start with the second because the first is already used as a base
+      for (std::set<CFileItemPtr>::const_iterator item = ++itItem->second.begin(); item != itItem->second.end(); ++item)
+      {
+        CVideoInfoTag* itemInfo = (*item)->GetVideoInfoTag();
+
+        // handle lastplayed
+        if (itemInfo->m_lastPlayed.IsValid() && itemInfo->m_lastPlayed > info->m_lastPlayed)
+          info->m_lastPlayed = itemInfo->m_lastPlayed;
+
+        // handle dateadded
+        if (itemInfo->m_dateAdded.IsValid() && itemInfo->m_dateAdded > info->m_dateAdded)
+          info->m_dateAdded = itemInfo->m_dateAdded;
+
+        // handle playcount/watched
+        info->m_playCount += itemInfo->m_playCount;
+        if (itemInfo->m_playCount > 0)
+          iWatched++;
+
+        // put together all available "best" streams
+        if (itemInfo->HasStreamDetails())
+        {
+          for (std::set<CStreamDetail::StreamType>::const_iterator streamType = streamTypes.begin(); streamType != streamTypes.end(); ++streamType)
+          {
+            if (itemInfo->m_streamDetails.GetStreamCount(*streamType) > 0)
+            {
+              CStreamDetail* newStream = NULL;
+              const CStreamDetail* stream = itemInfo->m_streamDetails.GetNthStream(*streamType, 0);
+              switch (*streamType)
+              {
+              case CStreamDetail::VIDEO:
+                newStream = new CStreamDetailVideo(*static_cast<const CStreamDetailVideo*>(stream));
+                break;
+
+              case CStreamDetail::AUDIO:
+                newStream = new CStreamDetailAudio(*static_cast<const CStreamDetailAudio*>(stream));
+                break;
+
+              case CStreamDetail::SUBTITLE:
+                newStream = new CStreamDetailSubtitle(*static_cast<const CStreamDetailSubtitle*>(stream));
+                break;
+              }
+
+              if (newStream != NULL)
+                info->m_streamDetails.AddStream(newStream);
+            }
+          }
+        }
+      }
+
+      // determine the best streams
+      info->m_streamDetails.DetermineBestStreams();
+
+      pItem->SetProperty("total", (int)itItem->second.size());
+      pItem->SetProperty("watched", iWatched);
+      pItem->SetProperty("unwatched", (int)itItem->second.size() - iWatched);
+      pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, info->m_playCount > 0);
 
       groupedItems.Add(pItem);
     }
