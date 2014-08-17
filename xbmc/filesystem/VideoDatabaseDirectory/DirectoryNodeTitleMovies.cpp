@@ -30,6 +30,32 @@ CDirectoryNodeTitleMovies::CDirectoryNodeTitleMovies(const std::string& strName,
 
 }
 
+NODE_TYPE CDirectoryNodeTitleMovies::GetChildType() const
+{
+  std::string name = GetName();
+  if (name.empty())
+    return NODE_TYPE_NONE;
+
+  char *end = NULL;
+  int idMovie = strtol(name.c_str(), &end, 0);
+  if ((end != NULL && *end != '\0') ||
+      idMovie <= 0)
+    return NODE_TYPE_NONE;
+
+  CVideoDatabase videodatabase;
+  if (!videodatabase.Open())
+    return NODE_TYPE_NONE;
+
+  std::set<int> files;
+  bool result = videodatabase.GetFilesForItem(idMovie, MediaTypeMovie, files);
+  videodatabase.Close();
+
+  if (result && files.size() > 1)
+    return NODE_TYPE_TITLE_MOVIES;
+
+  return NODE_TYPE_NONE;
+}
+
 bool CDirectoryNodeTitleMovies::GetContent(CFileItemList& items) const
 {
   CVideoDatabase videodatabase;
@@ -39,7 +65,18 @@ bool CDirectoryNodeTitleMovies::GetContent(CFileItemList& items) const
   CQueryParams params;
   CollectQueryParams(params);
 
-  bool bSuccess=videodatabase.GetMoviesNav(BuildPath(), items, params.GetGenreId(), params.GetYear(), params.GetActorId(), params.GetDirectorId(), params.GetStudioId(), params.GetCountryId(), params.GetSetId(), params.GetTagId());
+  bool bSuccess = false;
+  if (params.GetMovieId() <= 0)
+    bSuccess = videodatabase.GetMoviesNav(BuildPath(), items, params.GetGenreId(), params.GetYear(), params.GetActorId(), params.GetDirectorId(), params.GetStudioId(), params.GetCountryId(), params.GetSetId(), params.GetTagId());
+  else
+  {
+    CVideoDbUrl videoUrl;
+    if (videoUrl.FromString(BuildPath()))
+    {
+      videoUrl.AddOption("movieid", params.GetMovieId());
+      bSuccess = videodatabase.GetMoviesByWhere(videoUrl.ToString(), CDatabase::Filter(), items);
+    }
+  }
 
   videodatabase.Close();
 

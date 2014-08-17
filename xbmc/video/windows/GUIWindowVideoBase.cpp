@@ -1790,12 +1790,21 @@ void CGUIWindowVideoBase::GetGroupedItems(CFileItemList &items)
     CVideoDatabaseDirectory dir;
     dir.GetQueryParams(items.GetPath(), params);
     VIDEODATABASEDIRECTORY::NODE_TYPE nodeType = CVideoDatabaseDirectory::GetDirectoryChildType(m_strFilterPath);
-    if (items.GetContent() == "movies" && params.GetSetId() <= 0 &&
-        nodeType == NODE_TYPE_TITLE_MOVIES &&
-       (CSettings::Get().GetBool("videolibrary.groupmoviesets") || (StringUtils::EqualsNoCase(group, "sets") && mixed)))
+    GroupBy groupBy = GroupByNone;
+    if ((items.GetContent() == "movies" && nodeType == NODE_TYPE_TITLE_MOVIES && params.GetMovieId() <= 0) ||
+        (items.GetContent() == "episodes" && nodeType == NODE_TYPE_EPISODES && params.GetEpisodeId() <= 0) ||
+        (items.GetContent() == "musicvideo" && nodeType == NODE_TYPE_TITLE_MUSICVIDEOS && params.GetMVideoId() <= 0))
+    {
+      groupBy = GroupByItem;
+      if (items.GetContent() == "movies" && params.GetSetId() <= 0 &&
+         (CSettings::Get().GetBool("videolibrary.groupmoviesets") || (StringUtils::EqualsNoCase(group, "sets") && mixed)))
+        groupBy = (GroupBy)(groupBy | GroupBySet);
+    }
+
+    if (groupBy != GroupByNone)
     {
       CFileItemList groupedItems;
-      if (GroupUtils::Group(GroupBySet, m_strFilterPath, items, groupedItems, GroupAttributeIgnoreSingleItems))
+      if (GroupUtils::Group(groupBy, m_strFilterPath, items, groupedItems, GroupAttributeIgnoreSingleItems))
       {
         items.ClearItems();
         items.Append(groupedItems);
