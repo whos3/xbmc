@@ -811,6 +811,13 @@ protected:
   */
   int GetMatchingMovie(const CVideoInfoTag& movie);
 
+  /*! \brief Check whether a matching episode is already in the library.
+  Matches on the tvshow, season and episode number.
+  \param episode the details of the episode to check for.
+  \return the episode id if found, else -1.
+  */
+  int GetMatchingEpisode(const CVideoInfoTag& episode);
+
   // link functions - these two do all the work
   void AddLinkToActor(int mediaId, const char *mediaType, int actorId, const CStdString &role, int order);
   void AddToLinkTable(int mediaId, const std::string& mediaType, const std::string& table, int valueId, const char *foreignKey = NULL);
