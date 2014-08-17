@@ -1241,15 +1241,13 @@ void CGUIWindowVideoBase::GetContextButtons(CFileItemPtr item, CContextButtons &
         // allow a folder to be ad-hoc queued and played by the default player
         if (item->m_bIsFolder || (item->IsPlayList() &&
            !g_advancedSettings.m_playlistAsFolders))
-        {
           buttons.Add(CONTEXT_BUTTON_PLAY_ITEM, 208);
-        }
 
-        if (!m_vecItems->GetPath().empty() && !StringUtils::StartsWithNoCase(item->GetPath(), "newsmartplaylist://") && !StringUtils::StartsWithNoCase(item->GetPath(), "newtag://")
-            && !m_vecItems->IsSourcesPath())
-        {
+        if (!m_vecItems->GetPath().empty() &&
+            !StringUtils::StartsWithNoCase(item->GetPath(), "newsmartplaylist://") &&
+            !StringUtils::StartsWithNoCase(item->GetPath(), "newtag://") &&
+            !m_vecItems->IsSourcesPath())
           buttons.Add(CONTEXT_BUTTON_QUEUE_ITEM, 13347);      // Add to Playlist
-        }
       }
 
       if (!m_vecItems->IsPlugin() && (item->IsPlugin() || item->IsScript()))
@@ -1269,17 +1267,13 @@ void CGUIWindowVideoBase::GetContextButtons(CFileItemPtr item, CContextButtons &
           buttons.Add(CONTEXT_BUTTON_PLAY_WITH, 15213);
       }
       if (item->IsSmartPlayList())
-      {
         buttons.Add(CONTEXT_BUTTON_PLAY_PARTYMODE, 15216); // Play in Partymode
-      }
 
       // if autoresume is enabled then add restart video button
       // check to see if the Resume Video button is applicable
       // only if the video is NOT a DVD (in that case the resume button will be added by CGUIDialogContextMenu::GetContextButtons)
       if (!item->IsDVD() && HasResumeItemOffset(item.get()))
-      {
         buttons.Add(CONTEXT_BUTTON_RESUME_ITEM, GetResumeString(*(item.get())));     // Resume Video
-      }
 
       int itemNumber = m_vecItems->GetIndex(item);
 
