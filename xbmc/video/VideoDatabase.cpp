@@ -2519,16 +2519,43 @@ int CVideoDatabase::AddSeason(int showID, int season)
   return seasonId;
 }
 
+int CVideoDatabase::GetMatchingMusicVideo(const CVideoInfoTag& musicvideo)
+{
+  if (musicvideo.m_strTitle.empty() || musicvideo.m_artist.empty())
+    return -1;
+
+  string sql = PrepareSQL("SELECT idMVideo FROM musicvideo "
+                          "WHERE musicvideo.c%02d = '%s' AND musicvideo.c%02d = '%s'",
+                          VIDEODB_ID_MUSICVIDEO_TITLE, musicvideo.m_strTitle.c_str(),
+                          VIDEODB_ID_MUSICVIDEO_ARTIST, StringUtils::Join(musicvideo.m_artist, g_advancedSettings.m_videoItemSeparator).c_str());
+  if (!musicvideo.m_strAlbum.empty())
+    sql += PrepareSQL(" AND musicvideo.c%02d = '%s'",
+                      VIDEODB_ID_MUSICVIDEO_ALBUM, musicvideo.m_strAlbum.c_str());
+
+  return GetDbId(sql);
+}
+
 int CVideoDatabase::SetDetailsForMusicVideo(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, const map<string, string> &artwork, int idMVideo /* = -1 */)
 {
   try
   {
     BeginTransaction();
 
-    if (idMVideo < 0)
+    if (idMVideo <= 0)
+    {
       idMVideo = GetMusicVideoId(strFilenameAndPath);
 
-    if (idMVideo > -1)
+      if (idMVideo <= 0)
+      {
+        // check if we already have the same musicvideo from a different file
+        idMVideo = GetMatchingMusicVideo(details);
+        // if the same musicvideo already exists add the new file without adding the musicvideo
+        if (idMVideo > 0)
+          AddMusicVideo(strFilenameAndPath, idMVideo);
+      }
+    }
+
+    if (idMVideo > 0)
       DeleteMusicVideo(idMVideo, true); // Keep id
     else
     {
@@ -2536,7 +2563,7 @@ int CVideoDatabase::SetDetailsForMusicVideo(const CStdString& strFilenameAndPath
       // (DeleteMusicVideo is called with bKeepId == true so the musicvideo won't
       // be removed from the musicvideo table)
       idMVideo = AddMusicVideo(strFilenameAndPath);
-      if (idMVideo < 0)
+      if (idMVideo <= 0)
       {
         RollbackTransaction();
         return -1;

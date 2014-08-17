@@ -818,6 +818,13 @@ protected:
   */
   int GetMatchingEpisode(const CVideoInfoTag& episode);
 
+  /*! \brief Check whether a matching musicvideo is already in the library.
+  Matches on the title, album and artist.
+  \param musicvideo the details of the musicvideo to check for.
+  \return the musicvideo id if found, else -1.
+  */
+  int GetMatchingMusicVideo(const CVideoInfoTag& musicvideo);
+
   // link functions - these two do all the work
   void AddLinkToActor(int mediaId, const char *mediaType, int actorId, const CStdString &role, int order);
   void AddToLinkTable(int mediaId, const std::string& mediaType, const std::string& table, int valueId, const char *foreignKey = NULL);
