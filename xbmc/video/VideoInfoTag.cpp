@@ -820,3 +820,16 @@ unsigned int CVideoInfoTag::GetDurationFromMinuteString(const std::string &runti
   }
   return duration*60;
 }
+
+void CVideoInfoTag::SetFileDetails(const CVideoInfoTag& file)
+{
+  m_iFileId = file.m_iFileId;
+  m_streamDetails = file.m_streamDetails;
+  m_strFile = file.m_strFile;
+  m_strFileNameAndPath = file.m_strFileNameAndPath;
+  m_strPath = file.m_strPath;
+  m_dateAdded = file.m_dateAdded;
+  m_lastPlayed = file.m_lastPlayed;
+  m_playCount = file.m_playCount;
+  m_resumePoint = file.m_resumePoint;
+}
