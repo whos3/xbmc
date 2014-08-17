@@ -9509,6 +9509,10 @@ bool CVideoDatabase::GetFilter(CDbUrl &videoUrl, Filter &filter, SortDescription
 
   if (type == "movies")
   {
+    option = options.find("movieid");
+    if (option != options.end())
+    filter.AppendWhere(PrepareSQL("movie_view.idMovie = %i", (int)option->second.asInteger()));
+
     AppendIdLinkFilter("genre", "genre", "movie", "movie", "idMovie", options, filter);
     AppendLinkFilter("genre", "genre", "movie", "movie", "idMovie", options, filter);
 
@@ -9579,6 +9583,10 @@ bool CVideoDatabase::GetFilter(CDbUrl &videoUrl, Filter &filter, SortDescription
     }
     else if (itemType == "episodes")
     {
+      option = options.find("episodeid");
+      if (option != options.end())
+        filter.AppendWhere(PrepareSQL("episode_view.idEpisode = %i", (int)option->second.asInteger()));
+
       int idShow = -1;
       option = options.find("tvshowid");
       if (option != options.end())
@@ -9634,6 +9642,10 @@ bool CVideoDatabase::GetFilter(CDbUrl &videoUrl, Filter &filter, SortDescription
   }
   else if (type == "musicvideos")
   {
+    option = options.find("musicvideoid");
+    if (option != options.end())
+      filter.AppendWhere(PrepareSQL("musicvideo_view.idMVideo = %i", (int)option->second.asInteger()));
+
     AppendIdLinkFilter("genre", "genre", "musicvideo", "musicvideo", "idMVideo", options, filter);
     AppendLinkFilter("genre", "genre", "musicvideo", "musicvideo", "idMVideo", options, filter);
 
