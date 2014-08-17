@@ -2415,13 +2415,41 @@ int CVideoDatabase::SetDetailsForSeason(const CVideoInfoTag& details, const std:
   return -1;
 }
 
+int CVideoDatabase::GetMatchingEpisode(const CVideoInfoTag& episode)
+{
+  if (episode.m_strUniqueId.empty() &&
+     (episode.m_iIdShow <= 0 || episode.m_iSeason < 0 ||
+     (episode.m_strTitle.empty() && episode.m_iEpisode < 0)))
+    return -1;
+
+  return GetDbId(PrepareSQL("SELECT idEpisode FROM episode "
+                            "WHERE episode.c%02d = '%s' OR "
+                            "(episode.idShow = %d AND episode.c%02d = '%s' AND (episode.c%02d = %i OR episode.c%02d = '%s'))",
+                            VIDEODB_ID_EPISODE_UNIQUEID, episode.m_strIMDBNumber.c_str(),
+                            episode.m_iIdShow, VIDEODB_ID_EPISODE_SEASON, episode.m_iSeason,
+                            VIDEODB_ID_EPISODE_EPISODE, episode.m_iEpisode, VIDEODB_ID_EPISODE_TITLE, episode.m_strTitle.c_str()));
+}
+
 int CVideoDatabase::SetDetailsForEpisode(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, const map<string, string> &artwork, int idShow, int idEpisode)
 {
   try
   {
     BeginTransaction();
-    if (idEpisode < 0)
+    if (idEpisode <= 0)
+    {
       idEpisode = GetEpisodeId(strFilenameAndPath);
+
+      if (idEpisode <= 0)
+      {
+        CVideoInfoTag detailsCopy = details;
+        detailsCopy.m_iIdShow = idShow;
+        // check if we already have the same episode from a different file
+        idEpisode = GetMatchingEpisode(detailsCopy);
+        // if the same episode already exists add the new file without adding the episode
+        if (idEpisode > 0)
+          AddEpisode(idShow, strFilenameAndPath, idEpisode);
+      }
+    }
 
     if (idEpisode > 0)
       DeleteEpisode(idEpisode, true); // true to keep the table entry
@@ -2431,7 +2459,7 @@ int CVideoDatabase::SetDetailsForEpisode(const CStdString& strFilenameAndPath, c
       // (DeleteEpisode is called with bKeepId == true so the episode won't
       // be removed from the episode table)
       idEpisode = AddEpisode(idShow,strFilenameAndPath);
-      if (idEpisode < 0)
+      if (idEpisode <= 0)
       {
         RollbackTransaction();
         return -1;
@@ -2455,31 +2483,6 @@ int CVideoDatabase::SetDetailsForEpisode(const CStdString& strFilenameAndPath, c
 
     SetArtForItem(idEpisode, MediaTypeEpisode, artwork);
 
-    if (details.m_iEpisode != -1 && details.m_iSeason != -1)
-    { // query DB for any episodes matching idShow, Season and Episode
-      CStdString strSQL = PrepareSQL("SELECT files.playCount, files.lastPlayed FROM episode "
-                                     "JOIN file_link ON file_link.media_id = episode.idEpisode AND file_link.media_type = 'episode' "
-                                     "JOIN files ON files.idFile = file_link.idFile "
-                                     "WHERE episode.c%02d = %i and episode.c%02d = %i AND episode.idShow = %i and episode.idEpisode != %i and files.playCount > 0",
-                                     VIDEODB_ID_EPISODE_SEASON, details.m_iSeason, VIDEODB_ID_EPISODE_EPISODE, details.m_iEpisode, idShow, idEpisode);
-      m_pDS->query(strSQL.c_str());
-
-      if (!m_pDS->eof())
-      {
-        int playCount = m_pDS->fv("files.playCount").get_asInt();
-
-        CDateTime lastPlayed;
-        lastPlayed.SetFromDBDateTime(m_pDS->fv("files.lastPlayed").get_asString());
-
-        int idFile = GetFileId(strFilenameAndPath);
-
-        // update with playCount and lastPlayed
-        strSQL = PrepareSQL("update files set playCount=%i,lastPlayed='%s' where idFile=%i", playCount, lastPlayed.GetAsDBDateTime().c_str(), idFile);
-        m_pDS->exec(strSQL.c_str());
-      }
-
-      m_pDS->close();
-    }
     // and insert the new row
     CStdString sql = "update episode set " + GetValueString(details, VIDEODB_ID_EPISODE_MIN, VIDEODB_ID_EPISODE_MAX, DbEpisodeOffsets);
     sql += PrepareSQL(" where idEpisode=%i", idEpisode);
