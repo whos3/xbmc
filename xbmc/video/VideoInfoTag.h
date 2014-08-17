@@ -92,6 +92,11 @@ public:
    */
   static unsigned int GetDurationFromMinuteString(const std::string &runtime);
 
+  /*! \brief sets all file specific properties from the given object
+   \param file object containing file specific properties
+   */
+  void SetFileDetails(const CVideoInfoTag& file);
+
   CStdString m_basePath; // the base path of the video, for folder-based lookups
   int m_parentPathID;      // the parent path id where the base path of the video lies
   std::vector<std::string> m_director;
