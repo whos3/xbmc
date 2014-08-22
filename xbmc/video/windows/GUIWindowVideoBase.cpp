@@ -1792,7 +1792,8 @@ void CGUIWindowVideoBase::GetGroupedItems(CFileItemList &items)
         (items.GetContent() == "episodes" && nodeType == NODE_TYPE_EPISODES && params.GetEpisodeId() <= 0) ||
         (items.GetContent() == "musicvideo" && nodeType == NODE_TYPE_TITLE_MUSICVIDEOS && params.GetMVideoId() <= 0))
     {
-      groupBy = GroupByItem;
+      if (CSettings::Get().GetBool("videolibrary.groupitems"))
+        groupBy = GroupByItem;
       if (items.GetContent() == "movies" && params.GetSetId() <= 0 &&
          (CSettings::Get().GetBool("videolibrary.groupmoviesets") || (StringUtils::EqualsNoCase(group, "sets") && mixed)))
         groupBy = (GroupBy)(groupBy | GroupBySet);

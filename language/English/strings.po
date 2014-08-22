@@ -10978,7 +10978,12 @@ msgctxt "#20469"
 msgid "Keep current set (%s)"
 msgstr ""
 
-#empty strings from id 20470 to 21329
+#: system/settings/settings.xml
+msgctxt "#20470"
+msgid "Group identical items from different sources"
+msgstr ""
+
+#empty strings from id 20471 to 21329
 #up to 21329 is reserved for the video db !! !
 
 #: system/settings/settings.xml
@@ -15905,7 +15910,13 @@ msgctxt "#36603"
 msgid "Category containing settings for how video output is handled."
 msgstr ""
 
-#empty strings from id 36604 to 36899
+#. Description of setting "Videos -> Library -> Group identical items from different sources" with label #20470
+#: system/settings/settings.xml
+msgctxt "#36604"
+msgid "Group library items with identical metadata but different files/sources together into a single item when browsing the video library."
+msgstr ""
+
+#empty strings from id 36605 to 36899
 
 #: xbmc/media/MediaType.cpp
 msgctxt "#36900"
