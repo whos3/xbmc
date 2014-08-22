@@ -21,6 +21,8 @@
 
 #include "SortUtils.h"
 
+#define PROPERTY_GROUPED  "grouped"
+
 class CFileItemList;
 
 // can be used as a flag
