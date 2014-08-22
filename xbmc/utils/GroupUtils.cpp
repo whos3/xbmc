@@ -84,6 +84,7 @@ bool GroupUtils::Group(GroupBy groupBy, const std::string &baseDir, const CFileI
       }
 
       CFileItemPtr pItem(new CFileItem((*set->second.begin())->GetVideoInfoTag()->m_strSet));
+      pItem->SetProperty(PROPERTY_GROUPED, true);
       pItem->GetVideoInfoTag()->m_iDbId = set->first;
       pItem->GetVideoInfoTag()->m_type = MediaTypeVideoCollection;
 
@@ -172,6 +173,7 @@ bool GroupUtils::Group(GroupBy groupBy, const std::string &baseDir, const CFileI
 
       CFileItemPtr pItem(*itItem->second.begin());
       CVideoInfoTag* info = pItem->GetVideoInfoTag();
+      pItem->SetProperty(PROPERTY_GROUPED, true);
       pItem->m_bIsFolder = true;
 
       int iWatched = 0; // have all the items been played at least once?
