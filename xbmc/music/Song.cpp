@@ -28,9 +28,9 @@
 using namespace std;
 using namespace MUSIC_INFO;
 
-CSong::CSong(CFileItem& item)
+CSong::CSong(const CFileItem& item)
 {
-  CMusicInfoTag& tag = *item.GetMusicInfoTag();
+  const CMusicInfoTag& tag = *item.GetMusicInfoTag();
   SYSTEMTIME stTime;
   tag.GetReleaseDate(stTime);
   strTitle = tag.GetTitle();
