@@ -2,10 +2,13 @@ SRCS= MediaImport.cpp \
       MediaImportManager.cpp \
       MediaImportTaskProcessorJob.cpp \
       dialogs/GUIDialogMediaImportInfo.cpp \
+      handler/AlbumImportHandler.cpp \
+      handler/ArtistImportHandler.cpp \
       handler/EpisodeImportHandler.cpp \
       handler/MovieImportHandler.cpp \
       handler/MusicVideoImportHandler.cpp \
       handler/SeasonImportHandler.cpp \
+      handler/SongImportHandler.cpp \
       handler/TvShowImportHandler.cpp \
       handler/VideoImportHandler.cpp \
       repositories/GenericMediaImportRepository.cpp \
