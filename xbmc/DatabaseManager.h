@@ -81,5 +81,6 @@ private:
   CCriticalSection            m_section;     ///< Critical section protecting m_dbStatus.
   std::map<std::string, DB_STATUS> m_dbStatus;    ///< Our database status map.
 
+  MediaImportRepositoryPtr m_musicImportRepository;
   MediaImportRepositoryPtr m_videoImportRepository;
 };

@@ -30,6 +30,7 @@
 #include "settings/AdvancedSettings.h"
 #include "media/import/MediaImportManager.h"
 #include "media/import/MediaImportSource.h"
+#include "media/import/repositories/MusicImportRepository.h"
 #include "media/import/repositories/VideoImportRepository.h"
 
 using namespace std;
@@ -43,7 +44,8 @@ CDatabaseManager &CDatabaseManager::Get()
 }
 
 CDatabaseManager::CDatabaseManager()
-  : m_videoImportRepository(new CVideoImportRepository())
+  : m_musicImportRepository(new CMusicImportRepository()),
+    m_videoImportRepository(new CVideoImportRepository())
 {
 }
 
@@ -63,7 +65,12 @@ void CDatabaseManager::Initialize(bool addonsOnly)
   //       before CVideoDatabase.
   { CViewDatabase db; UpdateDatabase(db); }
   { CTextureDatabase db; UpdateDatabase(db); }
-  { CMusicDatabase db; UpdateDatabase(db, &g_advancedSettings.m_databaseMusic); }
+  {
+    CMusicDatabase db;
+    UpdateDatabase(db, &g_advancedSettings.m_databaseMusic);
+    db.SetImportItemsEnabled(false);
+    CMediaImportManager::Get().RegisterImportRepository(m_musicImportRepository);
+  }
   {
     CVideoDatabase db;
     UpdateDatabase(db, &g_advancedSettings.m_databaseVideo);
@@ -79,6 +86,11 @@ void CDatabaseManager::Deinitialize(bool addonsOnly)
 {
   if (!addonsOnly)
   {
+    CMusicDatabase musicdb;
+    if (musicdb.Open())
+      musicdb.SetImportItemsEnabled(false);
+    CMediaImportManager::Get().UnregisterImportRepository(m_musicImportRepository);
+
     CVideoDatabase videodb;
     if (videodb.Open())
       videodb.SetImportItemsEnabled(false);

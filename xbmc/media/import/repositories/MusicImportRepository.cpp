@@ -61,9 +61,9 @@ bool CMusicImportRepository::updateSource(const CMediaImportSource &source)
   return m_db.SetDetailsForSource(source);
 }
 
-void CMusicImportRepository::removeSource(const CMediaImportSource &source, CGUIDialogProgress *progress /* = NULL */)
+void CMusicImportRepository::removeSource(const CMediaImportSource &source)
 {
-  m_db.RemoveSource(source.GetIdentifier(), progress);
+  m_db.RemoveSource(source.GetIdentifier());
 }
 
 std::vector<CMediaImport> CMusicImportRepository::getImports()
@@ -81,9 +81,9 @@ bool CMusicImportRepository::updateImport(const CMediaImport &import)
   return m_db.SetDetailsForImport(import);
 }
 
-void CMusicImportRepository::removeImport(const CMediaImport &import, CGUIDialogProgress *progress /* = NULL */)
+void CMusicImportRepository::removeImport(const CMediaImport &import)
 {
-  m_db.RemoveImport(import, progress);
+  m_db.RemoveImport(import);
 }
 
 void CMusicImportRepository::updateLastSync(const CMediaImport &import, const CDateTime &lastSync)

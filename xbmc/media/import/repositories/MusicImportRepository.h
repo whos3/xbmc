@@ -42,11 +42,11 @@ protected:
   virtual std::vector<CMediaImportSource> getSources();
   virtual int addSource(const CMediaImportSource &source);
   virtual bool updateSource(const CMediaImportSource &source);
-  virtual void removeSource(const CMediaImportSource &source, CGUIDialogProgress *progress = NULL);
+  virtual void removeSource(const CMediaImportSource &source);
   virtual std::vector<CMediaImport> getImports();
   virtual int addImport(const CMediaImport &import);
   virtual bool updateImport(const CMediaImport &import);
-  virtual void removeImport(const CMediaImport &import, CGUIDialogProgress *progress = NULL);
+  virtual void removeImport(const CMediaImport &import);
   virtual void updateLastSync(const CMediaImport &import, const CDateTime &lastSync);
 
   CMusicDatabase m_db;
