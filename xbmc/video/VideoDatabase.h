@@ -489,8 +489,8 @@ public:
 
   void DeleteMovie(int idMovie, bool bKeepId = false);
   void DeleteMovie(const CStdString& strFilenameAndPath, bool bKeepId = false);
-  void DeleteTvShow(int idTvShow, bool bKeepId = false);
-  void DeleteTvShow(const CStdString& strPath);
+  void DeleteTvShow(const CStdString& strPath, bool deleteChildren = true);
+  void DeleteTvShow(int idTvShow, bool bKeepId = false, bool deleteChildren = true);
   void DeleteSeason(int idSeason, bool bKeepId = false);
   void DeleteEpisode(int idEpisode, bool bKeepId = false);
   void DeleteEpisode(const CStdString& strFilenameAndPath, bool bKeepId = false);
