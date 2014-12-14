@@ -3423,6 +3423,8 @@ bool CApplication::Cleanup()
     g_RemoteControl.Disconnect();
 #endif
 
+    CDatabaseManager::Get().Deinitialize();
+
     CLog::Log(LOGNOTICE, "unload sections");
 
 #ifdef HAS_PERFORMANCE_SAMPLE
