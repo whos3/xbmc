@@ -2818,6 +2818,8 @@ bool CApplication::Cleanup()
     CLog::Log(LOGNOTICE, "closing down remote control service");
     CInputManager::GetInstance().DisableRemoteControl();
 
+    CDatabaseManager::GetInstance().Deinitialize();
+
     CLog::Log(LOGNOTICE, "unload sections");
 
 #ifdef HAS_PERFORMANCE_SAMPLE
