@@ -4722,7 +4722,7 @@ void CVideoDatabase::UpdateTables(int iVersion)
     m_pDS->exec("DROP TABLE IF EXISTS tag");
     m_pDS->exec("ALTER TABLE tagnew RENAME TO tag");
   }
-  if (iVersion < 91)
+  if (iVersion < 92)
   {
     m_pDS->exec("CREATE TABLE file_link (file_id integer, media_id integer, media_type TEXT)");
     m_pDS->exec("INSERT INTO file_link (file_id, media_id, media_type) SELECT idFile, idMovie, 'movie' FROM movie");
@@ -4733,7 +4733,7 @@ void CVideoDatabase::UpdateTables(int iVersion)
 
 int CVideoDatabase::GetSchemaVersion() const
 {
-  return 91;
+  return 92;
 }
 
 bool CVideoDatabase::LookupByFolders(const CStdString &path, bool shows)
