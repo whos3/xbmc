@@ -2999,7 +2999,10 @@ msgctxt "#728"
 msgid "FTP server"
 msgstr ""
 
-#empty string with id 729
+#: system/settings/settings.xml
+msgctxt "#729"
+msgid "Support CORS (Cross Origin Resource Sharing)"
+msgstr ""
 
 #: system/settings/settings.xml
 msgctxt "#730"
@@ -15557,7 +15560,7 @@ msgctxt "#36419"
 msgid "Define locations used for retrieving weather information."
 msgstr ""
 
-#. Description of setting "Services -> Webserver -> Support JSONP (JSON with padding)" with label #731
+#. Description of setting "Services -> Webserver -> Support JSONP (JSON with Padding)" with label #731
 #: system/settings/settings.xml
 msgctxt "#36420"
 msgid "Decide whether the JSON-RPC API can be accessed through the webserver using JSONP (JSON with padding) which allows access from another host."
@@ -15573,6 +15576,12 @@ msgstr ""
 #: system/settings/settings.xml
 msgctxt "#36422"
 msgid "Enable hardware video decode using AMLogic decoder."
+msgstr ""
+
+#. Description of setting "Services -> Webserver -> Support CORS (Cross Origin Resource Sharing)" with label #729
+#: system/settings/settings.xml
+msgctxt "#36423"
+msgid "Decide whether the webserver supports CORS (Cross Origin Resource Sharing) which allows access from another host."
 msgstr ""
 
 #empty string with id 36423

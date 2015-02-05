@@ -56,6 +56,8 @@
 
 #define HEADER_NEWLINE        "\r\n"
 
+#define HEADER_ACCESS_CONTROL_ALLOW_ORIGIN  "Access-Control-Allow-Origin"
+
 using namespace std;
 
 typedef struct ConnectionHandler
@@ -547,6 +549,9 @@ int CWebServer::FinalizeRequest(IHTTPRequestHandler *handler, int responseStatus
   // add MHD_HTTP_HEADER_CONTENT_LENGTH
   if (responseDetails.totalLength > 0)
     handler->AddResponseHeader(MHD_HTTP_HEADER_CONTENT_LENGTH, StringUtils::Format("%" PRIu64, responseDetails.totalLength));
+
+  if (CSettings::Get().GetBool("services.webservercors"))
+    handler->AddResponseHeader(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 
   // add all headers set by the request handler
   for (multimap<string, string>::const_iterator it = responseDetails.headers.begin(); it != responseDetails.headers.end(); ++it)
