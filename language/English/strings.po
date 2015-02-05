@@ -3006,7 +3006,10 @@ msgctxt "#730"
 msgid "Port"
 msgstr ""
 
-#empty string with id 731
+#: system/settings/settings.xml
+msgctxt "#731"
+msgid "Support JSONP (JSON with Padding)"
+msgstr ""
 
 msgctxt "#732"
 msgid "Save & apply"
@@ -15554,7 +15557,11 @@ msgctxt "#36419"
 msgid "Define locations used for retrieving weather information."
 msgstr ""
 
-#empty string with id 36420
+#. Description of setting "Services -> Webserver -> Support JSONP (JSON with padding)" with label #731
+#: system/settings/settings.xml
+msgctxt "#36420"
+msgid "Decide whether the JSON-RPC API can be accessed through the webserver using JSONP (JSON with padding) which allows access from another host."
+msgstr ""
 
 #. Description of setting "Videos -> Playback -> Prefer VDPAU Video Mixer" with label #13437
 #: system/settings/settings.xml

@@ -2086,6 +2086,16 @@
           <control type="button" format="addon" />
         </setting>
       </group>
+      <group id="2">
+        <setting id="services.webserverjsonp" type="boolean" label="731" help="36420">
+          <level>2</level>
+          <default>true</default>
+          <dependencies>
+            <dependency type="enable" setting="services.webserver">true</dependency>
+          </dependencies>
+          <control type="toggle" />
+        </setting>
+      </group>
     </category>
     <category id="remotecontrol" label="790" help="36333">
       <requirement>
