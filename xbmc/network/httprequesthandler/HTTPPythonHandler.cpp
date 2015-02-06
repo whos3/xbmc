@@ -28,6 +28,7 @@
 #include "network/httprequesthandler/HTTPWebinterfaceHandler.h"
 #include "network/httprequesthandler/python/HTTPModPythonInvoker.h"
 #include "network/httprequesthandler/python/HTTPPythonInvoker.h"
+#include "network/httprequesthandler/python/HTTPPythonWsgiInvoker.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"
 #include "utils/URIUtils.h"
@@ -42,7 +43,8 @@ CHTTPPythonHandler::CHTTPPythonHandler()
     m_lastModified(),
     m_requestData(),
     m_responseData(),
-    m_responseRanges()
+    m_responseRanges(),
+    m_redirectUrl()
 { }
 
 CHTTPPythonHandler::CHTTPPythonHandler(const HTTPRequest &request)
@@ -53,14 +55,42 @@ CHTTPPythonHandler::CHTTPPythonHandler(const HTTPRequest &request)
     m_lastModified(),
     m_requestData(),
     m_responseData(),
-    m_responseRanges()
+    m_responseRanges(),
+    m_redirectUrl()
 {
+  m_response.type = HTTPMemoryDownloadNoFreeCopy;
+
   // get the real path of the script and check if it actually exists
   m_response.status = CHTTPWebinterfaceHandler::ResolveUrl(m_request.pathUrl, m_scriptPath, m_addon);
-  // only allow requests to existing files and to python scripts belonging to a non-static webinterface addon
-  if (m_response.status != MHD_HTTP_OK ||
-      m_addon == NULL || m_addon->Type() != ADDON::ADDON_WEB_INTERFACE ||
+  // only allow requests to a non-static webinterface addon
+  if (m_addon == NULL || m_addon->Type() != ADDON::ADDON_WEB_INTERFACE ||
       std::dynamic_pointer_cast<ADDON::CWebinterface>(m_addon)->GetType() == ADDON::WebinterfaceTypeStatic)
+  {
+    m_response.type = HTTPError;
+    m_response.status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+
+    return;
+  }
+
+  std::shared_ptr<ADDON::CWebinterface> webinterface = std::dynamic_pointer_cast<ADDON::CWebinterface>(m_addon);
+  m_type = webinterface->GetType();
+
+  // for WSGI-webinterfaces we forward every request to the default entry point
+  if (webinterface->GetType() == ADDON::WebinterfaceTypeWsgi)
+  {
+    m_scriptPath = webinterface->LibPath();
+
+    // we need to map any requests to a specific WSGI webinterface to the root path
+    std::string baseLocation = webinterface->GetBaseLocation();
+    if (!StringUtils::StartsWith(m_request.pathUrl, baseLocation))
+    {
+      m_response.type = HTTPRedirect;
+      m_response.status = MHD_HTTP_MOVED_PERMANENTLY;
+      m_redirectUrl = baseLocation + m_request.pathUrl;
+    }
+  }
+  // for non-WSGI webinterfaces only allow requests to existing python scripts
+  else if (m_response.status != MHD_HTTP_OK)
   {
     m_response.type = HTTPError;
     if (m_response.status == MHD_HTTP_FOUND)
@@ -69,11 +99,13 @@ CHTTPPythonHandler::CHTTPPythonHandler(const HTTPRequest &request)
     return;
   }
 
-  m_type = std::dynamic_pointer_cast<ADDON::CWebinterface>(m_addon)->GetType();
+  // remember whether the file exists or not
+  bool fileExists = m_response.status == MHD_HTTP_OK;
 
-  m_response.type = HTTPMemoryDownloadNoFreeCopy;
-  m_response.status = MHD_HTTP_OK;
-  
+  // no need to try to read the last modified date from a non-existing file
+  if (!fileExists)
+    return;
+
   // determine the last modified date
   const CURL pathToUrl(m_scriptPath);
   struct __stat64 statBuffer;
@@ -111,8 +143,11 @@ bool CHTTPPythonHandler::CanHandleRequest(const HTTPRequest &request)
   if (URIUtils::PathEquals(path, addon->Path(), true))
     return true;
 
+  // for WSGI addons forward any request to the default entry point
+  if (webinterface->GetType() == ADDON::WebinterfaceTypeWsgi)
+    return true;
   // we only handle python scripts
-  if (!StringUtils::EqualsNoCase(URIUtils::GetExtension(path), ".py"))
+  else if (!StringUtils::EqualsNoCase(URIUtils::GetExtension(path), ".py"))
     return false;
 
   return true;
@@ -120,7 +155,7 @@ bool CHTTPPythonHandler::CanHandleRequest(const HTTPRequest &request)
 
 int CHTTPPythonHandler::HandleRequest()
 {
-  if (m_response.type == HTTPError)
+  if (m_response.type == HTTPError || m_response.type == HTTPRedirect)
     return MHD_YES;
 
   std::vector<std::string> args;
@@ -156,6 +191,8 @@ int CHTTPPythonHandler::HandleRequest()
     CHTTPPythonInvoker* pythonInvoker = NULL;
     if (m_type == ADDON::WebinterfaceTypeModPython)
       pythonInvoker = new CHTTPModPythonInvoker(&g_pythonParser, pythonRequest);
+    else if (m_type == ADDON::WebinterfaceTypeWsgi)
+      pythonInvoker = new CHTTPPythonWsgiInvoker(&g_pythonParser, pythonRequest);
     else
     {
       CLog::Log(LOGWARNING, "WebServer: unable to run python script at %s with an unknown invoker", m_scriptPath.c_str());

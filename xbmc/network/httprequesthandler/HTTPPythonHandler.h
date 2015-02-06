@@ -40,7 +40,9 @@ public:
 
   virtual HttpResponseRanges GetResponseData() const { return m_responseRanges; }
 
-  virtual int GetPriority() const { return 2; }
+  virtual std::string GetRedirectUrl() const { return m_redirectUrl; }
+
+  virtual int GetPriority() const { return 3; }
 
 protected:
   explicit CHTTPPythonHandler(const HTTPRequest &request);
@@ -60,4 +62,6 @@ private:
   std::string m_requestData;
   std::string m_responseData;
   HttpResponseRanges m_responseRanges;
+
+  std::string m_redirectUrl;
 };
