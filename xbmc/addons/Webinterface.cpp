@@ -63,6 +63,14 @@ std::string CWebinterface::GetEntryPoint(const std::string &path) const
   return URIUtils::AddFileToFolder(path, m_entryPoint);
 }
 
+std::string CWebinterface::GetBaseLocation() const
+{
+  if (m_type == WebinterfaceTypeWsgi)
+    return "/addons/" + ID();
+
+  return "";
+}
+
 AddonPtr CWebinterface::Clone() const
 {
   return AddonPtr(new CWebinterface(*this));

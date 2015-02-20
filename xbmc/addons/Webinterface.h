@@ -43,6 +43,7 @@ namespace ADDON
     const std::string& EntryPoint() const { return m_entryPoint; }
 
     std::string GetEntryPoint(const std::string &path) const;
+    std::string GetBaseLocation() const;
 
     // specializations of CAddon
     virtual AddonPtr Clone() const;
