@@ -4,3 +4,6 @@
 [submodule "addons/webinterface.flask.demo"]
 	path = addons/webinterface.flask.demo
 	url = https://github.com/tamland/kodi-flask-demo.git
+[submodule "addons/webinterface.bottle.demo"]
+	path = addons/webinterface.bottle.demo
+	url = https://github.com/tamland/kodi-bottle-demo.git
