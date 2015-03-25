@@ -594,6 +594,7 @@ private:
     artist_strYearsActive,
     artist_strImage,
     artist_strFanart,
+    artist_iAlbumArtistCount,
     artist_enumCount // end of the enum, do not add past here
   } ArtistFields;
 

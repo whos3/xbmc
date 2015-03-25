@@ -321,8 +321,12 @@ void CMusicDatabase::CreateViews()
               "  strBorn, strFormed, strGenres,"
               "  strMoods, strStyles, strInstruments, "
               "  strBiography, strDied, strDisbanded, "
-              "  strYearsActive, strImage, strFanart "
-              "FROM artist");
+              "  strYearsActive, strImage, strFanart, "
+              "  COUNT(album_artist.idArtist) AS iAlbumArtistCount"
+              "FROM artist "
+              "LEFT JOIN album_artist ON "
+              "  album_artist.idArtist = artist.idArtist "
+              "GROUP BY artist.idArtist");
 
   CLog::Log(LOGINFO, "create albumartist view");
   m_pDS->exec("CREATE VIEW albumartistview AS SELECT"
@@ -1800,6 +1804,7 @@ CArtist CMusicDatabase::GetArtistFromDataset(const dbiplus::sql_record* const re
   artist.strDisbanded = record->at(offset + artist_strDisbanded).get_asString();
   artist.yearsActive = StringUtils::Split(record->at(offset + artist_strYearsActive).get_asString(), g_advancedSettings.m_musicItemSeparator);
   artist.instruments = StringUtils::Split(record->at(offset + artist_strInstruments).get_asString(), g_advancedSettings.m_musicItemSeparator);
+  artist.compilationOnly = record->at(offset + artist_iAlbumArtistCount).get_asInt() == 0;
 
   if (needThumb)
   {
@@ -4070,7 +4075,7 @@ void CMusicDatabase::UpdateTables(int version)
 
 int CMusicDatabase::GetSchemaVersion() const
 {
-  return 50;
+  return 51;
 }
 
 unsigned int CMusicDatabase::GetSongIDs(const Filter &filter, vector<pair<int,int> > &songIDs)
