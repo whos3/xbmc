@@ -68,6 +68,7 @@ public:
     discography.clear();
     idArtist = -1;
     strPath.clear();
+    compilationOnly = false;
   }
 
   /*! \brief Load artist information from an XML file.
@@ -96,6 +97,7 @@ public:
   CScraperUrl thumbURL;
   CFanart fanart;
   std::vector<std::pair<std::string,std::string> > discography;
+  bool compilationOnly;
 };
 
 class CArtistCredit
