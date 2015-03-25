@@ -503,6 +503,7 @@ void CMusicInfoTag::SetArtist(const CArtist& artist)
   SetArtist(artist.strArtist);
   SetAlbumArtist(artist.strArtist);
   SetGenre(artist.genre);
+  SetCompilation(artist.compilationOnly);
   m_iDbId = artist.idArtist;
   m_type = MediaTypeArtist;
   m_bLoaded = true;
