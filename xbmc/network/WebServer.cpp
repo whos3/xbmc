@@ -1127,6 +1127,11 @@ struct MHD_Daemon* CWebServer::StartMHD(unsigned int flags, int port)
                           MHD_OPTION_END);
 }
 
+bool CWebServer::Start(uint16_t port)
+{
+  return Start(port, "", "");
+}
+
 bool CWebServer::Start(uint16_t port, const std::string &username, const std::string &password)
 {
   SetCredentials(username, password);
@@ -1172,7 +1177,7 @@ bool CWebServer::Stop()
   return true;
 }
 
-bool CWebServer::IsStarted()
+bool CWebServer::IsStarted() const
 {
   return m_running;
 }

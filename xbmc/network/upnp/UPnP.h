@@ -56,7 +56,7 @@ public:
     // client
     void StartClient();
     void StopClient();
-    bool IsClientStarted() { return (m_MediaBrowser != NULL); }
+    bool IsClientStarted(); /* TODO { return (m_MediaBrowser != NULL); }*/
 
     // controller
     void StartController();

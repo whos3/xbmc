@@ -52,6 +52,10 @@
 #include "pvr/recordings/PVRRecording.h"
 #include "ContextMenuManager.h"
 
+#include "network/upnp/openHome/ohUPnP.h"
+#include "network/upnp/openHome/controlpoints/ohUPnPContentDirectoryControlPoint.h"
+#include "network/upnp/openHome/transfer/ohUPnPTransfer.h"
+
 #include <utility>
 
 using namespace XFILE;
@@ -901,6 +905,18 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
     }
     if (!item->IsParentFolder())
     {
+      // check if we support exporting and if any of the visible MediaServer devices support importing
+      if (!item->m_bIsFolder &&
+          CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFER) &&
+          CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFEREXPORT) &&
+          COhUPnPTransfer::HasMediaServersSupportingImport())
+        buttons.Add(CONTEXT_BUTTON_SEND_TO, 15212);
+
+      if (URIUtils::IsUPnP(m_vecItems->GetPath()) && !item->m_bIsFolder &&
+          CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFER) &&
+          CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT))
+        buttons.Add(CONTEXT_BUTTON_IMPORT, 15217);
+
       ADDON::ScraperPtr info;
       VIDEO::SScanSettings settings;
       GetScraperForItem(item.get(), info, settings);
@@ -1078,6 +1094,44 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       }
       return true;
     }
+
+  case CONTEXT_BUTTON_SEND_TO:
+  {
+    if (!CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFER) ||
+        !CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFEREXPORT))
+      return true;
+
+    const auto& devices = COhUPnPTransfer::GetMediaServersSupportingImport();
+    if (devices.empty())
+      return true;
+
+    CContextButtons choices;
+    for (size_t i = 0; i < devices.size(); ++i)
+      choices.Add(i, devices.at(i).GetFriendlyName());
+
+    int choice = CGUIDialogContextMenu::ShowAndGetChoice(choices);
+    if (choice < 0)
+      return true;
+
+    const auto& device = devices.at(choice);
+
+    if (!COhUPnPTransfer::SendItemToMediaServer(device, m_vecItems->GetPath(), *item)) // TODO: containerId
+      CGUIDialogOK::ShowAndGetInput(CVariant{ 15212 }, StringUtils::Format(g_localizeStrings.Get(15211).c_str(), device.GetFriendlyName().c_str()));
+
+    return true;
+  }
+
+  case CONTEXT_BUTTON_IMPORT:
+  {
+    if (!CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFER) ||
+        !CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT))
+        return true;
+
+    if (!COhUPnPTransfer::ImportItemFromMediaServer(*item))
+      CGUIDialogOK::ShowAndGetInput(CVariant{ 15212 }, CVariant{ 0 }); // TODO
+
+    return true;
+  }
 
   default:
     break;

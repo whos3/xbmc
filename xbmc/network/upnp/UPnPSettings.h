@@ -35,16 +35,16 @@ public:
   void Clear();
 
   const std::string& GetServerUUID() const { return m_serverUUID; }
-  int GetServerPort() const { return m_serverPort; }
+  uint16_t GetServerPort() const { return m_serverPort; }
   int GetMaximumReturnedItems() const { return m_maxReturnedItems; }
   const std::string& GetRendererUUID() const { return m_rendererUUID; }
-  int GetRendererPort() const { return m_rendererPort; }
+  uint16_t GetRendererPort() const { return m_rendererPort; }
 
   void SetServerUUID(const std::string &uuid) { m_serverUUID = uuid; }
-  void SetServerPort(int port) { m_serverPort = port; }
+  void SetServerPort(uint16_t port) { m_serverPort = port; }
   void SetMaximumReturnedItems(int maximumReturnedItems) { m_maxReturnedItems = maximumReturnedItems; }
   void SetRendererUUID(const std::string &uuid) { m_rendererUUID = uuid; }
-  void SetRendererPort(int port) { m_rendererPort = port; }
+  void SetRendererPort(uint16_t port) { m_rendererPort = port; }
 
 protected:
   CUPnPSettings();
@@ -54,10 +54,10 @@ protected:
 
 private:
   std::string m_serverUUID;
-  int m_serverPort;
+  uint16_t m_serverPort;
   int m_maxReturnedItems;
   std::string m_rendererUUID;
-  int m_rendererPort;
+  uint16_t m_rendererPort;
 
   CCriticalSection m_critical;
 };

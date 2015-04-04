@@ -32,6 +32,9 @@
 #include "cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.h"
 #include "guilib/LocalizeStrings.h"
 #include "peripherals/Peripherals.h"
+#if defined(HAS_UPNP)
+#include "network/upnp/openHome/ohUPnP.h"
+#endif
 #include "profiles/ProfilesManager.h"
 #include "pvr/PVRManager.h"
 #include "settings/SettingAddon.h"
@@ -286,6 +289,9 @@ void CSettingConditions::Initialize()
   m_complexConditions.insert(std::pair<std::string, SettingConditionCheck>("profilelockmode",               ProfileLockMode));
   m_complexConditions.insert(std::pair<std::string, SettingConditionCheck>("aesettingvisible",              CAEFactory::IsSettingVisible));
   m_complexConditions.insert(std::pair<std::string, SettingConditionCheck>("codecoptionvisible",            CDVDVideoCodec::IsSettingVisible));
+#if defined(HAS_UPNP)
+  m_complexConditions.insert(std::pair<std::string, SettingConditionCheck>("hasupnptransfers",              COhUPnP::HasUPnPTransfers));
+#endif
 }
 
 bool CSettingConditions::Check(const std::string &condition, const std::string &value /* = "" */, const CSetting *setting /* = NULL */)

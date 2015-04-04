@@ -81,10 +81,18 @@ bool CUPnPSettings::Load(const std::string &file)
 
   // load settings
   XMLUtils::GetString(pRootElement, XML_SERVER_UUID, m_serverUUID);
-  XMLUtils::GetInt(pRootElement, XML_SERVER_PORT, m_serverPort);
+
+  unsigned int port;
+  if (XMLUtils::GetUInt(pRootElement, XML_SERVER_PORT, port) && port <= std::numeric_limits<uint16_t>::max())
+    m_serverPort = static_cast<uint16_t>(port);
+
   XMLUtils::GetInt(pRootElement, XML_MAX_ITEMS, m_maxReturnedItems);
+
   XMLUtils::GetString(pRootElement, XML_RENDERER_UUID, m_rendererUUID);
-  XMLUtils::GetInt(pRootElement, XML_RENDERER_PORT, m_rendererPort);
+
+  port = 0;
+  if (XMLUtils::GetUInt(pRootElement, XML_RENDERER_PORT, port) && port <= std::numeric_limits<uint16_t>::max())
+    m_rendererPort = static_cast<uint16_t>(port);
 
   return true;
 }

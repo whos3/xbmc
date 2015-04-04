@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<profile extends="Default">
+  <name>BubbleUPnP</name>
+  <identification>
+    <rule property="friendlyname">BubbleUPnP</rule>
+    <rule property="user-agent" type="substring">BubbleUPnP</rule>
+  </identification>
+  <contentdirectory>
+    <version>3</version>
+  </contentdirectory>
+</profile>

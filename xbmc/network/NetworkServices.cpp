@@ -842,7 +842,11 @@ bool CNetworkServices::StopUPnP(bool bWait)
 bool CNetworkServices::StartUPnPClient()
 {
 #ifdef HAS_UPNP
-  CLog::Log(LOGNOTICE, "starting upnp client");
+  if (!CSettings::GetInstance().GetBool("services.upnpcontroller") &&
+    !CSettings::GetInstance().GetBool("services.upnpserver"))
+    return false;
+
+  CLog::Log(LOGNOTICE, "starting upnp controller");
   CUPnP::GetInstance()->StartClient();
   return IsUPnPClientRunning();
 #endif // HAS_UPNP

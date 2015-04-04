@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<profile extends="Default">
+  <name>Kodi</name>
+  <identification>
+    <rule property="modelname">Kodi</rule>
+    <rule property="user-agent" type="substring">Kodi</rule>
+  </identification>
+  <contentdirectory>
+    <version>4</version>
+  </contentdirectory>
+</profile>

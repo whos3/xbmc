@@ -41,9 +41,10 @@ public:
   CWebServer();
   virtual ~CWebServer() { }
 
+  bool Start(uint16_t port);
   bool Start(uint16_t port, const std::string &username, const std::string &password);
   bool Stop();
-  bool IsStarted();
+  bool IsStarted() const;
   void SetCredentials(const std::string &username, const std::string &password);
 
   void RegisterRequestHandler(IHTTPRequestHandler *handler);

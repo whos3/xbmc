@@ -172,8 +172,24 @@ typedef struct SortDescription {
   int limitEnd;
 
   SortDescription()
-    : sortBy(SortByNone), sortOrder(SortOrderAscending), sortAttributes(SortAttributeNone),
-      limitStart(0), limitEnd(-1)
+    : SortDescription(SortByNone)
+  { }
+
+  explicit SortDescription(SortBy sortBy)
+    : SortDescription(sortBy, SortOrderAscending)
+  { }
+
+  SortDescription(SortBy sortBy, SortOrder sortOrder)
+    : SortDescription(sortBy, sortOrder, SortAttributeNone)
+  { }
+
+  SortDescription(SortBy sortBy, SortOrder sortOrder, SortAttribute sortAttribute)
+    : sortBy(sortBy), sortOrder(sortOrder), sortAttributes(sortAttribute),
+    limitStart(0), limitEnd(-1)
+  { }
+
+  SortDescription(SortBy sortBy, SortAttribute sortAttribute)
+    : SortDescription(sortBy, SortOrderAscending, sortAttribute)
   { }
 } SortDescription;
 

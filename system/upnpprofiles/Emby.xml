@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<profile extends="Default">
+  <name>Emby</name>
+  <identification>
+    <rule property="friendlyname">Emby</rule>
+    <rule property="user-agent" type="substring">Emby</rule>
+  </identification>
+</profile>

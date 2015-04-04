@@ -43,7 +43,10 @@
 #include "linux/LinuxTimezone.h"
 #endif // defined(TARGET_POSIX)
 #include "network/NetworkServices.h"
+#if defined(HAS_UPNP)
 #include "network/upnp/UPnPSettings.h"
+#include "network/upnp/openHome/ohUPnP.h"
+#endif
 #include "network/WakeOnAccess.h"
 #if defined(TARGET_DARWIN_OSX)
 #include "platform/darwin/osx/XBMCHelper.h"
@@ -308,11 +311,18 @@ const std::string CSettings::SETTING_WEATHER_CURRENTLOCATION = "weather.currentl
 const std::string CSettings::SETTING_WEATHER_ADDON = "weather.addon";
 const std::string CSettings::SETTING_WEATHER_ADDONSETTINGS = "weather.addonsettings";
 const std::string CSettings::SETTING_SERVICES_DEVICENAME = "services.devicename";
+const std::string CSettings::SETTING_SERVICES_UPNPINTERFACE = "services.upnpinterface";
 const std::string CSettings::SETTING_SERVICES_UPNPSERVER = "services.upnpserver";
 const std::string CSettings::SETTING_SERVICES_UPNPANNOUNCE = "services.upnpannounce";
 const std::string CSettings::SETTING_SERVICES_UPNPLOOKFOREXTERNALSUBTITLES = "services.upnplookforexternalsubtitles";
 const std::string CSettings::SETTING_SERVICES_UPNPCONTROLLER = "services.upnpcontroller";
 const std::string CSettings::SETTING_SERVICES_UPNPRENDERER = "services.upnprenderer";
+const std::string CSettings::SETTING_SERVICES_UPNPTRANSFER = "services.upnptransfer";
+const std::string CSettings::SETTING_SERVICES_UPNPTRANSFEREXPORT = "services.upnptransferexport";
+const std::string CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT = "services.upnptransferimport";
+const std::string CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORTPATH = "services.upnptransferimportpath";
+const std::string CSettings::SETTING_SERVICES_UPNPTRANSFERPROGRESS = "services.upnptransferprogress";
+const std::string CSettings::SETTING_SERVICES_UPNPTRANSFERMANAGE = "services.upnptransfermanage";
 const std::string CSettings::SETTING_SERVICES_WEBSERVER = "services.webserver";
 const std::string CSettings::SETTING_SERVICES_WEBSERVERPORT = "services.webserverport";
 const std::string CSettings::SETTING_SERVICES_WEBSERVERUSERNAME = "services.webserverusername";
@@ -592,6 +602,9 @@ void CSettings::Uninitialize()
   m_settingsManager->UnregisterSettingOptionsFiller("verticalsyncs");
   m_settingsManager->UnregisterSettingOptionsFiller("keyboardlayouts");
   m_settingsManager->UnregisterSettingOptionsFiller("pvrrecordmargins");
+#if defined(HAS_UPNP)
+  m_settingsManager->UnregisterSettingOptionsFiller("upnpinterfaces");
+#endif
 
   // unregister ISettingCallback implementations
   m_settingsManager->UnregisterCallback(&CEventLog::GetInstance());
@@ -607,6 +620,9 @@ void CSettings::Uninitialize()
   m_settingsManager->UnregisterCallback(&g_langInfo);
   m_settingsManager->UnregisterCallback(&CInputManager::GetInstance());
   m_settingsManager->UnregisterCallback(&CNetworkServices::GetInstance());
+#if defined(HAS_UPNP)
+  m_settingsManager->UnregisterCallback(&COhUPnP::GetInstance());
+#endif
   m_settingsManager->UnregisterCallback(&g_passwordManager);
   m_settingsManager->UnregisterCallback(&PVR::g_PVRManager);
   m_settingsManager->UnregisterCallback(&CRssManager::GetInstance());
@@ -955,6 +971,9 @@ void CSettings::InitializeOptionFillers()
   m_settingsManager->RegisterSettingOptionsFiller("keyboardlayouts", CKeyboardLayoutManager::SettingOptionsKeyboardLayoutsFiller);
   m_settingsManager->RegisterSettingOptionsFiller("loggingcomponents", CAdvancedSettings::SettingOptionsLoggingComponentsFiller);
   m_settingsManager->RegisterSettingOptionsFiller("pvrrecordmargins", PVR::CPVRSettings::MarginTimeFiller);
+#if defined(HAS_UPNP)
+  m_settingsManager->RegisterSettingOptionsFiller("upnpinterfaces", COhUPnP::SettingOptionsUPnPInterfacesFiller);
+#endif
 }
 
 void CSettings::InitializeConditions()
@@ -1145,6 +1164,16 @@ void CSettings::InitializeISettingCallbacks()
   settingSet.insert(CSettings::SETTING_SMB_WINSSERVER);
   settingSet.insert(CSettings::SETTING_SMB_WORKGROUP);
   m_settingsManager->RegisterCallback(&CNetworkServices::GetInstance(), settingSet);
+
+#if defined(HAS_UPNP)
+  settingSet.clear();
+  settingSet.insert(CSettings::SETTING_SERVICES_UPNPINTERFACE);
+  settingSet.insert(CSettings::SETTING_SERVICES_UPNPTRANSFER);
+  settingSet.insert(CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT);
+  settingSet.insert(CSettings::SETTING_DEBUG_EXTRALOGGING);
+  settingSet.insert(CSettings::SETTING_DEBUG_SETEXTRALOGLEVEL);
+  m_settingsManager->RegisterCallback(&COhUPnP::GetInstance(), settingSet);
+#endif
 
   settingSet.clear();
   settingSet.insert(CSettings::SETTING_MASTERLOCK_LOCKCODE);

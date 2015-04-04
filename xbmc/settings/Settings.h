@@ -264,11 +264,18 @@ public:
   static const std::string SETTING_WEATHER_ADDON;
   static const std::string SETTING_WEATHER_ADDONSETTINGS;
   static const std::string SETTING_SERVICES_DEVICENAME;
+  static const std::string SETTING_SERVICES_UPNPINTERFACE;
   static const std::string SETTING_SERVICES_UPNPSERVER;
   static const std::string SETTING_SERVICES_UPNPANNOUNCE;
   static const std::string SETTING_SERVICES_UPNPLOOKFOREXTERNALSUBTITLES;
   static const std::string SETTING_SERVICES_UPNPCONTROLLER;
   static const std::string SETTING_SERVICES_UPNPRENDERER;
+  static const std::string SETTING_SERVICES_UPNPTRANSFER;
+  static const std::string SETTING_SERVICES_UPNPTRANSFEREXPORT;
+  static const std::string SETTING_SERVICES_UPNPTRANSFERIMPORT;
+  static const std::string SETTING_SERVICES_UPNPTRANSFERIMPORTPATH;
+  static const std::string SETTING_SERVICES_UPNPTRANSFERPROGRESS;
+  static const std::string SETTING_SERVICES_UPNPTRANSFERMANAGE;
   static const std::string SETTING_SERVICES_WEBSERVER;
   static const std::string SETTING_SERVICES_WEBSERVERPORT;
   static const std::string SETTING_SERVICES_WEBSERVERUSERNAME;

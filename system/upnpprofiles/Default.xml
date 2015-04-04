@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<profile>
+  <name>Default</name>
+  <mediaserver>
+    <typemapping default="">
+      <map type="simple" class="object.item.videoItem" to="movie" />
+      <map type="simple" class="object.item.videoItem.movie" to="movie" />
+      <map type="simple" class="object.item.videoItem.videoBroadcast" to="episode" />
+      <map type="simple" class="object.item.videoItem.musicVideoClip" to="musicvideo" />
+      <map type="simple" class="object.item.audioItem" to="song" />
+      <map type="simple" class="object.item.audioItem.musicTrack" to="song" />
+      <map type="simple" class="object.item.imageItem" to="picture" />
+      <map type="simple" class="object.item.imageItem.photo" to="picture" />
+      <map type="simple" class="object.container.album" to="album" />
+      <map type="simple" class="object.container.album.videoAlbum" to="tvshow" />
+      <map type="simple" class="object.container.album.musicAlbum" to="album" />
+      <map type="simple" class="object.container.album.photoAlbum" to="picture" />
+      <map type="simple" class="object.container.person" to="artist" />
+      <map type="simple" class="object.container.person.musicArtist" to="artist" />
+    </typemapping>
+    <pathmapping>
+      <map id="0" to="virtualpath://upnproot/" />
+      <map id="1" to="library://music/" />
+      <map id="2" to="library://video/" />
+      <!-- TODO <map id="3" to="TODO: pictures" /> -->
+      <map id="4" to="library://music/songs.xml" /> <!-- Sonos specific -->
+      <map id="7" to="library://music/albums.xml" /> <!-- Sonos specific -->
+      <map id="15" to="library://video/" /> <!-- Xbox 360 specific -->
+      <!-- TODO <map id="17" to="TODO: pictures" /> --> <!-- Xbox 360 specific -->
+      <map id="107" to="library://music/artists.xml" /> <!-- Sonos specific -->
+    </pathmapping>
+  </mediaserver>
+  <contentdirectory>
+    <version>1</version>
+  </contentdirectory>
+</profile>

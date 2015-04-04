@@ -7821,7 +7821,17 @@ msgctxt "#15208"
 msgid "Not connected"
 msgstr ""
 
-#empty strings from id 15209 to 15212
+#empty strings from id 15209 to 15210
+
+#: xbmc/video/windows/GUIWindowVideoNav.cpp
+msgctxt "#15211"
+msgid "Failed to send item to %s."
+msgstr ""
+
+#: xbmc/video/windows/GUIWindowVideoNav.cpp
+msgctxt "#15212"
+msgid "Send to..."
+msgstr ""
 
 #: xbmc/windows/GUIWindowFileManager.cpp
 msgctxt "#15213"
@@ -7840,7 +7850,12 @@ msgctxt "#15216"
 msgid "Play in party mode"
 msgstr ""
 
-#empty strings from id 15217 to 15299
+#: xbmc/video/windows/GUIWindowVideoNav.cpp
+msgctxt "#15217"
+msgid "Import"
+msgstr ""
+
+#empty strings from id 15218 to 15299
 
 #: xbmc/windows/GUIMediaWindow.cpp
 #: xbmc/windows/GUIWindowFileManager.cpp
@@ -12266,7 +12281,10 @@ msgctxt "#21397"
 msgid "High quality pixel shader v2"
 msgstr ""
 
-#empty string with id 21398
+#: system/settings/settings.xml
+msgctxt "#21398"
+msgid "Network interface"
+msgstr ""
 
 msgctxt "#21399"
 msgid "Use tween animations"
@@ -12677,7 +12695,37 @@ msgctxt "#21482"
 msgid "Subtitle track count"
 msgstr ""
 
-#empty strings from id 21483 to 21601
+#: system/settings/settings.xml
+msgctxt "#21483"
+msgid "Allow transfering media items"
+msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#21484"
+msgid "Allow sending media items"
+msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#21485"
+msgid "Allow importing media items"
+msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#21486"
+msgid "Show progress of transfers"
+msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#21487"
+msgid "Manage active transfers"
+msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#21488"
+msgid "Imported item location"
+msgstr ""
+
+#empty strings from id 21489 to 21601
 
 #: xbmc/Util.cpp
 msgctxt "#21602"
@@ -17468,7 +17516,13 @@ msgctxt "#36441"
 msgid "Enable audio DSP processing"
 msgstr ""
 
-#empty strings from id 36442 to 36459
+#. Description of setting "Services -> UPnP -> Network interface" with label #21398
+#: system/settings/settings.xml
+msgctxt "#36442"
+msgid "Specifies the network interface / subnet to use for UPnP interactions."
+msgstr ""
+
+#empty strings from id 36443 to 36459
 
 #. Description of settings "System -> Logging -> Enable event logging" with label #14112
 #: system/settings/settings.xml

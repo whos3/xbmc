@@ -2051,6 +2051,16 @@
     <category id="upnp" label="20187" help="36322">
       <requirement>HAS_UPNP</requirement>
       <group id="1">
+        <setting id="services.upnpinterface" type="integer" label="21398" help="36442">
+          <level>2</level>
+          <default>0</default>
+          <constraints>
+            <options>upnpinterfaces</options>
+          </constraints>
+          <control type="list" format="string" />
+        </setting>
+      </group>
+      <group id="2">
         <setting id="services.upnpserver" type="boolean" label="21360" help="36323">
           <level>0</level>
           <default>false</default>
@@ -2084,6 +2094,68 @@
           <level>1</level>
           <default>false</default>
           <control type="toggle" />
+        </setting>
+      </group>
+      <group id="3">
+        <setting id="services.upnptransfer" type="boolean" label="21483" help="TODO">
+          <level>0</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+        <setting id="services.upnptransferexport" type="boolean" parent="services.upnptransfer" label="21484" help="TODO">
+          <level>0</level>
+          <default>true</default>
+          <dependencies>
+            <dependency type="enable" setting="services.upnptransfer">true</dependency>
+          </dependencies>
+          <control type="toggle" />
+        </setting>
+        <setting id="services.upnptransferimport" type="boolean" parent="services.upnptransfer" label="21485" help="TODO">
+          <level>0</level>
+          <default>true</default>
+          <dependencies>
+            <dependency type="enable">
+              <and>
+                <condition setting="services.upnpserver">true</condition>
+                <condition setting="services.upnptransfer">true</condition>
+              </and>
+            </dependency>
+          </dependencies>
+          <control type="toggle" />
+        </setting>
+        <setting id="services.upnptransferimportpath" type="path" parent="services.upnptransferimport" label="21488" help="TODO">
+          <level>0</level>
+          <default></default>
+          <constraints>
+            <allowempty>true</allowempty>
+            <writable>true</writable>
+          </constraints>
+          <dependencies>
+            <dependency type="enable" setting="services.upnptransferimport">true</dependency>
+          </dependencies>
+          <control type="button" format="path">
+            <heading>657</heading>
+          </control>
+        </setting>
+        <setting id="services.upnptransferprogress" type="boolean" parent="services.upnptransfer" label="21486" help="TODO">
+          <level>0</level>
+          <default>true</default>
+          <dependencies>
+            <dependency type="enable">
+              <or>
+                <condition setting="services.upnptransferexport">true</condition>
+                <condition setting="services.upnptransferimport">true</condition>
+              </or>
+            </dependency>
+          </dependencies>
+          <control type="toggle" />
+        </setting>
+        <setting id="services.upnptransfermanage" type="action" parent="services.upnptransfer" label="21487" help="TODO">
+          <level>0</level>
+          <dependencies>
+            <dependency type="enable" on="property" name="HasUPnPTransfers" />
+          </dependencies>
+          <control type="button" format="action" />
         </setting>
       </group>
     </category>
