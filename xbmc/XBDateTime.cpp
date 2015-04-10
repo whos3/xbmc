@@ -182,14 +182,34 @@ void CDateTimeSpan::SetDateTimeSpan(int day, int hour, int minute, int second)
   FromULargeInt(time);
 }
 
-void CDateTimeSpan::SetFromTimeString(const std::string& time) // hh:mm
+bool CDateTimeSpan::SetFromTimeString(const std::string& time) // hh:mm[:ss]
 {
-  if (time.size() >= 5 && time[2] == ':')
+  if (time.size() < 5 || time[2] != ':')
+    return false;
+
+  std::string strHours = time.substr(0, 2);
+  if (!StringUtils::IsNaturalNumber(strHours))
+    return false;
+
+  std::string strMinutes = time.substr(3, 2);
+  if (!StringUtils::IsNaturalNumber(strMinutes))
+    return false;
+
+  int hour = static_cast<int>(strtol(strHours.c_str(), NULL, 0));
+  int minutes = static_cast<int>(strtol(strMinutes.c_str(), NULL, 0));
+
+  int seconds = 0;
+  if (time.size() > 6 && time[5] == ':')
   {
-    int hour    = atoi(time.substr(0, 2).c_str());
-    int minutes = atoi(time.substr(3, 2).c_str());
-    SetDateTimeSpan(0,hour,minutes,0);
+    std::string strSeconds = time.substr(6, 2);
+    if (!StringUtils::IsNaturalNumber(strSeconds))
+      return false;
+
+    seconds = static_cast<int>(strtol(strSeconds.c_str(), NULL, 0));
   }
+
+  SetDateTimeSpan(0, hour, minutes, seconds);
+  return true;
 }
 
 int CDateTimeSpan::GetDays() const

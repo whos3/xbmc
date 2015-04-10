@@ -68,7 +68,7 @@ public:
 
   void SetDateTimeSpan(int day, int hour, int minute, int second);
   void SetFromPeriod(const std::string &period);
-  void SetFromTimeString(const std::string& time);
+  bool SetFromTimeString(const std::string& time);
 
   int GetDays() const;
   int GetHours() const;
