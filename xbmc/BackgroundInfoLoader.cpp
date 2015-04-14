@@ -26,14 +26,14 @@
 
 using namespace std;
 
-CBackgroundInfoLoader::CBackgroundInfoLoader() : m_thread (NULL)
-{
-  m_bStop = true;
-  m_pObserver=NULL;
-  m_pProgressCallback=NULL;
-  m_pVecItems = NULL;
-  m_bIsLoading = false;
-}
+CBackgroundInfoLoader::CBackgroundInfoLoader()
+  : m_pVecItems(nullptr),
+    m_bIsLoading(false),
+    m_bStop(true),
+    m_thread(nullptr),
+    m_pObserver(nullptr),
+    m_pProgressCallback(nullptr)
+{ }
 
 CBackgroundInfoLoader::~CBackgroundInfoLoader()
 {
@@ -44,14 +44,14 @@ void CBackgroundInfoLoader::Run()
 {
   try
   {
-    if (m_vecItems.size() > 0)
+    if (!m_vecItems.empty())
     {
       OnLoaderStart();
 
       // Stage 1: All "fast" stuff we have already cached
-      for (vector<CFileItemPtr>::const_iterator iter = m_vecItems.begin(); iter != m_vecItems.end(); ++iter)
+      for (const auto& iter : m_vecItems)
       {
-        CFileItemPtr pItem = *iter;
+        CFileItemPtr pItem = iter;
 
         // Ask the callback if we should abort
         if ((m_pProgressCallback && m_pProgressCallback->Abort()) || m_bStop)
@@ -59,7 +59,7 @@ void CBackgroundInfoLoader::Run()
 
         try
         {
-          if (LoadItemCached(pItem.get()) && m_pObserver)
+          if (LoadItemCached(pItem.get()) && m_pObserver != nullptr)
             m_pObserver->OnItemLoaded(pItem.get());
         }
         catch (...)
@@ -69,9 +69,9 @@ void CBackgroundInfoLoader::Run()
       }
 
       // Stage 2: All "slow" stuff that we need to lookup
-      for (vector<CFileItemPtr>::const_iterator iter = m_vecItems.begin(); iter != m_vecItems.end(); ++iter)
+      for (const auto& iter : m_vecItems)
       {
-        CFileItemPtr pItem = *iter;
+        CFileItemPtr pItem = iter;
 
         // Ask the callback if we should abort
         if ((m_pProgressCallback && m_pProgressCallback->Abort()) || m_bStop)
@@ -79,7 +79,7 @@ void CBackgroundInfoLoader::Run()
 
         try
         {
-          if (LoadItemLookup(pItem.get()) && m_pObserver)
+          if (LoadItemLookup(pItem.get()) && m_pObserver != nullptr)
             m_pObserver->OnItemLoaded(pItem.get());
         }
         catch (...)
@@ -108,7 +108,7 @@ void CBackgroundInfoLoader::Load(CFileItemList& items)
 
   CSingleLock lock(m_lock);
 
-  for (int nItem=0; nItem < items.Size(); nItem++)
+  for (int nItem = 0; nItem < items.Size(); nItem++)
     m_vecItems.push_back(items[nItem]);
 
   m_pVecItems = &items;
@@ -125,7 +125,6 @@ void CBackgroundInfoLoader::StopAsync()
   m_bStop = true;
 }
 
-
 void CBackgroundInfoLoader::StopThread()
 {
   StopAsync();
@@ -134,10 +133,11 @@ void CBackgroundInfoLoader::StopThread()
   {
     m_thread->StopThread();
     delete m_thread;
-    m_thread = NULL;
+    m_thread = nullptr;
   }
+
   m_vecItems.clear();
-  m_pVecItems = NULL;
+  m_pVecItems = nullptr;
   m_bIsLoading = false;
 }
 
@@ -155,4 +155,3 @@ void CBackgroundInfoLoader::SetProgressCallback(IProgressCallback* pCallback)
 {
   m_pProgressCallback = pCallback;
 }
-

@@ -20,20 +20,22 @@
  *
  */
 
-#include "threads/Thread.h"
-#include "IProgressCallback.h"
-#include "threads/CriticalSection.h"
-
 #include <vector>
 #include <memory>
 
-class CFileItem; typedef std::shared_ptr<CFileItem> CFileItemPtr;
+#include "IProgressCallback.h"
+#include "threads/CriticalSection.h"
+#include "threads/Thread.h"
+
+class CFileItem;
+typedef std::shared_ptr<CFileItem> CFileItemPtr;
 class CFileItemList;
 
 class IBackgroundLoaderObserver
 {
 public:
-  virtual ~IBackgroundLoaderObserver() {}
+  virtual ~IBackgroundLoaderObserver() { }
+
   virtual void OnItemLoaded(CFileItem* pItem) = 0;
 };
 
@@ -43,21 +45,25 @@ public:
   CBackgroundInfoLoader();
   virtual ~CBackgroundInfoLoader();
 
+  virtual bool LoadItem(CFileItem* pItem) { return false; }
+  virtual bool LoadItemCached(CFileItem* pItem) { return false; }
+  virtual bool LoadItemLookup(CFileItem* pItem) { return false; }
+
   void Load(CFileItemList& items);
   bool IsLoading();
-  virtual void Run();
+
   void SetObserver(IBackgroundLoaderObserver* pObserver);
   void SetProgressCallback(IProgressCallback* pCallback);
-  virtual bool LoadItem(CFileItem* pItem) { return false; };
-  virtual bool LoadItemCached(CFileItem* pItem) { return false; };
-  virtual bool LoadItemLookup(CFileItem* pItem) { return false; };
 
   void StopThread(); // will actually stop the loader thread.
   void StopAsync();  // will ask loader to stop as soon as possible, but not block
 
+  // implementations of IRunnable
+  virtual void Run();
+
 protected:
-  virtual void OnLoaderStart() {};
-  virtual void OnLoaderFinish() {};
+  virtual void OnLoaderStart() { }
+  virtual void OnLoaderFinish() { }
 
   CFileItemList *m_pVecItems;
   std::vector<CFileItemPtr> m_vecItems; // FileItemList would delete the items and we only want to keep a reference.
@@ -70,4 +76,3 @@ protected:
   IBackgroundLoaderObserver* m_pObserver;
   IProgressCallback* m_pProgressCallback;
 };
-
