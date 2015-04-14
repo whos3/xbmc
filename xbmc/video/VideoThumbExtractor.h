@@ -55,6 +55,8 @@ public:
   std::string m_target; ///< thumbpath
   std::string m_listpath; ///< path used in fileitem list
   CFileItem m_item;
+
+private:
   bool m_extractThumb; ///< extract thumb?
   int64_t m_pos; ///< position to extract thumb from
   bool m_fillStreamDetails; ///< fill in stream details? 
