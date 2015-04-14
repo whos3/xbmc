@@ -20,9 +20,11 @@
  */
 
 #include <map>
+#include <string>
+
+#include "FileItem.h"
 #include "ThumbLoader.h"
 #include "utils/JobManager.h"
-#include "FileItem.h"
 
 class CStreamDetails;
 class CVideoDatabase;
