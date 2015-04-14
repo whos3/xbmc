@@ -1174,6 +1174,7 @@
     <ClCompile Include="..\..\xbmc\video\PlayerController.cpp" />
     <ClCompile Include="..\..\xbmc\video\videosync\VideoSyncD3D.cpp" />
     <ClCompile Include="..\..\xbmc\video\VideoLibraryQueue.cpp" />
+    <ClCompile Include="..\..\xbmc\video\VideoThumbExtractor.cpp" />
     <ClCompile Include="..\..\xbmc\video\VideoThumbLoader.cpp" />
     <ClCompile Include="..\..\xbmc\music\MusicThumbLoader.cpp" />
     <ClCompile Include="..\..\xbmc\ThumbnailCache.cpp" />
@@ -2032,6 +2033,7 @@
     <ClInclude Include="..\..\xbmc\video\videosync\VideoSync.h" />
     <ClInclude Include="..\..\xbmc\video\videosync\VideoSyncD3D.h" />
     <ClInclude Include="..\..\xbmc\video\VideoLibraryQueue.h" />
+    <ClInclude Include="..\..\xbmc\video\VideoThumbExtractor.h" />
     <ClInclude Include="..\..\xbmc\video\VideoThumbLoader.h" />
     <ClInclude Include="..\..\xbmc\music\MusicThumbLoader.h" />
     <ClInclude Include="..\..\xbmc\ThumbnailCache.h" />

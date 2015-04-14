@@ -30,6 +30,7 @@
 #include "utils/URIUtils.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
+#include "video/VideoThumbExtractor.h"
 #include "video/VideoThumbLoader.h"
 #include "URL.h"
 
@@ -95,7 +96,7 @@ bool CPictureThumbLoader::LoadItemCached(CFileItem* pItem)
       else if (CSettings::Get().GetBool("myvideos.extractthumb") && CSettings::Get().GetBool("myvideos.extractflags"))
       {
         CFileItem item(*pItem);
-        CThumbExtractor* extract = new CThumbExtractor(item, pItem->GetPath(), true, thumbURL);
+        CVideoThumbExtractor* extract = new CVideoThumbExtractor(item, pItem->GetPath(), true, thumbURL);
         AddJob(extract);
         thumb.clear();
       }
@@ -123,7 +124,7 @@ void CPictureThumbLoader::OnJobComplete(unsigned int jobID, bool success, CJob* 
 {
   if (success)
   {
-    CThumbExtractor* loader = (CThumbExtractor*)job;
+    CVideoThumbExtractor* loader = (CVideoThumbExtractor*)job;
     loader->m_item.SetPath(loader->m_listpath);
     CFileItemPtr pItem(new CFileItem(loader->m_item));
     CGUIMessage msg(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UPDATE_ITEM, 0, pItem);

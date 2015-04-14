@@ -10,6 +10,7 @@ SRCS=Bookmark.cpp \
      VideoInfoTag.cpp \
      VideoLibraryQueue.cpp \
      VideoReferenceClock.cpp \
+     VideoThumbExtractor.cpp \
      VideoThumbLoader.cpp \
      
 LIB=video.a

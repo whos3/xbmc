@@ -48,6 +48,7 @@
 #include "utils/Variant.h"
 #include "Util.h"
 #include "cores/IPlayer.h"
+#include "video/VideoThumbExtractor.h"
 #include "video/VideoThumbLoader.h"
 #include "filesystem/File.h"
 #include "TextureCache.h"
@@ -300,7 +301,7 @@ void CGUIDialogVideoBookmarks::OnRefreshList()
     else if (i > m_jobsStarted && CSettings::Get().GetBool("myvideos.extractchapterthumbs"))
     {
       CFileItem item(m_filePath, false);
-      CJob* job = new CThumbExtractor(item, m_filePath, true, chapterPath, pos * 1000, false);
+      CJob* job = new CVideoThumbExtractor(item, m_filePath, true, chapterPath, pos * 1000, false);
       AddJob(job);
       m_mapJobsChapter[job] = i;
       m_jobsStarted++;

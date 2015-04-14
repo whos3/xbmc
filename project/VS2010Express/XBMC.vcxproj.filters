@@ -3084,6 +3084,9 @@
     <ClCompile Include="..\..\xbmc\test\TestUtil.cpp">
       <Filter>test</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\video\VideoThumbExtractor.cpp">
+      <Filter>video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -5964,6 +5967,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\music\EmbeddedArt.h">
       <Filter>music</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\video\VideoThumbExtractor.h">
+      <Filter>video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

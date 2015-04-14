@@ -39,6 +39,7 @@
 #include "video/VideoDatabase.h"
 #include "cores/dvdplayer/DVDFileInfo.h"
 #include "video/VideoInfoScanner.h"
+#include "video/VideoThumbExtractor.h"
 #include "music/MusicDatabase.h"
 #include "utils/StringUtils.h"
 #include "settings/AdvancedSettings.h"
@@ -46,133 +47,6 @@
 using namespace XFILE;
 using namespace std;
 using namespace VIDEO;
-
-CThumbExtractor::CThumbExtractor(const CFileItem& item,
-                                 const std::string& listpath,
-                                 bool thumb,
-                                 const std::string& target,
-                                 int64_t pos,
-                                 bool fillStreamDetails)
-{
-  m_listpath = listpath;
-  m_target = target;
-  m_thumb = thumb;
-  m_item = item;
-  m_pos = pos;
-  m_fillStreamDetails = fillStreamDetails;
-
-  if (item.IsVideoDb() && item.HasVideoInfoTag())
-    m_item.SetPath(item.GetVideoInfoTag()->m_strFileNameAndPath);
-
-  if (m_item.IsStack())
-    m_item.SetPath(CStackDirectory::GetFirstStackedFile(m_item.GetPath()));
-}
-
-CThumbExtractor::~CThumbExtractor()
-{
-}
-
-bool CThumbExtractor::operator==(const CJob* job) const
-{
-  if (strcmp(job->GetType(),GetType()) == 0)
-  {
-    const CThumbExtractor* jobExtract = dynamic_cast<const CThumbExtractor*>(job);
-    if (jobExtract && jobExtract->m_listpath == m_listpath
-                   && jobExtract->m_target == m_target)
-      return true;
-  }
-  return false;
-}
-
-bool CThumbExtractor::DoWork()
-{
-  if (m_item.IsLiveTV()
-  ||  URIUtils::IsUPnP(m_item.GetPath())
-  ||  m_item.IsDVD()
-  ||  m_item.IsDiscImage()
-  ||  m_item.IsDVDFile(false, true)
-  ||  m_item.IsInternetStream()
-  ||  m_item.IsDiscStub()
-  ||  m_item.IsPlayList())
-    return false;
-
-  // For HTTP/FTP we only allow extraction when on a LAN
-  if (URIUtils::IsRemote(m_item.GetPath()) &&
-     !URIUtils::IsOnLAN(m_item.GetPath())  &&
-     (URIUtils::IsFTP(m_item.GetPath())    ||
-      URIUtils::IsHTTP(m_item.GetPath())))
-    return false;
-
-  bool result=false;
-  if (m_thumb)
-  {
-    CLog::Log(LOGDEBUG,"%s - trying to extract thumb from video file %s", __FUNCTION__, CURL::GetRedacted(m_item.GetPath()).c_str());
-    // construct the thumb cache file
-    CTextureDetails details;
-    details.file = CTextureCache::GetCacheFile(m_target) + ".jpg";
-    result = CDVDFileInfo::ExtractThumb(m_item.GetPath(), details, m_fillStreamDetails ? &m_item.GetVideoInfoTag()->m_streamDetails : NULL, (int) m_pos);
-    if(result)
-    {
-      CTextureCache::Get().AddCachedTexture(m_target, details);
-      m_item.SetProperty("HasAutoThumb", true);
-      m_item.SetProperty("AutoThumbImage", m_target);
-      m_item.SetArt("thumb", m_target);
-
-      CVideoInfoTag* info = m_item.GetVideoInfoTag();
-      if (info->m_iDbId > 0 && !info->m_type.empty())
-      {
-        CVideoDatabase db;
-        if (db.Open())
-        {
-          db.SetArtForItem(info->m_iDbId, info->m_type, "thumb", m_item.GetArt("thumb"));
-          db.Close();
-        }
-      }
-    }
-  }
-  else if (!m_item.HasVideoInfoTag() || !m_item.GetVideoInfoTag()->HasStreamDetails())
-  {
-    // No tag or no details set, so extract them
-    CLog::Log(LOGDEBUG,"%s - trying to extract filestream details from video file %s", __FUNCTION__, CURL::GetRedacted(m_item.GetPath()).c_str());
-    result = CDVDFileInfo::GetFileStreamDetails(&m_item);
-  }
-
-  if (result)
-  {
-    CVideoInfoTag* info = m_item.GetVideoInfoTag();
-    CVideoDatabase db;
-    if (db.Open())
-    {
-      if (URIUtils::IsStack(m_listpath))
-      {
-        // Don't know the total time of the stack, so set duration to zero to avoid confusion
-        info->m_streamDetails.SetVideoDuration(0, 0);
-
-        // Restore original stack path
-        m_item.SetPath(m_listpath);
-      }
-
-      if (info->m_iFileId < 0)
-        db.SetStreamDetailsForFile(info->m_streamDetails, !info->m_strFileNameAndPath.empty() ? info->m_strFileNameAndPath : static_cast<const std::string&>(m_item.GetPath()));
-      else
-        db.SetStreamDetailsForFileId(info->m_streamDetails, info->m_iFileId);
-
-      // overwrite the runtime value if the one from streamdetails is available
-      if (info->m_iDbId > 0 && info->m_duration != static_cast<int>(info->GetDuration()))
-      {
-        info->m_duration = info->GetDuration();
-
-        // store the updated information in the database
-        db.SetDetailsForItem(info->m_iDbId, info->m_type, *info, m_item.GetArt());
-      }
-
-      db.Close();
-    }
-    return true;
-  }
-
-  return false;
-}
 
 CVideoThumbLoader::CVideoThumbLoader() :
   CThumbLoader(), CJobQueue(true, 1, CJob::PRIORITY_LOW_PAUSABLE)
@@ -389,7 +263,7 @@ bool CVideoThumbLoader::LoadItemLookup(CFileItem* pItem)
         if (URIUtils::IsInRAR(item.GetPath()))
           SetupRarOptions(item,path);
 
-        CThumbExtractor* extract = new CThumbExtractor(item, path, true, thumbURL);
+        CVideoThumbExtractor* extract = new CVideoThumbExtractor(item, path, true, thumbURL);
         AddJob(extract);
 
         m_videoDatabase->Close();
@@ -406,7 +280,7 @@ bool CVideoThumbLoader::LoadItemLookup(CFileItem* pItem)
       std::string path(item.GetPath());
       if (URIUtils::IsInRAR(item.GetPath()))
         SetupRarOptions(item,path);
-      CThumbExtractor* extract = new CThumbExtractor(item,path,false);
+      CVideoThumbExtractor* extract = new CVideoThumbExtractor(item,path,false);
       AddJob(extract);
     }
   }
@@ -542,7 +416,7 @@ void CVideoThumbLoader::OnJobComplete(unsigned int jobID, bool success, CJob* jo
 {
   if (success)
   {
-    CThumbExtractor* loader = (CThumbExtractor*)job;
+    CVideoThumbExtractor* loader = (CVideoThumbExtractor*)job;
     loader->m_item.SetPath(loader->m_listpath);
 
     if (m_pObserver)

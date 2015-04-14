@@ -27,40 +27,6 @@
 class CStreamDetails;
 class CVideoDatabase;
 
-/*!
- \ingroup thumbs,jobs
- \brief Thumb extractor job class
-
- Used by the CVideoThumbLoader to perform asynchronous generation of thumbs
-
- \sa CVideoThumbLoader and CJob
- */
-class CThumbExtractor : public CJob
-{
-public:
-  CThumbExtractor(const CFileItem& item, const std::string& listpath, bool thumb, const std::string& strTarget="", int64_t pos = -1, bool fillStreamDetails = true);
-  virtual ~CThumbExtractor();
-
-  /*!
-   \brief Work function that extracts thumb.
-   */
-  virtual bool DoWork();
-
-  virtual const char* GetType() const
-  {
-    return kJobTypeMediaFlags;
-  }
-
-  virtual bool operator==(const CJob* job) const;
-
-  std::string m_target; ///< thumbpath
-  std::string m_listpath; ///< path used in fileitem list
-  CFileItem  m_item;
-  bool       m_thumb; ///< extract thumb?
-  int64_t    m_pos; ///< position to extract thumb from
-  bool m_fillStreamDetails; ///< fill in stream details? 
-};
-
 class CVideoThumbLoader : public CThumbLoader, public CJobQueue
 {
 public:
@@ -110,7 +76,7 @@ public:
  virtual bool FillLibraryArt(CFileItem &item);
 
   /*!
-   \brief Callback from CThumbExtractor on completion of a generated image
+   \brief Callback from CVideoThumbExtractor on completion of a generated image
 
    Performs the callbacks and updates the GUI.
 

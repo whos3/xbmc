@@ -35,7 +35,7 @@ public:
   static void ProcessFoldersAndArchives(CFileItem *pItem);
 
   /*!
-   \brief Callback from CThumbExtractor on completion of a generated image
+   \brief Callback from CVideoThumbExtractor on completion of a generated image
 
    Performs the callbacks and updates the GUI.
 
