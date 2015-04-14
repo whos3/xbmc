@@ -19,8 +19,9 @@
  *
  */
 
-#include "BackgroundInfoLoader.h"
 #include <string>
+
+#include "BackgroundInfoLoader.h"
 
 class CTextureDatabase;
 
@@ -30,6 +31,7 @@ public:
   CThumbLoader();
   virtual ~CThumbLoader();
 
+  // implementations of CBackgroundInfoLoader
   virtual void OnLoaderStart();
   virtual void OnLoaderFinish();
 
@@ -62,6 +64,8 @@ class CProgramThumbLoader : public CThumbLoader
 public:
   CProgramThumbLoader();
   virtual ~CProgramThumbLoader();
+
+  // implementations of CBackgroundInfoLoader
   virtual bool LoadItem(CFileItem* pItem);
   virtual bool LoadItemCached(CFileItem* pItem);
   virtual bool LoadItemLookup(CFileItem* pItem);

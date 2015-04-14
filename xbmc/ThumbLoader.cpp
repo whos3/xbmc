@@ -19,18 +19,14 @@
  */
 
 #include "ThumbLoader.h"
-#include "filesystem/File.h"
 #include "FileItem.h"
 #include "TextureCache.h"
+#include "filesystem/File.h"
 
-using namespace std;
-using namespace XFILE;
-
-CThumbLoader::CThumbLoader() :
-  CBackgroundInfoLoader()
-{
-  m_textureDatabase = new CTextureDatabase();
-}
+CThumbLoader::CThumbLoader()
+  : CBackgroundInfoLoader(),
+    m_textureDatabase(new CTextureDatabase())
+{ }
 
 CThumbLoader::~CThumbLoader()
 {
@@ -53,8 +49,10 @@ std::string CThumbLoader::GetCachedImage(const CFileItem &item, const std::strin
   {
     std::string image = m_textureDatabase->GetTextureForPath(item.GetPath(), type);
     m_textureDatabase->Close();
+
     return image;
   }
+
   return "";
 }
 
@@ -68,12 +66,10 @@ void CThumbLoader::SetCachedImage(const CFileItem &item, const std::string &type
 }
 
 CProgramThumbLoader::CProgramThumbLoader()
-{
-}
+{ }
 
 CProgramThumbLoader::~CProgramThumbLoader()
-{
-}
+{ }
 
 bool CProgramThumbLoader::LoadItem(CFileItem *pItem)
 {
@@ -117,6 +113,7 @@ bool CProgramThumbLoader::FillThumb(CFileItem &item)
     CTextureCache::Get().BackgroundCacheImage(thumb);
     item.SetArt("thumb", thumb);
   }
+
   return true;
 }
 
@@ -129,14 +126,15 @@ std::string CProgramThumbLoader::GetLocalThumb(const CFileItem &item)
   if (item.m_bIsFolder)
   {
     std::string folderThumb = item.GetFolderThumb();
-    if (CFile::Exists(folderThumb))
+    if (XFILE::CFile::Exists(folderThumb))
       return folderThumb;
   }
   else
   {
     std::string fileThumb(item.GetTBNFile());
-    if (CFile::Exists(fileThumb))
+    if (XFILE::CFile::Exists(fileThumb))
       return fileThumb;
   }
+
   return "";
 }
