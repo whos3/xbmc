@@ -961,7 +961,7 @@ bool CPVRChannelGroup::HasChanges(void) const
   return m_bChanged || HasNewChannels() || HasChangedChannels();
 }
 
-void CPVRChannelGroup::OnSettingChanged(const CSetting *setting)
+void CPVRChannelGroup::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

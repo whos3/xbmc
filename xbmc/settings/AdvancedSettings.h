@@ -124,7 +124,7 @@ class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
     virtual void OnSettingsLoaded();
     virtual void OnSettingsUnloaded();
 
-    virtual void OnSettingChanged(const CSetting *setting);
+    virtual void OnSettingChanged(const CSetting *setting, const Context* context);
 
     void Initialize();
     bool Initialized() { return m_initialized; };

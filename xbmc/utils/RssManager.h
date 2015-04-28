@@ -47,7 +47,7 @@ public:
   virtual void OnSettingsLoaded();
   virtual void OnSettingsUnloaded();
 
-  virtual void OnSettingAction(const CSetting *setting);
+  virtual void OnSettingAction(const CSetting *setting, const Context* context);
 
   void Start();
   void Stop();

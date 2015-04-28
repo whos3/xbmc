@@ -113,12 +113,12 @@ std::string CGUIDialogAudioSubtitleSettings::FormatPercentAsDecibel(float value)
   return StringUtils::Format(g_localizeStrings.Get(14054).c_str(), CAEUtil::PercentToGain(value));
 }
 
-void CGUIDialogAudioSubtitleSettings::OnSettingChanged(const CSetting *setting)
+void CGUIDialogAudioSubtitleSettings::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
   
   CVideoSettings &videoSettings = CMediaSettings::Get().GetCurrentVideoSettings();
   const std::string &settingId = setting->GetId();
@@ -174,12 +174,12 @@ void CGUIDialogAudioSubtitleSettings::OnSettingChanged(const CSetting *setting)
   }
 }
 
-void CGUIDialogAudioSubtitleSettings::OnSettingAction(const CSetting *setting)
+void CGUIDialogAudioSubtitleSettings::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingAction(setting);
+  CGUIDialogSettingsManualBase::OnSettingAction(setting, context);
   
   const std::string &settingId = setting->GetId();
   if (settingId == SETTING_SUBTITLE_BROWSER)

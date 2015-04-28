@@ -207,14 +207,14 @@ public:
    \param value Boolean value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetBool(const std::string &id, bool value);
+  bool SetBool(const std::string &id, bool value, const ISettingCallback::Context* context);
   /*!
    \brief Toggles the boolean value of the setting with the given identifier.
 
    \param id Setting identifier
    \return True if toggling the boolean value was successful, false otherwise
    */
-  bool ToggleBool(const std::string &id);
+  bool ToggleBool(const std::string &id, const ISettingCallback::Context* context);
   /*!
    \brief Sets the integer value of the setting with the given identifier.
 
@@ -222,7 +222,7 @@ public:
    \param value Integer value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetInt(const std::string &id, int value);
+  bool SetInt(const std::string &id, int value, const ISettingCallback::Context* context);
   /*!
    \brief Sets the real number value of the setting with the given identifier.
 
@@ -230,7 +230,7 @@ public:
    \param value Real number value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetNumber(const std::string &id, double value);
+  bool SetNumber(const std::string &id, double value, const ISettingCallback::Context* context);
   /*!
    \brief Sets the string value of the setting with the given identifier.
 
@@ -238,7 +238,7 @@ public:
    \param value String value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetString(const std::string &id, const std::string &value);
+  bool SetString(const std::string &id, const std::string &value, const ISettingCallback::Context* context);
   /*!
    \brief Sets the values of the list setting with the given identifier.
 
@@ -246,7 +246,7 @@ public:
    \param value Values to set
    \return True if setting the values was successful, false otherwise
    */
-  bool SetList(const std::string &id, const std::vector<CVariant> &value);
+  bool SetList(const std::string &id, const std::vector<CVariant> &value, const ISettingCallback::Context* context);
 
   /*!
    \brief Loads the setting being represented by the given XML node with the

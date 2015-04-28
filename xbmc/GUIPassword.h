@@ -87,7 +87,7 @@ public:
   void RemoveSourceLocks();
   bool IsDatabasePathUnlocked(const std::string& strPath, VECSOURCES& vecSources);
 
-  virtual void OnSettingAction(const CSetting *setting);
+  virtual void OnSettingAction(const CSetting *setting, const Context* context);
 
   bool bMasterUser;
   int iMasterLockRetriesLeft;

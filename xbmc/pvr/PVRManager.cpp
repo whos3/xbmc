@@ -148,7 +148,7 @@ bool CPVRManager::RestartManagerOnAddonDisabled(void) const
   return true;
 }
 
-void CPVRManager::OnSettingChanged(const CSetting *setting)
+void CPVRManager::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
@@ -173,7 +173,7 @@ void CPVRManager::OnSettingChanged(const CSetting *setting)
   }
 }
 
-void CPVRManager::OnSettingAction(const CSetting *setting)
+void CPVRManager::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

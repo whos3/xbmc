@@ -406,7 +406,7 @@ void CWeather::OnJobComplete(unsigned int jobID, bool success, CJob *job)
   CInfoLoader::OnJobComplete(jobID, success, job);
 }
 
-void CWeather::OnSettingChanged(const CSetting *setting)
+void CWeather::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
@@ -421,7 +421,7 @@ void CWeather::OnSettingChanged(const CSetting *setting)
   }
 }
 
-void CWeather::OnSettingAction(const CSetting *setting)
+void CWeather::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

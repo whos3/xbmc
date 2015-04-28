@@ -362,14 +362,14 @@ bool CSettings::GetBool(const std::string &id) const
   return m_settingsManager->GetBool(id);
 }
 
-bool CSettings::SetBool(const std::string &id, bool value)
+bool CSettings::SetBool(const std::string &id, bool value, const ISettingCallback::Context* context /* = nullptr */)
 {
-  return m_settingsManager->SetBool(id, value);
+  return m_settingsManager->SetBool(id, value, context);
 }
 
-bool CSettings::ToggleBool(const std::string &id)
+bool CSettings::ToggleBool(const std::string &id, const ISettingCallback::Context* context /* = nullptr */)
 {
-  return m_settingsManager->ToggleBool(id);
+  return m_settingsManager->ToggleBool(id, context);
 }
 
 int CSettings::GetInt(const std::string &id) const
@@ -377,9 +377,9 @@ int CSettings::GetInt(const std::string &id) const
   return m_settingsManager->GetInt(id);
 }
 
-bool CSettings::SetInt(const std::string &id, int value)
+bool CSettings::SetInt(const std::string &id, int value, const ISettingCallback::Context* context /* = nullptr */)
 {
-  return m_settingsManager->SetInt(id, value);
+  return m_settingsManager->SetInt(id, value, context);
 }
 
 double CSettings::GetNumber(const std::string &id) const
@@ -387,9 +387,9 @@ double CSettings::GetNumber(const std::string &id) const
   return m_settingsManager->GetNumber(id);
 }
 
-bool CSettings::SetNumber(const std::string &id, double value)
+bool CSettings::SetNumber(const std::string &id, double value, const ISettingCallback::Context* context /* = nullptr */)
 {
-  return m_settingsManager->SetNumber(id, value);
+  return m_settingsManager->SetNumber(id, value, context);
 }
 
 std::string CSettings::GetString(const std::string &id) const
@@ -397,9 +397,9 @@ std::string CSettings::GetString(const std::string &id) const
   return m_settingsManager->GetString(id);
 }
 
-bool CSettings::SetString(const std::string &id, const std::string &value)
+bool CSettings::SetString(const std::string &id, const std::string &value, const ISettingCallback::Context* context /* = nullptr */)
 {
-  return m_settingsManager->SetString(id, value);
+  return m_settingsManager->SetString(id, value, context);
 }
 
 std::vector<CVariant> CSettings::GetList(const std::string &id) const
@@ -411,13 +411,13 @@ std::vector<CVariant> CSettings::GetList(const std::string &id) const
   return CSettingUtils::GetList(static_cast<CSettingList*>(setting));
 }
 
-bool CSettings::SetList(const std::string &id, const std::vector<CVariant> &value)
+bool CSettings::SetList(const std::string &id, const std::vector<CVariant> &value, const ISettingCallback::Context* context /* = nullptr */)
 {
   CSetting *setting = m_settingsManager->GetSetting(id);
   if (setting == NULL || setting->GetType() != SettingTypeList)
     return false;
 
-  return CSettingUtils::SetList(static_cast<CSettingList*>(setting), value);
+  return CSettingUtils::SetList(static_cast<CSettingList*>(setting), value, context);
 }
 
 bool CSettings::LoadSetting(const TiXmlNode *node, const std::string &settingId)

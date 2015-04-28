@@ -55,8 +55,8 @@ public:
   CGUIAudioManager();
   ~CGUIAudioManager();
 
-  virtual void OnSettingChanged(const CSetting *setting);
-  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context);
+  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context);
 
   void Initialize();
   void DeInitialize();

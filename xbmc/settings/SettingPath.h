@@ -34,7 +34,7 @@ public:
   virtual CSetting* Clone(const std::string &id) const;
 
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
-  virtual bool SetValue(const std::string &value);
+  virtual bool SetValue(const std::string &value, const Context* context);
 
   bool Writable() const { return m_writable; }
   void SetWritable(bool writable) { m_writable = writable; }

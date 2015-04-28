@@ -89,14 +89,14 @@ bool CSettingPath::Deserialize(const TiXmlNode *node, bool update /* = false */)
   return true;
 }
 
-bool CSettingPath::SetValue(const std::string &value)
+bool CSettingPath::SetValue(const std::string &value, const Context* context /* = nullptr */)
 {
   // for backwards compatibility to Frodo
   if (StringUtils::EqualsNoCase(value, "select folder") ||
       StringUtils::EqualsNoCase(value, "select writable folder"))
-    return CSettingString::SetValue("");
+    return CSettingString::SetValue("", context);
 
-  return CSettingString::SetValue(value);
+  return CSettingString::SetValue(value, context);
 }
 
 void CSettingPath::copy(const CSettingPath &setting)

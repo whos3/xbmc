@@ -210,44 +210,44 @@ bool CSetting::IsVisible() const
   return visible;
 }
 
-bool CSetting::OnSettingChanging(const CSetting *setting)
+bool CSetting::OnSettingChanging(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (m_callback == NULL)
     return true;
     
-  return m_callback->OnSettingChanging(setting);
+  return m_callback->OnSettingChanging(setting, context);
 }
   
-void CSetting::OnSettingChanged(const CSetting *setting)
+void CSetting::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (m_callback == NULL)
     return;
 
-  m_callback->OnSettingChanged(setting);
+  m_callback->OnSettingChanged(setting, context);
 }
 
-void CSetting::OnSettingAction(const CSetting *setting)
+void CSetting::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (m_callback == NULL)
     return;
 
-  m_callback->OnSettingAction(setting);
+  m_callback->OnSettingAction(setting, context);
 }
 
-bool CSetting::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode)
+bool CSetting::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context /* = nullptr */)
 {
   if (m_callback == NULL)
     return false;
 
-  return m_callback->OnSettingUpdate(setting, oldSettingId, oldSettingNode);
+  return m_callback->OnSettingUpdate(setting, oldSettingId, oldSettingNode, context);
 }
 
-void CSetting::OnSettingPropertyChanged(const CSetting *setting, const char *propertyName)
+void CSetting::OnSettingPropertyChanged(const CSetting *setting, const char *propertyName, const Context* context /* = nullptr */)
 {
   if (m_callback == NULL)
     return;
 
-  m_callback->OnSettingPropertyChanged(setting, propertyName);
+  m_callback->OnSettingPropertyChanged(setting, propertyName, context);
 }
 
 void CSetting::Copy(const CSetting &setting)
@@ -381,13 +381,13 @@ int CSettingList::GetElementType() const
   return m_definition->GetType();
 }
 
-bool CSettingList::FromString(const std::string &value)
+bool CSettingList::FromString(const std::string &value, const Context* context /* = nullptr */)
 {
   SettingPtrList values;
   if (!fromString(value, values))
     return false;
 
-  return SetValue(values);
+  return SetValue(values, context);
 }
 
 std::string CSettingList::ToString() const
@@ -421,26 +421,26 @@ bool CSettingList::CheckValidity(const std::string &value) const
   return fromString(value, values);
 }
 
-void CSettingList::Reset()
+void CSettingList::Reset(const Context* context /* = nullptr */)
 {
   CExclusiveLock lock(m_critical);
   SettingPtrList values;
   for (SettingPtrList::const_iterator it = m_defaults.begin(); it != m_defaults.end(); ++it)
     values.push_back(SettingPtr((*it)->Clone((*it)->GetId())));
 
-  SetValue(values);
+  SetValue(values, context);
 }
 
-bool CSettingList::FromString(const std::vector<std::string> &value)
+bool CSettingList::FromString(const std::vector<std::string> &value, const Context* context /* = nullptr */)
 {
   SettingPtrList values;
   if (!fromValues(value, values))
     return false;
 
-  return SetValue(values);
+  return SetValue(values, context);
 }
 
-bool CSettingList::SetValue(const SettingPtrList &values)
+bool CSettingList::SetValue(const SettingPtrList &values, const Context* context /* = nullptr */)
 {
   CExclusiveLock lock(m_critical);
 
@@ -466,7 +466,7 @@ bool CSettingList::SetValue(const SettingPtrList &values)
   m_values.clear();
   m_values.insert(m_values.begin(), values.begin(), values.end());
 
-  if (!OnSettingChanging(this))
+  if (!OnSettingChanging(this, context))
   {
     m_values = oldValues;
 
@@ -474,12 +474,12 @@ bool CSettingList::SetValue(const SettingPtrList &values)
     // callback handlers failed the OnSettingChanging()
     // callback so we need to let all the callback handlers
     // know that the setting hasn't changed
-    OnSettingChanging(this);
+    OnSettingChanging(this, context);
     return false;
   }
 
   m_changed = (toString(m_values) != toString(m_defaults));
-  OnSettingChanged(this);
+  OnSettingChanged(this, context);
   return true;
 }
 
@@ -623,13 +623,13 @@ bool CSettingBool::Deserialize(const TiXmlNode *node, bool update /* = false */)
   return true;
 }
   
-bool CSettingBool::FromString(const std::string &value)
+bool CSettingBool::FromString(const std::string &value, const Context* context /* = nullptr */)
 {
   bool bValue;
   if (!fromString(value, bValue))
     return false;
 
-  return SetValue(bValue);
+  return SetValue(bValue, context);
 }
 
 std::string CSettingBool::ToString() const
@@ -649,7 +649,7 @@ bool CSettingBool::CheckValidity(const std::string &value) const
   return fromString(value, bValue);
 }
 
-bool CSettingBool::SetValue(bool value)
+bool CSettingBool::SetValue(bool value, const Context* context /* = nullptr */)
 {
   CExclusiveLock lock(m_critical);
 
@@ -659,7 +659,7 @@ bool CSettingBool::SetValue(bool value)
   bool oldValue = m_value;
   m_value = value;
 
-  if (!OnSettingChanging(this))
+  if (!OnSettingChanging(this, context))
   {
     m_value = oldValue;
 
@@ -667,12 +667,12 @@ bool CSettingBool::SetValue(bool value)
     // callback handlers failed the OnSettingChanging()
     // callback so we need to let all the callback handlers
     // know that the setting hasn't changed
-    OnSettingChanging(this);
+    OnSettingChanging(this, context);
     return false;
   }
 
   m_changed = m_value != m_default;
-  OnSettingChanged(this);
+  OnSettingChanged(this, context);
   return true;
 }
   
@@ -824,13 +824,13 @@ bool CSettingInt::Deserialize(const TiXmlNode *node, bool update /* = false */)
   return true;
 }
 
-bool CSettingInt::FromString(const std::string &value)
+bool CSettingInt::FromString(const std::string &value, const Context* context /* = nullptr */)
 {
   int iValue;
   if (!fromString(value, iValue))
     return false;
 
-  return SetValue(iValue);
+  return SetValue(iValue, context);
 }
 
 std::string CSettingInt::ToString() const
@@ -881,7 +881,7 @@ bool CSettingInt::CheckValidity(int value) const
   return true;
 }
 
-bool CSettingInt::SetValue(int value)
+bool CSettingInt::SetValue(int value, const Context* context /* = nullptr */)
 {
   CExclusiveLock lock(m_critical);
 
@@ -894,7 +894,7 @@ bool CSettingInt::SetValue(int value)
   int oldValue = m_value;
   m_value = value;
 
-  if (!OnSettingChanging(this))
+  if (!OnSettingChanging(this, context))
   {
     m_value = oldValue;
 
@@ -902,12 +902,12 @@ bool CSettingInt::SetValue(int value)
     // callback handlers failed the OnSettingChanging()
     // callback so we need to let all the callback handlers
     // know that the setting hasn't changed
-    OnSettingChanging(this);
+    OnSettingChanging(this, context);
     return false;
   }
 
   m_changed = m_value != m_default;
-  OnSettingChanged(this);
+  OnSettingChanged(this, context);
   return true;
 }
 
@@ -1070,13 +1070,13 @@ bool CSettingNumber::Deserialize(const TiXmlNode *node, bool update /* = false *
   return true;
 }
 
-bool CSettingNumber::FromString(const std::string &value)
+bool CSettingNumber::FromString(const std::string &value, const Context* context /* = nullptr */)
 {
   double dValue;
   if (!fromString(value, dValue))
     return false;
 
-  return SetValue(dValue);
+  return SetValue(dValue, context);
 }
 
 std::string CSettingNumber::ToString() const
@@ -1113,7 +1113,7 @@ bool CSettingNumber::CheckValidity(double value) const
   return true;
 }
 
-bool CSettingNumber::SetValue(double value)
+bool CSettingNumber::SetValue(double value, const Context* context /* = nullptr */)
 {
   CExclusiveLock lock(m_critical);
 
@@ -1126,7 +1126,7 @@ bool CSettingNumber::SetValue(double value)
   double oldValue = m_value;
   m_value = value;
 
-  if (!OnSettingChanging(this))
+  if (!OnSettingChanging(this, context))
   {
     m_value = oldValue;
 
@@ -1134,12 +1134,12 @@ bool CSettingNumber::SetValue(double value)
     // callback handlers failed the OnSettingChanging()
     // callback so we need to let all the callback handlers
     // know that the setting hasn't changed
-    OnSettingChanging(this);
+    OnSettingChanging(this, context);
     return false;
   }
 
   m_changed = m_value != m_default;
-  OnSettingChanged(this);
+  OnSettingChanged(this, context);
   return true;
 }
 
@@ -1258,7 +1258,7 @@ bool CSettingString::CheckValidity(const std::string &value) const
   return true;
 }
 
-bool CSettingString::SetValue(const std::string &value)
+bool CSettingString::SetValue(const std::string &value, const Context* context /* = nullptr */)
 {
   CExclusiveLock lock(m_critical);
 
@@ -1271,7 +1271,7 @@ bool CSettingString::SetValue(const std::string &value)
   std::string oldValue = m_value;
   m_value = value;
 
-  if (!OnSettingChanging(this))
+  if (!OnSettingChanging(this, context))
   {
     m_value = oldValue;
 
@@ -1279,12 +1279,12 @@ bool CSettingString::SetValue(const std::string &value)
     // callback handlers failed the OnSettingChanging()
     // callback so we need to let all the callback handlers
     // know that the setting hasn't changed
-    OnSettingChanging(this);
+    OnSettingChanging(this, context);
     return false;
   }
 
   m_changed = m_value != m_default;
-  OnSettingChanged(this);
+  OnSettingChanged(this, context);
   return true;
 }
 

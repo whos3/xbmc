@@ -189,7 +189,7 @@ void CEpgContainer::Notify(const Observable &obs, const ObservableMessage msg)
   NotifyObservers(msg);
 }
 
-void CEpgContainer::OnSettingChanged(const CSetting *setting)
+void CEpgContainer::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

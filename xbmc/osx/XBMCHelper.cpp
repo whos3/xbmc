@@ -92,7 +92,7 @@ XBMCHelper::XBMCHelper()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-bool XBMCHelper::OnSettingChanging(const CSetting *setting)
+bool XBMCHelper::OnSettingChanging(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;

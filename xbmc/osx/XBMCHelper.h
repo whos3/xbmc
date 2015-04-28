@@ -38,7 +38,7 @@ class XBMCHelper : public ISettingCallback
  public:
   static XBMCHelper& GetInstance();
 
-  virtual bool OnSettingChanging(const CSetting *setting);
+  virtual bool OnSettingChanging(const CSetting *setting, const Context* context = nullptr);
 
   void Start();
   void Stop();

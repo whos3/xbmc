@@ -28,6 +28,16 @@ public:
   virtual ~ISettingCallback() { }
 
   /*!
+   * \brief Context in which a setting callback has been triggered.
+   */
+  typedef struct Context
+  {
+    int callerId;
+    const char* callerName;
+    void* data;
+  } Context;
+
+  /*!
    \brief The value of the given setting is being changed.
 
    This callback is triggered whenever the value of a setting is being
@@ -37,9 +47,10 @@ public:
    inform all listeners that the value change has been reverted.
 
    \param setting The setting whose value is being changed (already containing the changed value)
+   \param context The context in which the setting has been chaged.
    \return True if the new value is acceptable otherwise false
    */
-  virtual bool OnSettingChanging(const CSetting *setting) { return true; }
+  virtual bool OnSettingChanging(const CSetting *setting, const Context* context) { return true; }
 
   /*!
    \brief The value of the given setting has changed.
@@ -49,8 +60,9 @@ public:
    has reverted the change.
 
    \param setting The setting whose value has been changed
+   \param context The context in which the setting has been chaged.
    */
-  virtual void OnSettingChanged(const CSetting *setting) { }
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context) { }
 
   /*!
    \brief The given setting has been activated.
@@ -59,8 +71,9 @@ public:
    This callback is only fired for CSettingAction settings.
 
    \param setting The setting which has been activated.
+   \param context The context in which the setting has been activated.
    */
-  virtual void OnSettingAction(const CSetting *setting) { }
+  virtual void OnSettingAction(const CSetting *setting, const Context* context) { }
 
   /*!
    \brief The given setting needs to be updated.
@@ -70,9 +83,10 @@ public:
    setting and will not be triggered afterwards.
 
    \param setting The setting which needs to be updated.
+   \param context The context in which the setting needs to be updated.
    \return True if the setting has been successfully updated otherwise false
    */
-  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode) { return false; }
+  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context) { return false; }
 
   /*!
    \brief The given property of the given setting has changed
@@ -82,6 +96,7 @@ public:
 
    \param setting The setting which has a changed property
    \param propertyName The string representation of the changed property
+   \param context The context in which the setting's property has been chaged.
    */
-  virtual void OnSettingPropertyChanged(const CSetting *setting, const char *propertyName) { }
+  virtual void OnSettingPropertyChanged(const CSetting *setting, const char *propertyName, const Context* context = nullptr) { }
 };

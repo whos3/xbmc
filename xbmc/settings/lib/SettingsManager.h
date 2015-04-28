@@ -327,14 +327,14 @@ public:
    \param value Boolean value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetBool(const std::string &id, bool value);
+  bool SetBool(const std::string &id, bool value, const Context* context);
   /*!
    \brief Toggles the boolean value of the setting with the given identifier.
 
    \param id Setting identifier
    \return True if toggling the boolean value was successful, false otherwise
    */
-  bool ToggleBool(const std::string &id);
+  bool ToggleBool(const std::string &id, const Context* context);
   /*!
    \brief Sets the integer value of the setting with the given identifier.
 
@@ -342,7 +342,7 @@ public:
    \param value Integer value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetInt(const std::string &id, int value);
+  bool SetInt(const std::string &id, int value, const Context* context);
   /*!
    \brief Sets the real number value of the setting with the given identifier.
 
@@ -350,7 +350,7 @@ public:
    \param value Real number value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetNumber(const std::string &id, double value);
+  bool SetNumber(const std::string &id, double value, const Context* context);
   /*!
    \brief Sets the string value of the setting with the given identifier.
 
@@ -358,7 +358,7 @@ public:
    \param value String value to set
    \return True if setting the value was successful, false otherwise
    */
-  bool SetString(const std::string &id, const std::string &value);
+  bool SetString(const std::string &id, const std::string &value, const Context* context);
   /*!
    \brief Sets the values of the list setting with the given identifier.
 
@@ -366,7 +366,7 @@ public:
    \param value Values to set
    \return True if setting the values was successful, false otherwise
    */
-  bool SetList(const std::string &id, const std::vector< std::shared_ptr<CSetting> > &value);
+  bool SetList(const std::string &id, const std::vector< std::shared_ptr<CSetting> > &value, const Context* context);
 
   /*!
    \brief Gets the setting conditions manager used by the settings manager.
@@ -396,11 +396,11 @@ public:
 
 private:
   // implementation of ISettingCallback
-  virtual bool OnSettingChanging(const CSetting *setting);
-  virtual void OnSettingChanged(const CSetting *setting);
-  virtual void OnSettingAction(const CSetting *setting);
-  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
-  virtual void OnSettingPropertyChanged(const CSetting *setting, const char *propertyName);
+  virtual bool OnSettingChanging(const CSetting *setting, const Context* context);
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context);
+  virtual void OnSettingAction(const CSetting *setting, const Context* context);
+  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context);
+  virtual void OnSettingPropertyChanged(const CSetting *setting, const char *propertyName, const Context* context = nullptr);
 
   // implementation of ISettingsHandler
   virtual bool OnSettingsLoading();
@@ -418,8 +418,8 @@ private:
 
   bool LoadSetting(const TiXmlNode *node, CSetting *setting, bool &updated);
   bool UpdateSetting(const TiXmlNode *node, CSetting *setting, const CSettingUpdate& update);
-  void UpdateSettingByDependency(const std::string &settingId, const CSettingDependency &dependency);
-  void UpdateSettingByDependency(const std::string &settingId, SettingDependencyType dependencyType);
+  void UpdateSettingByDependency(const std::string &settingId, const CSettingDependency &dependency, const Context* context);
+  void UpdateSettingByDependency(const std::string &settingId, SettingDependencyType dependencyType, const Context* context);
 
   typedef enum {
     SettingOptionsFillerTypeNone = 0,

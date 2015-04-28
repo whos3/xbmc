@@ -47,7 +47,7 @@ public:
   virtual bool Load(const TiXmlNode *settings);
   virtual bool Save(TiXmlNode *settings) const;
 
-  virtual void OnSettingAction(const CSetting *setting);
+  virtual void OnSettingAction(const CSetting *setting, const Context* context);
   virtual void OnSettingsLoaded();
 
   const CVideoSettings& GetDefaultVideoSettings() const { return m_defaultVideoSettings; }

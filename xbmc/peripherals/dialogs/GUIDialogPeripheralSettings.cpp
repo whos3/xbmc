@@ -69,12 +69,12 @@ void CGUIDialogPeripheralSettings::SetFileItem(const CFileItem *item)
   m_item = new CFileItem(*item);
 }
 
-void CGUIDialogPeripheralSettings::OnSettingChanged(const CSetting *setting)
+void CGUIDialogPeripheralSettings::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
 
   // we need to copy the new value of the setting from the copy to the
   // original setting

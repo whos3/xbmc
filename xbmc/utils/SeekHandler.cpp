@@ -228,7 +228,7 @@ void CSeekHandler::SettingOptionsSeekStepsFiller(const CSetting *setting, std::v
   }
 }
 
-void CSeekHandler::OnSettingChanged(const CSetting *setting)
+void CSeekHandler::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

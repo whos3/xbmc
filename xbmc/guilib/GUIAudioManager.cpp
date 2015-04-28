@@ -44,7 +44,7 @@ CGUIAudioManager::~CGUIAudioManager()
 {
 }
 
-void CGUIAudioManager::OnSettingChanged(const CSetting *setting)
+void CGUIAudioManager::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
@@ -57,7 +57,7 @@ void CGUIAudioManager::OnSettingChanged(const CSetting *setting)
   }
 }
 
-bool CGUIAudioManager::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode)
+bool CGUIAudioManager::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;

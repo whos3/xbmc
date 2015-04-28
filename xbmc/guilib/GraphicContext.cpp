@@ -69,7 +69,7 @@ CGraphicContext::~CGraphicContext(void)
 {
 }
 
-void CGraphicContext::OnSettingChanged(const CSetting *setting)
+void CGraphicContext::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

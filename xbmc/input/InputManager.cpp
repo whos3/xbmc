@@ -824,7 +824,7 @@ void CInputManager::SetRemoteControlName(const std::string& name)
 #endif
 }
 
-void CInputManager::OnSettingChanged(const CSetting *setting)
+void CInputManager::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == nullptr)
     return;

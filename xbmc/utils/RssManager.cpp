@@ -60,7 +60,7 @@ void CRssManager::OnSettingsUnloaded()
   Clear();
 }
 
-void CRssManager::OnSettingAction(const CSetting *setting)
+void CRssManager::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

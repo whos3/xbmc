@@ -41,8 +41,8 @@ public:
   virtual bool Save(TiXmlNode *settings) const;
   virtual void Clear();
 
-  virtual bool OnSettingChanging(const CSetting *setting);
-  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
+  virtual bool OnSettingChanging(const CSetting *setting, const Context* context);
+  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context);
 
   /*!
    \brief Returns the currently active resolution

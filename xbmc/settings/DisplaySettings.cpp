@@ -212,7 +212,7 @@ void CDisplaySettings::Clear()
   m_nonLinearStretched = false;
 }
 
-bool CDisplaySettings::OnSettingChanging(const CSetting *setting)
+bool CDisplaySettings::OnSettingChanging(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;
@@ -296,7 +296,7 @@ bool CDisplaySettings::OnSettingChanging(const CSetting *setting)
   return true;
 }
 
-bool CDisplaySettings::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode)
+bool CDisplaySettings::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;

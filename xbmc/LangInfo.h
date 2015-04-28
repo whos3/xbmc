@@ -63,7 +63,7 @@ public:
   virtual ~CLangInfo();
 
   // implementation of ISettingCallback
-  virtual void OnSettingChanged(const CSetting *setting);
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context);
 
   // implementation of ISettingsHandler
   virtual void OnSettingsLoaded();

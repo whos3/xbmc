@@ -69,12 +69,12 @@ void CGUIDialogPVRTimerSettings::SetTimer(CFileItem *item)
   m_tmp_day           = 11;
 }
 
-void CGUIDialogPVRTimerSettings::OnSettingChanged(const CSetting *setting)
+void CGUIDialogPVRTimerSettings::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
 
   CPVRTimerInfoTagPtr tag = m_timerItem->GetPVRTimerInfoTag();
   if (tag == NULL)
@@ -143,12 +143,12 @@ void CGUIDialogPVRTimerSettings::OnSettingChanged(const CSetting *setting)
   tag->UpdateSummary();
 }
 
-void CGUIDialogPVRTimerSettings::OnSettingAction(const CSetting *setting)
+void CGUIDialogPVRTimerSettings::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingAction(setting);
+  CGUIDialogSettingsManualBase::OnSettingAction(setting, context);
 
   CPVRTimerInfoTagPtr tag = m_timerItem->GetPVRTimerInfoTag();
   if (tag == NULL)

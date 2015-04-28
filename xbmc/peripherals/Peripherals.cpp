@@ -696,7 +696,7 @@ bool CPeripherals::GetNextKeypress(float frameTime, CKey &key)
   return false;
 }
 
-void CPeripherals::OnSettingChanged(const CSetting *setting)
+void CPeripherals::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
@@ -714,7 +714,7 @@ void CPeripherals::OnSettingChanged(const CSetting *setting)
   }
 }
 
-void CPeripherals::OnSettingAction(const CSetting *setting)
+void CPeripherals::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

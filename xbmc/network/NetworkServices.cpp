@@ -164,7 +164,7 @@ CNetworkServices& CNetworkServices::Get()
   return sNetworkServices;
 }
 
-bool CNetworkServices::OnSettingChanging(const CSetting *setting)
+bool CNetworkServices::OnSettingChanging(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;
@@ -392,7 +392,7 @@ bool CNetworkServices::OnSettingChanging(const CSetting *setting)
   return true;
 }
 
-void CNetworkServices::OnSettingChanged(const CSetting *setting)
+void CNetworkServices::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
@@ -420,7 +420,7 @@ void CNetworkServices::OnSettingChanged(const CSetting *setting)
   }
 }
 
-bool CNetworkServices::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode)
+bool CNetworkServices::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;

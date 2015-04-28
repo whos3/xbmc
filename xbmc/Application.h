@@ -395,9 +395,9 @@ protected:
   virtual bool Load(const TiXmlNode *settings);
   virtual bool Save(TiXmlNode *settings) const;
 
-  virtual void OnSettingChanged(const CSetting *setting);
-  virtual void OnSettingAction(const CSetting *setting);
-  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context);
+  virtual void OnSettingAction(const CSetting *setting, const Context* context);
+  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context);
 
   bool LoadSkin(const std::string& skinID);
   bool LoadSkin(const std::shared_ptr<ADDON::CSkinInfo>& skin);

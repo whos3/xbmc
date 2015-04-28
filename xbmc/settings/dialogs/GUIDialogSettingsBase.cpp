@@ -456,7 +456,7 @@ void CGUIDialogSettingsBase::OnTimeout()
   UpdateSettingControl(m_delayedSetting);
 }
 
-void CGUIDialogSettingsBase::OnSettingChanged(const CSetting *setting)
+void CGUIDialogSettingsBase::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL || setting->GetType() == SettingTypeNone ||
       setting->GetType() == SettingTypeAction)
@@ -465,7 +465,7 @@ void CGUIDialogSettingsBase::OnSettingChanged(const CSetting *setting)
   UpdateSettingControl(setting->GetId());
 }
 
-void CGUIDialogSettingsBase::OnSettingPropertyChanged(const CSetting *setting, const char *propertyName)
+void CGUIDialogSettingsBase::OnSettingPropertyChanged(const CSetting *setting, const char *propertyName, const Context* context /* = nullptr */)
 {
   if (setting == NULL || propertyName == NULL)
     return;

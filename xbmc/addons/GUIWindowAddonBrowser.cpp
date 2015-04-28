@@ -41,6 +41,7 @@
 #include "utils/log.h"
 #include "threads/SingleLock.h"
 #include "settings/Settings.h"
+#include "settings/SettingUtils.h"
 #include "settings/MediaSourceSettings.h"
 #include "utils/StringUtils.h"
 #include "AddonDatabase.h"
@@ -92,33 +93,35 @@ bool CGUIWindowAddonBrowser::OnMessage(CGUIMessage& message)
     break;
   case GUI_MSG_CLICKED:
     {
+      SettingContext guiContext = CSettingUtils::CreateGuiContext(this);
+
       int iControl = message.GetSenderId();
       if (iControl == CONTROL_AUTOUPDATE)
       {
         const CGUIControl *control = GetControl(CONTROL_AUTOUPDATE);
         if (control && control->GetControlType() == CGUIControl::GUICONTROL_BUTTON)
-          CSettings::Get().SetInt("general.addonupdates", (CSettings::Get().GetInt("general.addonupdates")+1) % AUTO_UPDATES_MAX);
+          CSettings::Get().SetInt("general.addonupdates", (CSettings::Get().GetInt("general.addonupdates") + 1) % AUTO_UPDATES_MAX, guiContext.get());
         else
-          CSettings::Get().SetInt("general.addonupdates", (CSettings::Get().GetInt("general.addonupdates") == 0) ? 1 : 0);
+          CSettings::Get().SetInt("general.addonupdates", (CSettings::Get().GetInt("general.addonupdates") == 0) ? 1 : 0, guiContext.get());
         UpdateButtons();
         return true;
       }
       else if (iControl == CONTROL_SHUTUP)
       {
-        CSettings::Get().ToggleBool("general.addonnotifications");
+        CSettings::Get().ToggleBool("general.addonnotifications", guiContext.get());
         CSettings::Get().Save();
         return true;
       }
       else if (iControl == CONTROL_FOREIGNFILTER)
       {
-        CSettings::Get().ToggleBool("general.addonforeignfilter");
+        CSettings::Get().ToggleBool("general.addonforeignfilter", guiContext.get());
         CSettings::Get().Save();
         Refresh();
         return true;
       }
       else if (iControl == CONTROL_BROKENFILTER)
       {
-        CSettings::Get().ToggleBool("general.addonbrokenfilter");
+        CSettings::Get().ToggleBool("general.addonbrokenfilter", guiContext.get());
         CSettings::Get().Save();
         Refresh();
         return true;

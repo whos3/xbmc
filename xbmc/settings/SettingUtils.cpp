@@ -22,18 +22,21 @@
 #include "settings/lib/Setting.h"
 #include "utils/StringUtils.h"
 
+static const int GuiContextCallerId = 0;
+static const char* GuiContextCallerName = "gui";
+
 std::vector<CVariant> CSettingUtils::GetList(const CSettingList *settingList)
 {
   return ListToValues(settingList, settingList->GetValue());
 }
 
-bool CSettingUtils::SetList(CSettingList *settingList, const std::vector<CVariant> &value)
+bool CSettingUtils::SetList(CSettingList *settingList, const std::vector<CVariant> &value, const ISettingCallback::Context* context /* = nullptr */)
 {
   SettingPtrList newValues;
   if (!ValuesToList(settingList, value, newValues))
     return false;
 
-  return settingList->SetValue(newValues);
+  return settingList->SetValue(newValues, context);
 }
 
 std::vector<CVariant> CSettingUtils::ListToValues(const CSettingList *setting, const std::vector< std::shared_ptr<CSetting> > &values)
@@ -130,4 +133,27 @@ bool CSettingUtils::ValuesToList(const CSettingList *setting, const std::vector<
   }
 
   return true;
+}
+
+SettingContext CSettingUtils::CreateContext(int callerId, const char* callerName, void* data /* = nullptr */)
+{
+  std::shared_ptr<ISettingCallback::Context> context;
+  context->callerId = callerId;
+  context->callerName = callerName;
+  context->data = data;
+
+  return context;
+}
+
+SettingContext CSettingUtils::CreateGuiContext(void* data /* = nullptr */)
+{
+  return CreateContext(GuiContextCallerId, GuiContextCallerName, data);
+}
+
+bool CSettingUtils::IsGuiContext(const ISettingCallback::Context* context)
+{
+  if (context == nullptr)
+    return false;
+
+  return context->callerId == GuiContextCallerId;
 }

@@ -44,9 +44,9 @@ class CNetworkServices : public ISettingCallback
 public:
   static CNetworkServices& Get();
   
-  virtual bool OnSettingChanging(const CSetting *setting);
-  virtual void OnSettingChanged(const CSetting *setting);
-  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
+  virtual bool OnSettingChanging(const CSetting *setting, const Context* context);
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context);
+  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context);
 
   void Start();
   void Stop(bool bWait);

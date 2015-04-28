@@ -112,12 +112,12 @@ bool CGUIDialogLockSettings::ShowAndGetUserAndPassword(std::string &user, std::s
   return true;
 }
 
-void CGUIDialogLockSettings::OnSettingChanged(const CSetting *setting)
+void CGUIDialogLockSettings::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
 
   const std::string &settingId = setting->GetId();
   if (settingId == SETTING_USERNAME)
@@ -144,12 +144,12 @@ void CGUIDialogLockSettings::OnSettingChanged(const CSetting *setting)
   m_changed = true;
 }
 
-void CGUIDialogLockSettings::OnSettingAction(const CSetting *setting)
+void CGUIDialogLockSettings::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingAction(setting);
+  CGUIDialogSettingsManualBase::OnSettingAction(setting, context);
 
   const std::string &settingId = setting->GetId();
   if (settingId == SETTING_LOCKCODE)

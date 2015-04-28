@@ -1353,7 +1353,7 @@ void CApplication::StopServices()
   g_peripherals.Clear();
 }
 
-void CApplication::OnSettingChanged(const CSetting *setting)
+void CApplication::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
@@ -1427,7 +1427,7 @@ void CApplication::OnSettingChanged(const CSetting *setting)
     m_replayGainSettings.bAvoidClipping = ((CSettingBool*)setting)->GetValue();
 }
 
-void CApplication::OnSettingAction(const CSetting *setting)
+void CApplication::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
@@ -1455,7 +1455,7 @@ void CApplication::OnSettingAction(const CSetting *setting)
     g_windowManager.ActivateWindow(WINDOW_TEST_PATTERN);
 }
 
-bool CApplication::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode)
+bool CApplication::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;

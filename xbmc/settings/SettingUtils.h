@@ -21,10 +21,13 @@
 #include <vector>
 #include <memory>
 
+#include "settings/lib/ISettingCallback.h"
 #include "utils/Variant.h"
 
 class CSettingList;
 class CSetting;
+
+typedef std::shared_ptr<ISettingCallback::Context> SettingContext;
 
 class CSettingUtils
 {
@@ -43,8 +46,13 @@ public:
    \param value Values to set
    \return True if setting the values was successful, false otherwise
    */
-  static bool SetList(CSettingList *settingList, const std::vector<CVariant> &value);
+  static bool SetList(CSettingList *settingList, const std::vector<CVariant> &value, const ISettingCallback::Context* context);
 
   static std::vector<CVariant> ListToValues(const CSettingList *setting, const std::vector< std::shared_ptr<CSetting> > &values);
   static bool ValuesToList(const CSettingList *setting, const std::vector<CVariant> &values, std::vector< std::shared_ptr<CSetting> > &newValues);
+
+  static SettingContext CreateContext(int callerId, const char* callerName, void* data = nullptr);
+  static SettingContext CreateGuiContext(void* data = nullptr);
+
+  static bool IsGuiContext(const ISettingCallback::Context* context);
 };

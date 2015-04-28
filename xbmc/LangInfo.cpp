@@ -326,7 +326,7 @@ CLangInfo::~CLangInfo()
 {
 }
 
-void CLangInfo::OnSettingChanged(const CSetting *setting)
+void CLangInfo::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

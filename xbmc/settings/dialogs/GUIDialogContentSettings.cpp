@@ -272,12 +272,12 @@ void CGUIDialogContentSettings::OnInitWindow()
   CGUIDialogSettingsManualBase::OnInitWindow();
 }
 
-void CGUIDialogContentSettings::OnSettingChanged(const CSetting *setting)
+void CGUIDialogContentSettings::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
 
   const std::string &settingId = setting->GetId();
   if (settingId == SETTING_CONTAINS_SINGLE_ITEM)
@@ -289,7 +289,7 @@ void CGUIDialogContentSettings::OnSettingChanged(const CSetting *setting)
   else if (settingId == SETTING_SCAN_RECURSIVE)
   {
     m_scanRecursive = static_cast<const CSettingBool*>(setting)->GetValue();
-    m_settingsManager->SetBool(SETTING_CONTAINS_SINGLE_ITEM, false);
+    m_settingsManager->SetBool(SETTING_CONTAINS_SINGLE_ITEM, false, context);
   }
   else if (settingId == SETTING_EXCLUDE)
     m_exclude = static_cast<const CSettingBool*>(setting)->GetValue();

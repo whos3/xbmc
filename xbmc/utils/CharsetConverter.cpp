@@ -586,7 +586,7 @@ CCharsetConverter::CCharsetConverter()
 {
 }
 
-void CCharsetConverter::OnSettingChanged(const CSetting* setting)
+void CCharsetConverter::OnSettingChanged(const CSetting* setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

@@ -36,7 +36,7 @@ class CCharsetConverter : public ISettingCallback
 public:
   CCharsetConverter();
 
-  virtual void OnSettingChanged(const CSetting* setting);
+  virtual void OnSettingChanged(const CSetting* setting, const Context* context);
 
   static void reset();
   static void resetSystemCharset();

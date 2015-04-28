@@ -200,9 +200,9 @@ void CGUIDialogMediaFilter::OnInitWindow()
   UpdateControls();
 }
 
-void CGUIDialogMediaFilter::OnSettingChanged(const CSetting *setting)
+void CGUIDialogMediaFilter::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
 
   map<std::string, Filter>::iterator it = m_filters.find(setting->GetId());
   if (it == m_filters.end())

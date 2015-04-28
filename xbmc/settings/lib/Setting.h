@@ -84,11 +84,11 @@ public:
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
 
   virtual int GetType() const = 0;
-  virtual bool FromString(const std::string &value) = 0;
+  virtual bool FromString(const std::string &value, const Context* context) = 0;
   virtual std::string ToString() const = 0;
   virtual bool Equals(const std::string &value) const = 0;
   virtual bool CheckValidity(const std::string &value) const = 0;
-  virtual void Reset() = 0;
+  virtual void Reset(const Context* context) = 0;
 
   int GetLabel() const { return m_label; }
   void SetLabel(int label) { m_label = label; }
@@ -115,11 +115,11 @@ public:
 
 protected:
   // implementation of ISettingCallback
-  virtual bool OnSettingChanging(const CSetting *setting);
-  virtual void OnSettingChanged(const CSetting *setting);
-  virtual void OnSettingAction(const CSetting *setting);
-  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
-  virtual void OnSettingPropertyChanged(const CSetting *setting, const char *propertyName);
+  virtual bool OnSettingChanging(const CSetting *setting, const Context* context);
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context);
+  virtual void OnSettingAction(const CSetting *setting, const Context* context);
+  virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context);
+  virtual void OnSettingPropertyChanged(const CSetting *setting, const char *propertyName, const Context* context = nullptr);
 
   void Copy(const CSetting &setting);
 
@@ -159,11 +159,11 @@ public:
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
 
   virtual int GetType() const { return SettingTypeList; }
-  virtual bool FromString(const std::string &value);
+  virtual bool FromString(const std::string &value, const Context* context);
   virtual std::string ToString() const;
   virtual bool Equals(const std::string &value) const;
   virtual bool CheckValidity(const std::string &value) const;
-  virtual void Reset();
+  virtual void Reset(const Context* context);
   
   int GetElementType() const;
   const CSetting* GetDefinition() const { return m_definition; }
@@ -176,10 +176,10 @@ public:
   int GetMaximumItems() const { return m_maximumItems; }
   void SetMaximumItems(int maximumItems) { m_maximumItems = maximumItems; }
   
-  bool FromString(const std::vector<std::string> &value);
+  bool FromString(const std::vector<std::string> &value, const Context* context);
 
   const SettingPtrList& GetValue() const { return m_values; }
-  bool SetValue(const SettingPtrList &values);
+  bool SetValue(const SettingPtrList &values, const Context* context);
   const SettingPtrList& GetDefault() const { return m_defaults; }
   void SetDefault(const SettingPtrList &values);
 
@@ -216,14 +216,14 @@ public:
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
 
   virtual int GetType() const { return SettingTypeBool; }
-  virtual bool FromString(const std::string &value);
+  virtual bool FromString(const std::string &value, const Context* context);
   virtual std::string ToString() const;
   virtual bool Equals(const std::string &value) const;
   virtual bool CheckValidity(const std::string &value) const;
-  virtual void Reset() { SetValue(m_default); }
+  virtual void Reset(const Context* context) { SetValue(m_default, context); }
 
   bool GetValue() const { CSharedLock lock(m_critical); return m_value; }
-  bool SetValue(bool value);
+  bool SetValue(bool value, const Context* context);
   bool GetDefault() const { return m_default; }
   void SetDefault(bool value);
 
@@ -255,15 +255,15 @@ public:
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
 
   virtual int GetType() const { return SettingTypeInteger; }
-  virtual bool FromString(const std::string &value);
+  virtual bool FromString(const std::string &value, const Context* context);
   virtual std::string ToString() const;
   virtual bool Equals(const std::string &value) const;
   virtual bool CheckValidity(const std::string &value) const;
   virtual bool CheckValidity(int value) const;
-  virtual void Reset() { SetValue(m_default); }
+  virtual void Reset(const Context* context) { SetValue(m_default, context); }
 
   int GetValue() const { CSharedLock lock(m_critical); return m_value; }
-  bool SetValue(int value);
+  bool SetValue(int value, const Context* context);
   int GetDefault() const { return m_default; }
   void SetDefault(int value);
 
@@ -325,15 +325,15 @@ public:
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
 
   virtual int GetType() const { return SettingTypeNumber; }
-  virtual bool FromString(const std::string &value);
+  virtual bool FromString(const std::string &value, const Context* context);
   virtual std::string ToString() const;
   virtual bool Equals(const std::string &value) const;
   virtual bool CheckValidity(const std::string &value) const;
   virtual bool CheckValidity(double value) const;
-  virtual void Reset() { SetValue(m_default); }
+  virtual void Reset(const Context* context) { SetValue(m_default, context); }
 
   double GetValue() const { CSharedLock lock(m_critical); return m_value; }
-  bool SetValue(double value);
+  bool SetValue(double value, const Context* context);
   double GetDefault() const { return m_default; }
   void SetDefault(double value);
 
@@ -373,14 +373,14 @@ public:
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
 
   virtual int GetType() const { return SettingTypeString; }
-  virtual bool FromString(const std::string &value) { return SetValue(value); }
+  virtual bool FromString(const std::string &value, const Context* context) { return SetValue(value, context); }
   virtual std::string ToString() const { return m_value; }
   virtual bool Equals(const std::string &value) const { return m_value == value; }
   virtual bool CheckValidity(const std::string &value) const;
-  virtual void Reset() { SetValue(m_default); }
+  virtual void Reset(const Context* context) { SetValue(m_default, context); }
 
   virtual const std::string& GetValue() const { CSharedLock lock(m_critical); return m_value; }
-  virtual bool SetValue(const std::string &value);
+  virtual bool SetValue(const std::string &value, const Context* context);
   virtual const std::string& GetDefault() const { return m_default; }
   virtual void SetDefault(const std::string &value);
 
@@ -435,13 +435,13 @@ public:
   virtual bool Deserialize(const TiXmlNode *node, bool update = false);
 
   virtual int GetType() const { return SettingTypeAction; }
-  virtual bool FromString(const std::string &value) { return false; }
+  virtual bool FromString(const std::string &value, const Context* context) { return false; }
   virtual std::string ToString() const { return ""; }
   virtual bool Equals(const std::string &value) const { return false; }
   virtual bool CheckValidity(const std::string &value) const { return false; }
-  virtual void Reset() { }
+  virtual void Reset(const Context* context) { }
 
   // this needs to be public so it can be triggered when activated
   // by the user in the GUI.
-  virtual void OnSettingAction(const CSetting *setting) { return CSetting::OnSettingAction(this); }
+  virtual void OnSettingAction(const CSetting *setting, const Context* context) { return CSetting::OnSettingAction(this, context); }
 };

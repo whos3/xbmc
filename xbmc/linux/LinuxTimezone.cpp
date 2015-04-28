@@ -153,7 +153,7 @@ CLinuxTimezone::CLinuxTimezone() : m_IsDST(0)
    free(line);
 }
 
-void CLinuxTimezone::OnSettingChanged(const CSetting *setting)
+void CLinuxTimezone::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;

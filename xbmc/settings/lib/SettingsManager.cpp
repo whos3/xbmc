@@ -528,24 +528,24 @@ bool CSettingsManager::GetBool(const std::string &id) const
   return ((CSettingBool*)setting)->GetValue();
 }
 
-bool CSettingsManager::SetBool(const std::string &id, bool value)
+bool CSettingsManager::SetBool(const std::string &id, bool value, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   CSetting *setting = GetSetting(id);
   if (setting == NULL || setting->GetType() != SettingTypeBool)
     return false;
 
-  return ((CSettingBool*)setting)->SetValue(value);
+  return ((CSettingBool*)setting)->SetValue(value, context);
 }
 
-bool CSettingsManager::ToggleBool(const std::string &id)
+bool CSettingsManager::ToggleBool(const std::string &id, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   CSetting *setting = GetSetting(id);
   if (setting == NULL || setting->GetType() != SettingTypeBool)
     return false;
 
-  return SetBool(id, !((CSettingBool*)setting)->GetValue());
+  return SetBool(id, !((CSettingBool*)setting)->GetValue(), context);
 }
 
 int CSettingsManager::GetInt(const std::string &id) const
@@ -558,14 +558,14 @@ int CSettingsManager::GetInt(const std::string &id) const
   return ((CSettingInt*)setting)->GetValue();
 }
 
-bool CSettingsManager::SetInt(const std::string &id, int value)
+bool CSettingsManager::SetInt(const std::string &id, int value, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   CSetting *setting = GetSetting(id);
   if (setting == NULL || setting->GetType() != SettingTypeInteger)
     return false;
 
-  return ((CSettingInt*)setting)->SetValue(value);
+  return ((CSettingInt*)setting)->SetValue(value, context);
 }
 
 double CSettingsManager::GetNumber(const std::string &id) const
@@ -578,14 +578,14 @@ double CSettingsManager::GetNumber(const std::string &id) const
   return ((CSettingNumber*)setting)->GetValue();
 }
 
-bool CSettingsManager::SetNumber(const std::string &id, double value)
+bool CSettingsManager::SetNumber(const std::string &id, double value, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   CSetting *setting = GetSetting(id);
   if (setting == NULL || setting->GetType() != SettingTypeNumber)
     return false;
 
-  return ((CSettingNumber*)setting)->SetValue(value);
+  return ((CSettingNumber*)setting)->SetValue(value, context);
 }
 
 std::string CSettingsManager::GetString(const std::string &id) const
@@ -598,14 +598,14 @@ std::string CSettingsManager::GetString(const std::string &id) const
   return ((CSettingString*)setting)->GetValue();
 }
 
-bool CSettingsManager::SetString(const std::string &id, const std::string &value)
+bool CSettingsManager::SetString(const std::string &id, const std::string &value, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   CSetting *setting = GetSetting(id);
   if (setting == NULL || setting->GetType() != SettingTypeString)
     return false;
 
-  return ((CSettingString*)setting)->SetValue(value);
+  return ((CSettingString*)setting)->SetValue(value, context);
 }
 
 std::vector< std::shared_ptr<CSetting> > CSettingsManager::GetList(const std::string &id) const
@@ -618,14 +618,14 @@ std::vector< std::shared_ptr<CSetting> > CSettingsManager::GetList(const std::st
   return ((CSettingList*)setting)->GetValue();
 }
 
-bool CSettingsManager::SetList(const std::string &id, const std::vector< std::shared_ptr<CSetting> > &value)
+bool CSettingsManager::SetList(const std::string &id, const std::vector< std::shared_ptr<CSetting> > &value, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   CSetting *setting = GetSetting(id);
   if (setting == NULL || setting->GetType() != SettingTypeList)
     return false;
 
-  return ((CSettingList*)setting)->SetValue(value);
+  return ((CSettingList*)setting)->SetValue(value, context);
 }
 
 void CSettingsManager::AddCondition(const std::string &condition)
@@ -722,7 +722,7 @@ bool CSettingsManager::Deserialize(const TiXmlNode *node, bool &updated, std::ma
   return true;
 }
 
-bool CSettingsManager::OnSettingChanging(const CSetting *setting)
+bool CSettingsManager::OnSettingChanging(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return false;
@@ -743,14 +743,14 @@ bool CSettingsManager::OnSettingChanging(const CSetting *setting)
         callback != settingData.callbacks.end();
         ++callback)
   {
-    if (!(*callback)->OnSettingChanging(setting))
+    if (!(*callback)->OnSettingChanging(setting, context))
       return false;
   }
 
   return true;
 }
   
-void CSettingsManager::OnSettingChanged(const CSetting *setting)
+void CSettingsManager::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   if (!m_loaded || setting == NULL)
@@ -767,7 +767,7 @@ void CSettingsManager::OnSettingChanged(const CSetting *setting)
   for (CallbackSet::iterator callback = settingData.callbacks.begin();
         callback != settingData.callbacks.end();
         ++callback)
-    (*callback)->OnSettingChanged(setting);
+    (*callback)->OnSettingChanged(setting, context);
 
   // now handle any settings which depend on the changed setting
   const SettingDependencyMap& deps = GetDependencies(setting);
@@ -778,7 +778,7 @@ void CSettingsManager::OnSettingChanged(const CSetting *setting)
   }
 }
 
-void CSettingsManager::OnSettingAction(const CSetting *setting)
+void CSettingsManager::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   if (!m_loaded || setting == NULL)
@@ -795,10 +795,10 @@ void CSettingsManager::OnSettingAction(const CSetting *setting)
   for (CallbackSet::iterator callback = settingData.callbacks.begin();
         callback != settingData.callbacks.end();
         ++callback)
-    (*callback)->OnSettingAction(setting);
+    (*callback)->OnSettingAction(setting, context);
 }
 
-bool CSettingsManager::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode)
+bool CSettingsManager::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   if (setting == NULL)
@@ -816,12 +816,12 @@ bool CSettingsManager::OnSettingUpdate(CSetting* &setting, const char *oldSettin
   for (CallbackSet::iterator callback = settingData.callbacks.begin();
         callback != settingData.callbacks.end();
         ++callback)
-    ret |= (*callback)->OnSettingUpdate(setting, oldSettingId, oldSettingNode);
+    ret |= (*callback)->OnSettingUpdate(setting, oldSettingId, oldSettingNode, context);
 
   return ret;
 }
 
-void CSettingsManager::OnSettingPropertyChanged(const CSetting *setting, const char *propertyName)
+void CSettingsManager::OnSettingPropertyChanged(const CSetting *setting, const char *propertyName, const Context* context /* = nullptr */)
 {
   CSharedLock lock(m_settingsCritical);
   if (!m_loaded || setting == NULL)
@@ -838,7 +838,7 @@ void CSettingsManager::OnSettingPropertyChanged(const CSetting *setting, const c
   for (CallbackSet::iterator callback = settingData.callbacks.begin();
         callback != settingData.callbacks.end();
         ++callback)
-    (*callback)->OnSettingPropertyChanged(setting, propertyName);
+    (*callback)->OnSettingPropertyChanged(setting, propertyName, context);
 
   // check the changed property and if it may have an influence on the
   // children of the setting
@@ -1046,12 +1046,12 @@ bool CSettingsManager::UpdateSetting(const TiXmlNode *node, CSetting *setting, c
   return updated;
 }
 
-void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, const CSettingDependency &dependency)
+void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, const CSettingDependency &dependency, const Context* context /* = nullptr */)
 {
-  UpdateSettingByDependency(settingId, dependency.GetType());
+  UpdateSettingByDependency(settingId, dependency.GetType(), context);
 }
 
-void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, SettingDependencyType dependencyType)
+void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, SettingDependencyType dependencyType, const Context* context /* = nullptr */)
 {
   CSetting *setting = GetSetting(settingId);
   if (setting == NULL)
@@ -1063,7 +1063,7 @@ void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, S
       // just trigger the property changed callback and a call to
       // CSetting::IsEnabled() will automatically determine the new
       // enabled state
-      OnSettingPropertyChanged(setting, "enabled");
+      OnSettingPropertyChanged(setting, "enabled", context);
       break;
 
     case SettingDependencyTypeUpdate:
@@ -1088,7 +1088,7 @@ void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, S
       // just trigger the property changed callback and a call to
       // CSetting::IsVisible() will automatically determine the new
       // visible state
-      OnSettingPropertyChanged(setting, "visible");
+      OnSettingPropertyChanged(setting, "visible", context);
       break;
 
     case SettingDependencyTypeNone:

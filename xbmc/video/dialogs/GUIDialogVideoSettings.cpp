@@ -69,12 +69,12 @@ CGUIDialogVideoSettings::CGUIDialogVideoSettings()
 CGUIDialogVideoSettings::~CGUIDialogVideoSettings()
 { }
 
-void CGUIDialogVideoSettings::OnSettingChanged(const CSetting *setting)
+void CGUIDialogVideoSettings::OnSettingChanged(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
 
   CVideoSettings &videoSettings = CMediaSettings::Get().GetCurrentVideoSettings();
 
@@ -142,12 +142,12 @@ void CGUIDialogVideoSettings::OnSettingChanged(const CSetting *setting)
     videoSettings.m_StereoInvert = static_cast<const CSettingBool*>(setting)->GetValue();
 }
 
-void CGUIDialogVideoSettings::OnSettingAction(const CSetting *setting)
+void CGUIDialogVideoSettings::OnSettingAction(const CSetting *setting, const Context* context /* = nullptr */)
 {
   if (setting == NULL)
     return;
 
-  CGUIDialogSettingsManualBase::OnSettingChanged(setting);
+  CGUIDialogSettingsManualBase::OnSettingChanged(setting, context);
 
   const std::string &settingId = setting->GetId();
   if (settingId == SETTING_VIDEO_CALIBRATION)

@@ -161,8 +161,8 @@ protected:
   virtual std::string BusyInfo(int info) const;
   virtual void OnJobComplete(unsigned int jobID, bool success, CJob *job);
 
-  virtual void OnSettingChanged(const CSetting *setting);
-  virtual void OnSettingAction(const CSetting *setting);
+  virtual void OnSettingChanged(const CSetting *setting, const Context* context);
+  virtual void OnSettingAction(const CSetting *setting, const Context* context);
 
 private:
 

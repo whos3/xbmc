@@ -34,7 +34,7 @@ class CLinuxTimezone : public ISettingCallback, public ISettingsHandler
 public:
    CLinuxTimezone();
 
-   virtual void OnSettingChanged(const CSetting *setting);
+   virtual void OnSettingChanged(const CSetting *setting, const Context* context);
 
    virtual void OnSettingsLoaded();
 
