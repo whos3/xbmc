@@ -75,11 +75,13 @@ OPTIONS="
 --enable-muxer=adts \
 --enable-muxer=asf \
 --enable-muxer=ipod \
+--enable-muxer=mp4 \
 --enable-muxer=ogg \
 --enable-encoder=ac3 \
 --enable-encoder=aac \
 --enable-encoder=wmav2 \
 --enable-encoder=libvorbis \
+--enable-libx264 \
 --enable-protocol=http \
 --enable-runtime-cpudetect \
 --enable-dxva2 \
