@@ -792,6 +792,10 @@ xbmc/main/posix/Makefile
 #/lib/win32/ffmpeg
 /lib/win32/ffmpeg/
 
+# /lib/win32/libx264
+/lib/win32/libx264-snapshot-*
+/lib/win32/libx264/
+
 # lib/cximage-6.0/
 /lib/cximage-6.0/Makefile
 /lib/cximage-6.0/Debug
