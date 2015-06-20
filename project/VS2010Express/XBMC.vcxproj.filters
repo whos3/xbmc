@@ -370,6 +370,9 @@
     <Filter Include="interfaces\builtins">
       <UniqueIdentifier>{248ffbc4-43f5-4aaf-b259-2dd4f840fcef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="cores\Transcoder">
+      <UniqueIdentifier>{654f1b50-e012-4141-ae01-81bdd7a9529f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -3257,6 +3260,12 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\addons\AddonCallbacksAudioEngine.cpp">
       <Filter>addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\Transcoder\Transcoder.cpp">
+      <Filter>cores\Transcoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\Transcoder\TranscodingOptions.cpp">
+      <Filter>cores\Transcoder</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -6321,6 +6330,12 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\utils\ScopeGuard.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\Transcoder.h">
+      <Filter>cores\Transcoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\TranscodingOptions.h">
+      <Filter>cores\Transcoder</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
