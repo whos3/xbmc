@@ -2389,5 +2389,36 @@
       { "name": "setting", "type": "string", "required": true, "minLength": 1 }
     ],
     "returns": "string"
+  },
+  "Transcoder.Transcode": {
+    "type": "method",
+    "description": "Transcode a specific media item. At the moment only movies from the library are supported",
+    "transport": "Response",
+    "permission": "WriteFile",
+    "params": [
+      { "name": "item", "$ref": "Playlist.Item", "required": true },
+      { "name": "options", "type": "object",
+        "properties": {
+          "container": { "type": "string", "default": "mp4", "description": "Container format to use for the transcoded data" },
+          "streaming": { "type": "string", "default": "http", "enum": [ "http", "hls" ], "description": "Streaming method" },
+          "width": { "type": "integer", "default": 0, "description": "Width of the transcoded video" },
+          "height": { "type": "integer", "default": 0, "description": "Height of the transcoded video" },
+          "videobitrate": { "type": "integer", "default": 500000, "description": "Bitrate of the transcoded video stream" },
+          "segmentduration": { "type": "integer", "default": 10, "description": "Duration of an HTTP Live Streaming media segment file" }
+        }
+      }
+    ],
+    "returns": {
+      "type": "object",
+      "properties": {
+        "protocol": { "type": "string", "required": true },
+        "mode": { "type": "string", "required": true, "enum": [ "direct", "redirect" ] },
+        "details": { "type": "object", "required": true,
+          "properties": {
+            "path": { "type": "string", "required": true }
+          }
+        }
+      }
+    }
   }
 }

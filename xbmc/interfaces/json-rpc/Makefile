@@ -15,6 +15,7 @@ SRCS=AddonsOperations.cpp \
      SettingsOperations.cpp \
      SystemOperations.cpp \
      TextureOperations.cpp \
+     TranscoderOperations.cpp \
      VideoLibrary.cpp \
      XBMCOperations.cpp \
 

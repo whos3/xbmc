@@ -40,6 +40,7 @@
 #include "FavouritesOperations.h"
 #include "TextureOperations.h"
 #include "SettingsOperations.h"
+#include "TranscoderOperations.h"
 
 using namespace JSONRPC;
 
@@ -233,7 +234,10 @@ JsonRpcMethodMap CJSONServiceDescription::m_methodMaps[] = {
 
 // XBMC operations
   { "XBMC.GetInfoLabels",                           CXBMCOperations::GetInfoLabels },
-  { "XBMC.GetInfoBooleans",                         CXBMCOperations::GetInfoBooleans }
+  { "XBMC.GetInfoBooleans",                         CXBMCOperations::GetInfoBooleans },
+
+// Transcoder operations
+  { "Transcoder.Transcode",                         CTranscoderOperations::Transcode }
 };
 
 JSONSchemaTypeDefinition::JSONSchemaTypeDefinition()
