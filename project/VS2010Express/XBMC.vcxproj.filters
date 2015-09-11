@@ -3198,6 +3198,9 @@
     <ClCompile Include="..\..\xbmc\messaging\helpers\DialogHelper.cpp">
       <Filter>messaging\helpers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\test\TestTrackedProperty.cpp">
+      <Filter>utils\test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -6198,6 +6201,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\messaging\helpers\DialogHelper.h">
       <Filter>messaging\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\TrackedProperty.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

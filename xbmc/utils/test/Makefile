@@ -45,6 +45,7 @@ SRCS=	\
 	TestSystemInfo.cpp \
 	TestTimeSmoother.cpp \
 	TestTimeUtils.cpp \
+	TestTrackedProperty.cpp \
 	TestURIUtils.cpp \
 	TestUrlOptions.cpp \
 	TestVariant.cpp \
