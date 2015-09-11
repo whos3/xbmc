@@ -30,6 +30,7 @@
 
 #include "guilib/GUIListItem.h"
 #include "GUIPassword.h"
+#include "media/info/MediaInfoTag.h"
 #include "threads/CriticalSection.h"
 #include "utils/IArchivable.h"
 #include "utils/ISerializable.h"
@@ -76,6 +77,8 @@ typedef std::shared_ptr<CCueDocument> CCueDocumentPtr;
 #define STARTOFFSET_RESUME (-1)
 
 class CMediaSource;
+
+class CMediaInfoTag;
 
 enum EFileFolderType {
   EFILEFOLDER_TYPE_ALWAYS     = 1<<0,
@@ -326,6 +329,31 @@ public:
     m_pvrRadioRDSInfoTag = tag;
   }
 
+  template<class TInfoTag>
+  inline bool HasInfoTag() const
+  {
+    return m_infoTags.find(TInfoTag::Type) != m_infoTags.end();
+  }
+
+  template<class TInfoTag>
+  std::shared_ptr<TInfoTag> GetInfoTag()
+  {
+    return const_cast<const CFileItem*>(this)->GetInfoTag<TInfoTag>();
+  }
+
+  template<class TInfoTag>
+  const std::shared_ptr<TInfoTag> GetInfoTag() const
+  {
+    auto& it = m_infoTags.find(TInfoTag::Type);
+    if (it == m_infoTags.end())
+    {
+      // create and add info tag object to the map
+      it = m_infoTags.insert(std::make_pair(TInfoTag::Type, std::make_shared<TInfoTag>())).first;
+    }
+
+    return std::dynamic_pointer_cast<TInfoTag>((*it).second);
+  }
+
   /*!
    \brief Test if this item has a valid resume point set.
    \return True if this item has a resume point and it is set, false otherwise.
@@ -527,6 +555,8 @@ private:
   bool m_bIsAlbum;
 
   CCueDocumentPtr m_cueDocument;
+
+  mutable std::map<MediaType, CMediaInfoTagPtr> m_infoTags;
 };
 
 /*!

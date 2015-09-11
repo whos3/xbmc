@@ -18,6 +18,7 @@
  *
  */
 
+#include "media/info/MovieInfoTag.h"
 #include "network/Network.h"
 #include "threads/SystemClock.h"
 #include "system.h"
@@ -705,6 +706,12 @@ bool CApplication::Create()
   CUtil::InitRandomSeed();
 
   g_mediaManager.Initialize();
+
+  CFileItem item;
+  assert(!item.HasInfoTag<CMovieInfoTag>());
+  CMovieInfoTagPtr movieInfoTag = item.GetInfoTag<CMovieInfoTag>();
+  assert(movieInfoTag != nullptr);
+  assert(item.HasInfoTag<CMovieInfoTag>());
 
   m_lastFrameTime = XbmcThreads::SystemClockMillis();
   m_lastRenderTime = m_lastFrameTime;

@@ -643,6 +643,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Testsuite|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\MediaSource.cpp" />
+    <ClCompile Include="..\..\xbmc\media\info\ContainerInfoTag.cpp" />
+    <ClCompile Include="..\..\xbmc\media\info\FileInfoTag.cpp" />
+    <ClCompile Include="..\..\xbmc\media\info\MediaInfoTag.cpp" />
+    <ClCompile Include="..\..\xbmc\media\info\MovieInfoTag.cpp" />
+    <ClCompile Include="..\..\xbmc\media\info\VideoFileInfoTag.cpp" />
     <ClCompile Include="..\..\xbmc\media\MediaType.cpp" />
     <ClCompile Include="..\..\xbmc\messaging\ApplicationMessenger.cpp" />
     <ClCompile Include="..\..\xbmc\messaging\helpers\DialogHelper.cpp" />
@@ -1085,6 +1090,12 @@
     <ClInclude Include="..\..\xbmc\interfaces\python\PythonInvoker.h" />
     <ClInclude Include="..\..\xbmc\interfaces\python\pythreadstate.h" />
     <ClInclude Include="..\..\xbmc\main\win32\MessagePrinter.h" />
+    <ClInclude Include="..\..\xbmc\media\info\ContainerInfoTag.h" />
+    <ClInclude Include="..\..\xbmc\media\info\FileInfoTag.h" />
+    <ClInclude Include="..\..\xbmc\media\info\MediaInfoTag.h" />
+    <ClInclude Include="..\..\xbmc\media\info\MovieInfoTag.h" />
+    <ClInclude Include="..\..\xbmc\media\info\VideoFileInfoTag.h" />
+    <ClInclude Include="..\..\xbmc\media\info\VideoInfoTag.h" />
     <ClInclude Include="..\..\xbmc\media\MediaType.h" />
     <ClInclude Include="..\..\xbmc\messaging\ApplicationMessenger.h" />
     <ClInclude Include="..\..\xbmc\messaging\helpers\DialogHelper.h" />

@@ -370,6 +370,12 @@
     <Filter Include="interfaces\builtins">
       <UniqueIdentifier>{248ffbc4-43f5-4aaf-b259-2dd4f840fcef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="media\info">
+      <UniqueIdentifier>{66ce350b-8958-44c0-a38e-b0aef4004645}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="media\info\video">
+      <UniqueIdentifier>{62dbbe5e-80af-48e7-b09b-9a1111d97bc2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -3260,6 +3266,21 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\input\InputCodingTableKorean.cpp">
       <Filter>input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\media\info\MovieInfoTag.cpp">
+      <Filter>media\info\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\media\info\MediaInfoTag.cpp">
+      <Filter>media\info</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\media\info\FileInfoTag.cpp">
+      <Filter>media\info</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\media\info\ContainerInfoTag.cpp">
+      <Filter>media\info</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\media\info\VideoFileInfoTag.cpp">
+      <Filter>media\info\video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -6327,6 +6348,22 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\input\InputCodingTableKorean.h">
       <Filter>input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\media\info\MediaInfoTag.h">
+      <Filter>media\info</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\media\info\FileInfoTag.h">
+      <Filter>media\info</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\media\info\ContainerInfoTag.h">
+      <Filter>media\info</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\media\info\MovieInfoTag.h">
+      <Filter>media\info\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\media\info\VideoInfoTag.h" />
+    <ClInclude Include="..\..\xbmc\media\info\VideoFileInfoTag.h">
+      <Filter>media\info\video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
