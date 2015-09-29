@@ -146,6 +146,7 @@ CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" LDFLAGS="$LDFLAGS" \
 	--enable-muxer=adts \
 	--enable-muxer=asf \
 	--enable-muxer=ipod \
+	--enable-muxer=mp4 \
 	--enable-encoder=ac3 \
 	--enable-encoder=aac \
 	--enable-encoder=wmav2 \
@@ -153,6 +154,7 @@ CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" LDFLAGS="$LDFLAGS" \
 	--enable-libvorbis \
 	--enable-muxer=ogg \
 	--enable-encoder=libvorbis \
+	--enable-libx264 \
 	--enable-nonfree \
 	--enable-pthreads \
 	--enable-zlib \
