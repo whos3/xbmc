@@ -60,6 +60,7 @@ echo "libx264 is being configured."
 ./configure \
   --prefix=/mingw \
   --disable-cli \
+  --enable-win32thread \
   --enable-shared &&
 
 echo "libx264 is being compiled."
@@ -72,8 +73,6 @@ make install &&
 #strip libx264-142.dll &&
 # Copying the libx264.dll is required for running Kodi
 cp libx264-142.dll /xbmc/system/players/dvdplayer/libx264-142.dll &&
-# Copying the pthreadGC2.dll is required for running Kodi (TODO get rid of this dependency somehow)
-cp /mingw/bin/pthreadGC2.dll /xbmc/system/players/dvdplayer/pthreadGC2.dll &&
 
 echo "libx264 has been installed."
 #remove the bgprocessfile for signaling the process end
