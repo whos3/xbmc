@@ -373,6 +373,15 @@
     <Filter Include="cores\Transcoder">
       <UniqueIdentifier>{654f1b50-e012-4141-ae01-81bdd7a9529f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="cores\Transcoder\processors">
+      <UniqueIdentifier>{16d11d29-c65b-45a6-bcf3-492e7868d9b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cores\Transcoder\output">
+      <UniqueIdentifier>{8efcd780-d04c-4c26-b983-5ffea5ee084e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cores\Transcoder\input">
+      <UniqueIdentifier>{438a5eea-b184-4c20-b155-f04d43300864}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -3272,6 +3281,12 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\cores\Transcoder\TranscoderManager.cpp">
       <Filter>cores\Transcoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\Transcoder\processors\SwsScaleFrameProcessor.cpp">
+      <Filter>cores\Transcoder\processors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\Transcoder\output\FileOutputWriter.cpp">
+      <Filter>cores\Transcoder\output</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -6351,6 +6366,18 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\cores\Transcoder\ITranscoderCallbacks.h">
       <Filter>cores\Transcoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\IFrameProcessor.h">
+      <Filter>cores\Transcoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\processors\SwsScaleFrameProcessor.h">
+      <Filter>cores\Transcoder\processors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\IOutputWriter.h">
+      <Filter>cores\Transcoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\output\FileOutputWriter.h">
+      <Filter>cores\Transcoder\output</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

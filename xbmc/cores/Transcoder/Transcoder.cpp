@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "URL.h"
+#include "cores/Transcoder/processors/SwsScaleFrameProcessor.h"
 #include "filesystem/File.h"
 #include "utils/log.h"
 #include "utils/URIUtils.h"
@@ -35,8 +36,9 @@ CTranscoder::CTranscoder(const std::string& path, ITranscoderCallbacks* callback
     m_callbacks(callbacks),
     m_path(path),
     m_transcodedPath(),
-    m_transcodingOptions(),
-    m_transcodingOptionsSet(false),
+    m_sourceOptions(),
+    m_targetOptions(),
+    m_targetOptionsSet(false),
     m_iCurrentHLSSegmentNumber(1),
     m_iTotalHLSSegmentNumber(0),
     m_iDuration(0),
@@ -52,11 +54,7 @@ CTranscoder::CTranscoder(const std::string& path, ITranscoderCallbacks* callback
     m_iVideoStreamDuration(0),
     m_bFoundAudioStream(false),
     m_iAudioStreamIndex(0),
-    m_iAudioStreamDuration(0),
-    m_iVideoWidth(0),
-    m_iVideoHeight(0),
-    m_eVideoPixelFormat(AV_PIX_FMT_NONE),
-    sws_video_ctx(nullptr)
+    m_iAudioStreamDuration(0)
 {
   packet.data = nullptr;
   packet.size = 0;
@@ -64,15 +62,14 @@ CTranscoder::CTranscoder(const std::string& path, ITranscoderCallbacks* callback
 
 CTranscoder::~CTranscoder()
 {
-  CloseSwsContext();
   CloseOutputFile();
   CloseInputFile();
 }
 
 void CTranscoder::SetOptions(CTranscodingOptions transOpts)
 {
-  m_transcodingOptions = transOpts;
-  m_transcodingOptionsSet = true;
+  m_targetOptions = transOpts;
+  m_targetOptionsSet = true;
 }
 
 TranscoderIdentifier CTranscoder::Start()
@@ -80,11 +77,11 @@ TranscoderIdentifier CTranscoder::Start()
   if (m_path.empty())
     return -1;
 
-  if (!m_transcodingOptionsSet)
+  if (!m_targetOptionsSet)
     CLog::Log(LOGDEBUG, "CTranscoder: no transcoding options set");
 
   // TODO: make this generic
-  if (m_transcodingOptions.GetStreamingMethod() == "hls")
+  if (m_targetOptions.GetStreamingMethod() == "hls")
     m_transcodedPath = TranscodePlaylistPath();
   else
     m_transcodedPath = TranscodePath();
@@ -96,89 +93,6 @@ TranscoderIdentifier CTranscoder::Start()
 void CTranscoder::Stop(bool wait /* = true */)
 {
   StopThread(wait);
-}
-
-int CTranscoder::InitSwsContext()
-{
-  sws_video_ctx = sws_getContext(m_iVideoWidth,
-    m_iVideoHeight,
-    m_eVideoPixelFormat,
-    GetTargetWidth(),
-    GetTargetHeight(),
-    m_transcodingOptions.GetPixelFormat(),
-    m_transcodingOptions.GetSwsInterpolationMethod(),
-    nullptr, nullptr, nullptr);
-
-  int ret = 0;
-  if (sws_video_ctx == nullptr)
-    ret = AVERROR(ENOMEM);
-
-  return ret;
-}
-
-int CTranscoder::CloseSwsContext()
-{
-  int ret = 0;
-  if (sws_video_ctx)
-    sws_freeContext(sws_video_ctx);
-  return ret;
-}
-
-int CTranscoder::SwsScaleVideo(const AVFrame *src_frame, AVFrame **scaled_frame)
-{
-  int ret;
-
-  // Allocate a new frame
-  *scaled_frame = av_frame_alloc();
-  if (*scaled_frame == 0)
-  {
-    CLog::Log(LOGERROR, "CTranscoder::SwsScaleVideo(): Could not allocate frame.");
-    ret = AVERROR(ENOMEM);
-    return ret;
-  }
-
-  // Allocate space for the picture data
-  if ((ret = avpicture_alloc((AVPicture *)*scaled_frame, m_transcodingOptions.GetPixelFormat(),
-    GetTargetWidth(), GetTargetHeight())) < 0)
-  {
-    CLog::Log(LOGERROR, "CTranscoder::SwsScaleVideo(): Could not allocate picture.");
-    return ret;
-  }
-
-  sws_scale(sws_video_ctx, (uint8_t const * const *)src_frame->data, src_frame->linesize,
-    0, m_iVideoHeight, (*scaled_frame)->data, (*scaled_frame)->linesize);
-  // TODO: Find out which of the following properties need to be set at all
-  (*scaled_frame)->width = GetTargetWidth();
-  (*scaled_frame)->height = GetTargetHeight();
-  (*scaled_frame)->format = m_transcodingOptions.GetPixelFormat();
-  (*scaled_frame)->sample_aspect_ratio = src_frame->sample_aspect_ratio;
-  (*scaled_frame)->pts = src_frame->pts;
-  (*scaled_frame)->pkt_pts = src_frame->pkt_pts;
-  (*scaled_frame)->pkt_dts = src_frame->pkt_dts;
-  (*scaled_frame)->nb_samples = src_frame->nb_samples;
-  (*scaled_frame)->key_frame = src_frame->key_frame;
-  (*scaled_frame)->pict_type = src_frame->pict_type;
-  (*scaled_frame)->coded_picture_number = src_frame->coded_picture_number;
-
-  return 0;
-}
-
-int CTranscoder::GetTargetWidth() const
-{
-  int result = m_transcodingOptions.GetWidth();
-  if (result != 0)
-    return result;
-
-  return m_iVideoWidth;
-}
-
-int CTranscoder::GetTargetHeight() const
-{
-  int result = m_transcodingOptions.GetHeight();
-  if (result != 0)
-    return result;
-
-  return m_iVideoHeight;
 }
 
 int CTranscoder::CreateMediaPlaylist(const char* filename)
@@ -198,14 +112,14 @@ int CTranscoder::CreateMediaPlaylist(const char* filename)
   }
 
   // Precompute number of total segments
-  m_iTotalHLSSegmentNumber = static_cast<int>((m_iDuration / AV_TIME_BASE) / m_transcodingOptions.GetSegmentDuration() + 1);
+  m_iTotalHLSSegmentNumber = static_cast<int>((m_iDuration / AV_TIME_BASE) / m_targetOptions.GetSegmentDuration() + 1);
 
   // Write contents
   std::string playlistHeader = "#EXTM3U\n";
   file.Write(playlistHeader.c_str(), playlistHeader.length());
   //std::string playlistType = "#EXT-X-PLAYLIST-TYPE:VOD\n";
   //file.Write(playlistType.c_str(), playlistType.length());
-  std::string playlistTargetDuration = "#EXT-X-TARGETDURATION:" + std::to_string(m_transcodingOptions.GetSegmentDuration()) + "\n";
+  std::string playlistTargetDuration = "#EXT-X-TARGETDURATION:" + std::to_string(m_targetOptions.GetSegmentDuration()) + "\n";
   file.Write(playlistTargetDuration.c_str(), playlistTargetDuration.length());
   //std::string playlistVersion = "#EXT-X-VERSION:3\n";
   //file.Write(playlistVersion.c_str(), playlistVersion.length());
@@ -216,11 +130,11 @@ int CTranscoder::CreateMediaPlaylist(const char* filename)
     int segmentDuration;
     if (s == m_iTotalHLSSegmentNumber)
     {
-      segmentDuration = (m_iDuration / AV_TIME_BASE) % m_transcodingOptions.GetSegmentDuration();
+      segmentDuration = (m_iDuration / AV_TIME_BASE) % m_targetOptions.GetSegmentDuration();
       segmentDuration++;
     }
     else
-      segmentDuration = m_transcodingOptions.GetSegmentDuration();
+      segmentDuration = m_targetOptions.GetSegmentDuration();
 
     std::string playlistEntry = "#EXTINF:" + std::to_string(segmentDuration) + ",Description\n";
     file.Write(playlistEntry.c_str(), playlistEntry.length());
@@ -252,7 +166,7 @@ int CTranscoder::ShouldStartNewSegment(int64_t time_stamp, const AVRational& tim
     ret = 0;
   }
   else if (time_stamp * time_base.num / time_base.den
-    >= m_iCurrentHLSSegmentNumber * m_transcodingOptions.GetSegmentDuration())
+    >= m_iCurrentHLSSegmentNumber * m_targetOptions.GetSegmentDuration())
   {
     m_iCurrentHLSSegmentNumber++;
     ret = 1;
@@ -329,9 +243,6 @@ int CTranscoder::OpenInputFile(const char *filename)
         m_bFoundVideoStream = true;
         m_iVideoStreamIndex = i;
         m_iVideoStreamDuration = stream->duration;
-        m_iVideoWidth = codec_ctx->width;
-        m_iVideoHeight = codec_ctx->height;
-        m_eVideoPixelFormat = codec_ctx->pix_fmt;
       }
       if (!m_bFoundAudioStream && codec_type == AVMEDIA_TYPE_AUDIO)
       {
@@ -339,6 +250,15 @@ int CTranscoder::OpenInputFile(const char *filename)
         m_iAudioStreamIndex = i;
         m_iAudioStreamDuration = stream->duration;
       }
+
+      // remember the codec details in the source options
+      m_sourceOptions.SetFromCodec(codec_ctx);
+
+      // update the target options if necessary
+      if (m_targetOptions.GetWidth() <= 0)
+        m_targetOptions.SetWidth(m_sourceOptions.GetWidth());
+      if (m_targetOptions.GetHeight() <= 0)
+        m_targetOptions.SetHeight(m_sourceOptions.GetHeight());
 		}
 	}
 
@@ -469,16 +389,16 @@ int CTranscoder::OpenVideoEncoder(AVCodecContext* encodingContext, AVCodecContex
   av_opt_set(encodingContext->priv_data, "profile", "high", AV_OPT_SEARCH_CHILDREN);
 
   encodingContext->profile = FF_PROFILE_H264_HIGH;
-  encodingContext->height = GetTargetHeight();
-  encodingContext->width = GetTargetWidth();
-  encodingContext->pix_fmt = m_transcodingOptions.GetPixelFormat();
+  encodingContext->width = m_targetOptions.GetWidth();
+  encodingContext->height = m_targetOptions.GetHeight();
+  encodingContext->pix_fmt = m_targetOptions.GetPixelFormat();
   AVRational sar; sar.num = 1; sar.den = 1;
   encodingContext->sample_aspect_ratio = sar;
   encodingContext->time_base = decodingContext->time_base;
   encodingContext->max_b_frames = 0;
-  encodingContext->bit_rate = m_transcodingOptions.GetVideoBitrate();
-  encodingContext->bit_rate_tolerance = 4 * m_transcodingOptions.GetVideoBitrate();
-  encodingContext->rc_max_rate = 2 * m_transcodingOptions.GetVideoBitrate();
+  encodingContext->bit_rate = m_targetOptions.GetVideoBitrate();
+  encodingContext->bit_rate_tolerance = 4 * m_targetOptions.GetVideoBitrate();
+  encodingContext->rc_max_rate = 2 * m_targetOptions.GetVideoBitrate();
   encodingContext->rc_min_rate = 0;
   encodingContext->rc_buffer_size = 1 * 1000 * 1000;
   // TODO: Some of the following settings are needed for a correctly working encoder.
@@ -614,7 +534,7 @@ int CTranscoder::InitFilter(FilteringContext* fctx, AVCodecContext *dec_ctx,
 
 		snprintf(args, sizeof(args),
 			"video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
-      GetTargetWidth(), GetTargetHeight(), m_transcodingOptions.GetPixelFormat(),
+      m_targetOptions.GetWidth(), m_targetOptions.GetHeight(), m_targetOptions.GetPixelFormat(),
 			dec_ctx->time_base.num, dec_ctx->time_base.den,
 			dec_ctx->sample_aspect_ratio.num,
 			dec_ctx->sample_aspect_ratio.den);
@@ -909,16 +829,19 @@ void CTranscoder::Run()
   avcodec_register_all();
   av_register_all();
 
+  // Input file and sws context are only created once
+  if ((ret = OpenInputFile(m_path.c_str())) < 0)
+  {
+    LogError(ret);
+    return;
+  }
+
+  CSwsScaleFrameProcessor swsScale(m_sourceOptions, m_targetOptions);
+
   // TODO: Get rid of code duplication for HTTP and HLS transcoding
   // HTTP Live Streaming
-  if (m_transcodingOptions.GetStreamingMethod() == "hls")
+  if (m_targetOptions.GetStreamingMethod() == "hls")
   {
-    // Input file and sws context are only created once
-    if ((ret = OpenInputFile(m_path.c_str())) < 0)
-      goto end;
-    if ((ret = InitSwsContext()) < 0)
-      goto end;
-
     // Output file and filters need to be created for every media segment file
     std::string pathSegment = TranscodeSegmentPath();
     if ((ret = OpenOutputFile(pathSegment.c_str())) < 0)
@@ -983,24 +906,16 @@ void CTranscoder::Run()
           {
             m_iLastVideoPTS = last_pts;
             // Rescale the video frame
-            AVFrame *scaledFrame;
-            if ((ret = SwsScaleVideo(frame, &scaledFrame)) == 0)
-            {
+            AVFrame *scaledFrame = nullptr;
+            bool newFrame = false;
+            if ((ret = swsScale.Process(frame, &scaledFrame, newFrame)) == 0)
               ret = FilterEncodeWriteFrame(scaledFrame, stream_index);
-              avpicture_free((AVPicture *)scaledFrame);
-              av_frame_free(&scaledFrame);
-              av_frame_free(&frame);
-            }
             else
-            {
               CLog::Log(LOGERROR, "CTranscoder::Run(): Scaling of video frame failed.");
-              if (scaledFrame)
-              {
-                avpicture_free((AVPicture *)scaledFrame);
-                av_frame_free(&scaledFrame);
-              }
-              av_frame_free(&frame);
-            }
+
+            // free the original and processed frames
+            swsScale.FreeProcessedFrame(&scaledFrame, newFrame);
+            av_frame_free(&frame);
 
             // See if it's time to start a new segment
             if (ShouldStartNewSegment(last_pts, codec_ctx->time_base))
@@ -1051,10 +966,6 @@ void CTranscoder::Run()
   // HTTP single file
   CLog::Log(LOGDEBUG, "CTranscoder::Run(): Output file: %s", m_transcodedPath.c_str());
 
-  if ((ret = OpenInputFile(m_path.c_str())) < 0)
-    goto end;
-  if ((ret = InitSwsContext()) < 0)
-    goto end;
   if ((ret = OpenOutputFile(m_transcodedPath.c_str())) < 0)
     goto end;
   if ((ret = InitFilters()) < 0)
@@ -1112,24 +1023,16 @@ void CTranscoder::Run()
         if (codec_type == AVMEDIA_TYPE_VIDEO)
         {
           // Rescale the video frame
-          AVFrame *scaledFrame;
-          if ((ret = SwsScaleVideo(frame, &scaledFrame)) == 0)
-          {
+          AVFrame *scaledFrame = nullptr;
+          bool newFrame = false;
+          if ((ret = swsScale.Process(frame, &scaledFrame, newFrame)) == 0)
             ret = FilterEncodeWriteFrame(scaledFrame, stream_index);
-            avpicture_free((AVPicture *)scaledFrame);
-            av_frame_free(&scaledFrame);
-            av_frame_free(&frame);
-          }
           else
-          {
             CLog::Log(LOGERROR, "CTranscoder::Run(): Scaling of video frame failed.");
-            if (scaledFrame)
-            {
-              avpicture_free((AVPicture *)scaledFrame);
-              av_frame_free(&scaledFrame);
-            }
-            av_frame_free(&frame);
-          }
+
+          // free the original and processed frames
+          swsScale.FreeProcessedFrame(&scaledFrame, newFrame);
+          av_frame_free(&frame);
         }
         else
         {
@@ -1216,7 +1119,7 @@ std::string CTranscoder::TranscodePath() const
   URIUtils::RemoveExtension(path);
 
   return path + "-transcoded." +
-    m_transcodingOptions.GetFileExtension();
+    m_targetOptions.GetFileExtension();
 }
 
 std::string CTranscoder::TranscodePlaylistPath() const
@@ -1235,5 +1138,5 @@ std::string CTranscoder::TranscodeSegmentPath(int segment /* = 0 */) const
 
   return path + "-transcoded" +
     std::to_string((segment == 0) ? m_iCurrentHLSSegmentNumber : segment) + "." +
-    m_transcodingOptions.GetFileExtension();
+    m_targetOptions.GetFileExtension();
 }

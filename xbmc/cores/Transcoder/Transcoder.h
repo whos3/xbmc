@@ -108,8 +108,9 @@ private:
   std::string m_path;
   std::string m_transcodedPath;
 
-  CTranscodingOptions m_transcodingOptions;
-  bool m_transcodingOptionsSet;
+  CTranscodingOptions m_sourceOptions;
+  CTranscodingOptions m_targetOptions;
+  bool m_targetOptionsSet;
 
   typedef struct FilteringContext
   {
@@ -134,13 +135,6 @@ private:
   int FilterEncodeWriteFrame(AVFrame *frame, unsigned int stream_index);
   int FlushEncoder(unsigned int stream_index);
   int FlushFiltersAndEncoders();
-
-  int InitSwsContext();
-  int SwsScaleVideo(const AVFrame *src_frame, AVFrame **scaled_frame);
-  int CloseSwsContext();
-
-  int GetTargetWidth() const;
-  int GetTargetHeight() const;
 
   // HTTP Live Streaming related members
 
@@ -191,12 +185,4 @@ private:
   /** Index of the input audio stream in the input format context.*/
   unsigned int m_iAudioStreamIndex;
   int64_t m_iAudioStreamDuration;
-  /** Width of the input video stream.*/
-  int m_iVideoWidth;
-  /** Height of the input video stream.*/
-  int m_iVideoHeight;
-  /** Pixel format of the input video stream.*/
-  AVPixelFormat m_eVideoPixelFormat;
-  /** Sws context used for scaling the video frames.*/
-  SwsContext *sws_video_ctx;
 };

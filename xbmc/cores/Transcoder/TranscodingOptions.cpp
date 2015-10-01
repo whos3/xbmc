@@ -23,6 +23,7 @@
 #include "utils/log.h"
 
 extern "C" {
+#include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 }
 
@@ -47,5 +48,24 @@ void CTranscodingOptions::SetStreamingMethod(const std::string& streamingMethod)
   {
     CLog::Log(LOGWARNING, "TranscodingOptions::SetStreamingMethod(): HTTP Live Streaming doesn't support the chosen container format. Using .ts instead");
     m_containerFormat = "ts";
+  }
+}
+
+void CTranscodingOptions::SetFromCodec(const AVCodecContext* codec)
+{
+  if (codec == nullptr)
+    return;
+
+  switch (codec->codec_type)
+  {
+  case AVMEDIA_TYPE_VIDEO:
+    SetWidth(codec->width);
+    SetHeight(codec->height);
+    SetPixelFormat(codec->pix_fmt);
+    SetVideoBitrate(codec->bit_rate);
+    break;
+
+  default:
+    break;
   }
 }

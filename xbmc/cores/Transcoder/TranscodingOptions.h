@@ -25,6 +25,8 @@ extern "C" {
 #include "libavutil/pixdesc.h" // TODO
 }
 
+struct AVCodecContext;
+
 class CTranscodingOptions
 {
 public:
@@ -54,6 +56,8 @@ public:
 
   inline int GetSwsInterpolationMethod() const { return m_swsInterpolationMethod; }
   inline void SetSwsInterpolationMethod(int swsInterpolationMethod) { m_swsInterpolationMethod = swsInterpolationMethod; }
+
+  void SetFromCodec(const AVCodecContext* codec);
 
 private:
   std::string m_containerFormat;

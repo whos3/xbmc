@@ -267,6 +267,8 @@
     <ClCompile Include="..\..\xbmc\cores\dvdplayer\DVDInputStreams\DVDInputStreamBluray.cpp" />
     <ClCompile Include="..\..\xbmc\cores\dvdplayer\DVDInputStreams\DVDInputStreamPVRManager.cpp" />
     <ClCompile Include="..\..\xbmc\cores\FFmpeg.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\Transcoder\output\FileOutputWriter.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\Transcoder\processors\SwsScaleFrameProcessor.cpp" />
     <ClCompile Include="..\..\xbmc\cores\Transcoder\Transcoder.cpp" />
     <ClCompile Include="..\..\xbmc\cores\Transcoder\TranscoderManager.cpp" />
     <ClCompile Include="..\..\xbmc\cores\Transcoder\TranscodingOptions.cpp" />
@@ -951,7 +953,11 @@
     <ClInclude Include="..\..\xbmc\cores\dvdplayer\DVDDemuxers\DVDDemuxCC.h" />
     <ClInclude Include="..\..\xbmc\cores\dvdplayer\DVDDemuxers\DVDDemuxCDDA.h" />
     <ClInclude Include="..\..\xbmc\cores\FFmpeg.h" />
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\IFrameProcessor.h" />
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\IOutputWriter.h" />
     <ClInclude Include="..\..\xbmc\cores\Transcoder\ITranscoderCallbacks.h" />
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\output\FileOutputWriter.h" />
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\processors\SwsScaleFrameProcessor.h" />
     <ClInclude Include="..\..\xbmc\cores\Transcoder\Transcoder.h" />
     <ClInclude Include="..\..\xbmc\cores\Transcoder\TranscoderManager.h" />
     <ClInclude Include="..\..\xbmc\cores\Transcoder\TranscodingOptions.h" />
