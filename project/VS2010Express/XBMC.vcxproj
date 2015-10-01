@@ -268,6 +268,7 @@
     <ClCompile Include="..\..\xbmc\cores\dvdplayer\DVDInputStreams\DVDInputStreamPVRManager.cpp" />
     <ClCompile Include="..\..\xbmc\cores\FFmpeg.cpp" />
     <ClCompile Include="..\..\xbmc\cores\Transcoder\Transcoder.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\Transcoder\TranscoderManager.cpp" />
     <ClCompile Include="..\..\xbmc\cores\Transcoder\TranscodingOptions.cpp" />
     <ClCompile Include="..\..\xbmc\cores\VideoRenderers\OverlayRendererGUI.cpp" />
     <ClCompile Include="..\..\xbmc\cores\VideoRenderers\RenderCapture.cpp" />
@@ -950,7 +951,9 @@
     <ClInclude Include="..\..\xbmc\cores\dvdplayer\DVDDemuxers\DVDDemuxCC.h" />
     <ClInclude Include="..\..\xbmc\cores\dvdplayer\DVDDemuxers\DVDDemuxCDDA.h" />
     <ClInclude Include="..\..\xbmc\cores\FFmpeg.h" />
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\ITranscoderCallbacks.h" />
     <ClInclude Include="..\..\xbmc\cores\Transcoder\Transcoder.h" />
+    <ClInclude Include="..\..\xbmc\cores\Transcoder\TranscoderManager.h" />
     <ClInclude Include="..\..\xbmc\cores\Transcoder\TranscodingOptions.h" />
     <ClInclude Include="..\..\xbmc\cores\VideoRenderers\OverlayRendererGUI.h" />
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogKeyboardGeneric.h" />

@@ -21,6 +21,7 @@
 
 #include <string>
 
+#include "cores/Transcoder/ITranscoderCallbacks.h"
 #include "cores/Transcoder/TranscodingOptions.h"
 #include "threads/Thread.h"
 
@@ -36,42 +37,34 @@ extern "C" {
 #include "libavutil/pixdesc.h" // TODO
 }
 
-class CTranscoder : public IRunnable, protected CThread
+class CTranscoder : public IRunnable, protected CThread, private ITranscoderCallbacks
 {
 public:
-  CTranscoder();
+  CTranscoder(const std::string& path, ITranscoderCallbacks* callbacks);
   virtual ~CTranscoder();
 
-  /** Starts transcoding in a new thread
-   * \param path Path to the video to be transcoded.
-   * \return Returns always 1.
-   */
-  int Transcode(std::string path);
+  TranscoderIdentifier GetIdentifier() const { return m_identifier; }
 
-  /** Get path of the transcoded video.
-   * \param path Path to the video to be transcoded.
-   * \return Returns the path to the transcoded video.
-   */
-  std::string TranscodePath(const std::string &path) const;
+  const std::string GetPath() const { return m_path; }
 
-  /** Get path of the HLS media playlist of the transcoded video.
-   * \param path Path to the video to be transcoded.
-   * \return Returns the path to the media playlist.
-   */
-  std::string TranscodePlaylistPath(const std::string &path) const;
-
-  /** Get path of a transcoded HLS media segment.
-   * \param path Path to the video to be transcoded.
-   * \param segment Number of the media segment.
-   * \return Returns the path to the transcoded media segment.
-   */
-  std::string TranscodeSegmentPath(const std::string &path, int segment = 0) const;
+  const std::string GetTranscodedPath() const { return m_transcodedPath; }
 
   /** Set transcoding options for this transcoder. SHOULD be called before
    * Transcode(std::string path).
    * \param transOpts Options to be used for transcoding.
    */
-  void SetTranscodingOptions(CTranscodingOptions transOpts);
+  void SetOptions(CTranscodingOptions transOpts);
+
+  /** Starts transcoding in a new thread
+   * \param path Path to the video to be transcoded.
+   * \return TODO
+   */
+  TranscoderIdentifier Start();
+
+  /** TODO
+   * \param wait Whether to wait for the transcoder to stop or not.
+   */
+  void Stop(bool wait = true);
 
 protected:
   // implementation of IRunnable
@@ -82,6 +75,39 @@ protected:
   virtual void OnExit() override;
 
 private:
+  void OnTranscodingError();
+  void OnTranscodingStopped();
+  void OnTranscodingFinished();
+
+  // implementations of ITranscoderCallbacks
+  virtual void OnTranscodingError(TranscoderIdentifier identifier) override;
+  virtual void OnTranscodingStopped(TranscoderIdentifier identifier) override;
+  virtual void OnTranscodingFinished(TranscoderIdentifier identifier) override;
+
+  /** Get path of the transcoded video.
+   * \return Returns the path to the transcoded video.
+   */
+  std::string TranscodePath() const;
+
+  /** Get path of the HLS media playlist of the transcoded video.
+   * \return Returns the path to the media playlist.
+   */
+  std::string TranscodePlaylistPath() const;
+
+  /** Get path of a transcoded HLS media segment.
+   * \param segment Number of the media segment.
+   * \return Returns the path to the transcoded media segment.
+   */
+  std::string TranscodeSegmentPath(int segment = 0) const;
+
+  static TranscoderIdentifier s_identifier;
+
+  TranscoderIdentifier m_identifier;
+  ITranscoderCallbacks* m_callbacks;
+
+  std::string m_path;
+  std::string m_transcodedPath;
+
   CTranscodingOptions m_transcodingOptions;
   bool m_transcodingOptionsSet;
 
@@ -140,9 +166,6 @@ private:
    */
   static void LogError(int errnum);
   static void ResetAVDictionary(AVDictionary **dict);
-
-  /** Path to the input file.*/
-  std::string path;
 
   // TODO: Make this a local variable if possible
   AVPacket packet;

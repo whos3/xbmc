@@ -25,9 +25,16 @@
 #include "URL.h"
 #include "filesystem/File.h"
 #include "utils/log.h"
+#include "utils/URIUtils.h"
 
-CTranscoder::CTranscoder()
+TranscoderIdentifier CTranscoder::s_identifier = 0;
+
+CTranscoder::CTranscoder(const std::string& path, ITranscoderCallbacks* callbacks)
   : CThread(this, "Transcoder"),
+    m_identifier(s_identifier++),
+    m_callbacks(callbacks),
+    m_path(path),
+    m_transcodedPath(),
     m_transcodingOptions(),
     m_transcodingOptionsSet(false),
     m_iCurrentHLSSegmentNumber(1),
@@ -35,7 +42,6 @@ CTranscoder::CTranscoder()
     m_iDuration(0),
     m_iLastVideoPTS(0),
     m_iLastAudioPTS(0),
-    path(),
     packet(),
     frame(nullptr),
     ifmt_ctx(nullptr),
@@ -61,6 +67,35 @@ CTranscoder::~CTranscoder()
   CloseSwsContext();
   CloseOutputFile();
   CloseInputFile();
+}
+
+void CTranscoder::SetOptions(CTranscodingOptions transOpts)
+{
+  m_transcodingOptions = transOpts;
+  m_transcodingOptionsSet = true;
+}
+
+TranscoderIdentifier CTranscoder::Start()
+{
+  if (m_path.empty())
+    return -1;
+
+  if (!m_transcodingOptionsSet)
+    CLog::Log(LOGDEBUG, "CTranscoder: no transcoding options set");
+
+  // TODO: make this generic
+  if (m_transcodingOptions.GetStreamingMethod() == "hls")
+    m_transcodedPath = TranscodePlaylistPath();
+  else
+    m_transcodedPath = TranscodePath();
+
+  Create(false);
+  return GetIdentifier();
+}
+
+void CTranscoder::Stop(bool wait /* = true */)
+{
+  StopThread(wait);
 }
 
 int CTranscoder::InitSwsContext()
@@ -190,7 +225,7 @@ int CTranscoder::CreateMediaPlaylist(const char* filename)
     std::string playlistEntry = "#EXTINF:" + std::to_string(segmentDuration) + ",Description\n";
     file.Write(playlistEntry.c_str(), playlistEntry.length());
     
-    std::string playlistEntryFile = TranscodeSegmentPath(path, s);
+    std::string playlistEntryFile = TranscodeSegmentPath(s);
     //std::string::size_type beginning = playlistEntryFile.find_last_of("/");
     //if (beginning == std::string::npos)
     //  beginning = playlistEntryFile.find_last_of("\\");
@@ -858,80 +893,41 @@ int CTranscoder::FlushFiltersAndEncoders()
   return ret;
 }
 
-int CTranscoder::Transcode(std::string path)
-{
-  if (!m_transcodingOptionsSet)
-    CLog::Log(LOGWARNING, "CTranscoder::Transcode(): No transcoding options were set.");
-
-  path = path;
-  Create(true);
-  return 1;
-}
-
-std::string CTranscoder::TranscodePath(const std::string &path) const
-{
-  return path.substr(0, path.find_last_of('.'))
-    + std::string("-transcoded.") + m_transcodingOptions.GetFileExtension();
-}
-
-std::string CTranscoder::TranscodePlaylistPath(const std::string &path) const
-{
-  return path.substr(0, path.find_last_of('.'))
-    + std::string("-transcoded.") + std::string("m3u8");
-}
-
-std::string CTranscoder::TranscodeSegmentPath(const std::string &path, int segment /* = 0 */) const
-{
-  int s = (segment == 0) ? m_iCurrentHLSSegmentNumber : segment;
-  return path.substr(0, path.find_last_of('.')) + std::string("-transcoded")
-    + std::to_string(s) + std::string(".") + m_transcodingOptions.GetFileExtension();
-}
-
 void CTranscoder::Run()
 {
   int ret;
   CLog::Log(LOGDEBUG, "CTranscoder::Run() was called.");
   
-  if (path.empty()) {
+  if (m_path.empty()) {
     CLog::Log(LOGERROR, "CTranscoder::Run(): Path to input file must not be empty.");
     return;
   }
 
-  CLog::Log(LOGDEBUG, "CTranscoder::Run(): Input file: %s", path.c_str());
+  CLog::Log(LOGDEBUG, "CTranscoder::Run(): Input file: %s", m_path.c_str());
 
   avfilter_register_all();
   avcodec_register_all();
   av_register_all();
 
-  std::string pathOut = TranscodePath(path);
   // TODO: Get rid of code duplication for HTTP and HLS transcoding
   // HTTP Live Streaming
   if (m_transcodingOptions.GetStreamingMethod() == "hls")
   {
     // Input file and sws context are only created once
-    if ((ret = OpenInputFile(path.c_str())) < 0)
-    {
+    if ((ret = OpenInputFile(m_path.c_str())) < 0)
       goto end;
-    }
     if ((ret = InitSwsContext()) < 0)
-    {
       goto end;
-    }
 
     // Output file and filters need to be created for every media segment file
-    std::string pathSegment = TranscodeSegmentPath(path);
+    std::string pathSegment = TranscodeSegmentPath();
     if ((ret = OpenOutputFile(pathSegment.c_str())) < 0)
-    {
       goto end;
-    }
     if ((ret = InitFilters()) < 0)
-    {
       goto end;
-    }
 
-    std::string pathPlaylist = TranscodePlaylistPath(path);
-    CLog::Log(LOGDEBUG, "CTranscoder::Run(): Output file: %s", pathPlaylist.c_str());
-    CreateMediaPlaylist(pathPlaylist.c_str());
+    CLog::Log(LOGDEBUG, "CTranscoder::Run(): Output file: %s", m_transcodedPath.c_str());
+    CreateMediaPlaylist(m_transcodedPath.c_str());
 
     unsigned int stream_index;
     int got_frame;
@@ -939,9 +935,7 @@ void CTranscoder::Run()
     while (1)
     {
       if (m_bStop)
-      {
         CLog::Log(LOGDEBUG, "CTranscoder::Run(): Transcoder asked to stop!");
-      }
       if ((ret = av_read_frame(ifmt_ctx, &packet)) < 0)
       {
         if (ret == AVERROR_EOF)
@@ -967,13 +961,9 @@ void CTranscoder::Run()
         }
         av_packet_rescale_ts(&packet, stream->time_base, codec_ctx->time_base);
         if (codec_type == AVMEDIA_TYPE_VIDEO)
-        {
           ret = avcodec_decode_video2(codec_ctx, frame, &got_frame, &packet);
-        }
         else if (codec_type == AVMEDIA_TYPE_AUDIO)
-        {
           ret = avcodec_decode_audio4(codec_ctx, frame, &got_frame, &packet);
-        }
         else
         {
           CLog::Log(LOGERROR, "CTranscoder::Run(): Got packet of unexpected media type.");
@@ -1018,15 +1008,11 @@ void CTranscoder::Run()
               CLog::Log(LOGDEBUG, "CTranscoder::Run(): Time to start segment %d.", m_iCurrentHLSSegmentNumber);
               CloseOutputFile();
 
-              pathSegment = TranscodeSegmentPath(path);
+              pathSegment = TranscodeSegmentPath();
               if ((ret = OpenOutputFile(pathSegment.c_str())) < 0)
-              {
                 goto end;
-              }
               if ((ret = InitFilters()) < 0)
-              {
                 goto end;
-              }
             }
           }
           else if (codec_type == AVMEDIA_TYPE_AUDIO)
@@ -1037,16 +1023,12 @@ void CTranscoder::Run()
           }
           // This should not happen
           else
-          {
             CLog::Log(LOGERROR, "CTranscoder::Run(): Only video and audio frames are sent to the filter graph.");
-          }
           if (ret < 0)
             goto end;
         }
         else
-        {
           av_frame_free(&frame);
-        }
       }
       else
       {
@@ -1067,24 +1049,16 @@ void CTranscoder::Run()
   }
 
   // HTTP single file
-  CLog::Log(LOGDEBUG, "CTranscoder::Run(): Output file: %s", pathOut.c_str());
+  CLog::Log(LOGDEBUG, "CTranscoder::Run(): Output file: %s", m_transcodedPath.c_str());
 
-  if ((ret = OpenInputFile(path.c_str())) < 0)
-  {
+  if ((ret = OpenInputFile(m_path.c_str())) < 0)
     goto end;
-  }
   if ((ret = InitSwsContext()) < 0)
-  {
     goto end;
-  }
-  if ((ret = OpenOutputFile(pathOut.c_str())) < 0)
-  {
+  if ((ret = OpenOutputFile(m_transcodedPath.c_str())) < 0)
     goto end;
-  }
   if ((ret = InitFilters()) < 0)
-  {
     goto end;
-  }
 
   unsigned int stream_index;
   int got_frame;
@@ -1092,9 +1066,7 @@ void CTranscoder::Run()
   while (1)
   {
     if (m_bStop)
-    {
       CLog::Log(LOGDEBUG, "CTranscoder::Run(): Transcoder asked to stop!");
-    }
     if ((ret = av_read_frame(ifmt_ctx, &packet)) < 0)
     {
       if (ret == AVERROR_EOF)
@@ -1120,13 +1092,9 @@ void CTranscoder::Run()
       }
       av_packet_rescale_ts(&packet, stream->time_base, codec_ctx->time_base);
       if (codec_type == AVMEDIA_TYPE_VIDEO)
-      {
         ret = avcodec_decode_video2(codec_ctx, frame, &got_frame, &packet);
-      }
       else if (codec_type == AVMEDIA_TYPE_AUDIO)
-      {
         ret = avcodec_decode_audio4(codec_ctx, frame, &got_frame, &packet);
-      }
       else
       {
         CLog::Log(LOGERROR, "CTranscoder::Run(): Got packet of unexpected media type.");
@@ -1172,9 +1140,7 @@ void CTranscoder::Run()
           goto end;
       }
       else
-      {
         av_frame_free(&frame);
-      }
     }
     else
     {
@@ -1205,8 +1171,69 @@ void CTranscoder::OnExit()
   CLog::Log(LOGDEBUG, "CTranscoder::OnExit() was called.");
 }
 
-void CTranscoder::SetTranscodingOptions(CTranscodingOptions transOpts)
+void CTranscoder::OnTranscodingError()
 {
-  m_transcodingOptions = transOpts;
-  m_transcodingOptionsSet = true;
+  OnTranscodingError(GetIdentifier());
+}
+
+void CTranscoder::OnTranscodingStopped()
+{
+  OnTranscodingStopped(GetIdentifier());
+}
+
+void CTranscoder::OnTranscodingFinished()
+{
+  OnTranscodingFinished(GetIdentifier());
+}
+
+void CTranscoder::OnTranscodingError(TranscoderIdentifier identifier)
+{
+  if (m_callbacks == nullptr)
+    return;
+
+  m_callbacks->OnTranscodingError(identifier);
+}
+
+void CTranscoder::OnTranscodingStopped(TranscoderIdentifier identifier)
+{
+  if (m_callbacks == nullptr)
+    return;
+
+  m_callbacks->OnTranscodingStopped(identifier);
+}
+
+void CTranscoder::OnTranscodingFinished(TranscoderIdentifier identifier)
+{
+  if (m_callbacks == nullptr)
+    return;
+
+  m_callbacks->OnTranscodingFinished(identifier);
+}
+
+std::string CTranscoder::TranscodePath() const
+{
+  std::string path = m_path;
+  URIUtils::RemoveExtension(path);
+
+  return path + "-transcoded." +
+    m_transcodingOptions.GetFileExtension();
+}
+
+std::string CTranscoder::TranscodePlaylistPath() const
+{
+  std::string path = m_path;
+  URIUtils::RemoveExtension(path);
+
+  return path + "-transcoded.m3u8";
+}
+
+std::string CTranscoder::TranscodeSegmentPath(int segment /* = 0 */) const
+{
+  std::string path = m_path;
+  URIUtils::RemoveExtension(path);
+  int segmentNumber = (segment == 0) ? m_iCurrentHLSSegmentNumber : segment;
+
+  return path + "-transcoded" +
+    std::to_string((segment == 0) ? m_iCurrentHLSSegmentNumber : segment) + "." +
+    m_transcodingOptions.GetFileExtension();
 }

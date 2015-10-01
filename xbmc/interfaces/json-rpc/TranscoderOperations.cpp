@@ -21,6 +21,7 @@
 #include "TranscoderOperations.h"
 #include "URL.h"
 #include "cores/Transcoder/Transcoder.h"
+#include "cores/Transcoder/TranscoderManager.h"
 #include "filesystem/File.h"
 #include "interfaces/json-rpc/VideoLibrary.h"
 #include "utils/log.h"
@@ -38,27 +39,11 @@ JSONRPC_STATUS CTranscoderOperations::Transcode(const std::string &method, ITran
   CFileItemPtr item = items[0];
   std::string path = item->GetPath();
 
-  CTranscoder* transcoder = new CTranscoder();
-  CTranscodingOptions transOpts = ParseOptions(parameterObject["options"]);
-  transcoder->SetTranscodingOptions(transOpts);
+  TranscoderPtr transcoder = CTranscoderManager::GetInstance().Start(path, ParseOptions(parameterObject["options"]));
+  if (transcoder == nullptr)
+    return InvalidParams;
 
-  std::string transpath;
-  CVariant streaming = parameterObject["options"]["streaming"];
-  if (!streaming.isNull() && streaming.asString().compare("hls") == 0)
-    transpath = transcoder->TranscodePlaylistPath(path);
-  else
-    transpath = transcoder->TranscodePath(path);
-      
-  if (XFILE::CFile::Exists(transpath))
-  {
-    CLog::Log(LOGDEBUG, "Transcoded movie already exists."); // TODO: remove
-    delete transcoder;
-  }
-  else
-  {
-    CLog::Log(LOGDEBUG, "Transcoding movie with playlist: %s", transpath.c_str()); // TODO: remove
-    transcoder->Transcode(path);
-  }
+  std::string transcodedPath = transcoder->GetTranscodedPath();
 
   result["protocol"] = "http";
 
@@ -68,7 +53,7 @@ JSONRPC_STATUS CTranscoderOperations::Transcode(const std::string &method, ITran
     result["mode"] = "redirect";
 
   std::string url = "vfs/";
-  url += CURL::Encode(transpath);
+  url += CURL::Encode(transcodedPath);
   result["details"]["path"] = url;
 
   return OK;
