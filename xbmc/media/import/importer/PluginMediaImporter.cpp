@@ -87,17 +87,38 @@ bool CPluginMediaImporter::Import(CMediaImportRetrievalTask* task) const
   if (task == NULL || !CanImport(GetPath()))
     return false;
 
+  return importItems(task, GetPath());
+}
+
+bool CPluginMediaImporter::getAddonId(const std::string& path, std::string& addonId)
+{
+  // can't import non-plugin:// paths
+  if (path.empty() || !URIUtils::IsPlugin(path))
+    return false;
+
+  CURL url(path);
+  addonId = url.GetHostName();
+
+  return true;
+}
+
+bool CPluginMediaImporter::importItems(CMediaImportRetrievalTask* task, const std::string& path) const
+{
   CFileItemList items;
-  if (!XFILE::CDirectory::GetDirectory(GetPath(), items, "", XFILE::DIR_FLAG_BYPASS_CACHE, false))
+  if (!XFILE::CDirectory::GetDirectory(path, items, "", XFILE::DIR_FLAG_BYPASS_CACHE, false))
     return false;
 
   const auto& mediaTypes = GetImport().GetMediaTypes();
   for (const auto& importedMediaType : mediaTypes)
   {
     std::vector<CFileItemPtr> itemList;
-    for (int i = 0; i < items.Size(); )
+    for (int i = 0; i < items.Size();)
     {
       CFileItemPtr item = items.Get(i);
+
+      // recurse into directories if enabled
+      if (item->m_bIsFolder && GetImport().IsRecursive())
+        importItems(task, item->GetPath());
 
       // get the media type of the item
       MediaType mediaType;
@@ -105,9 +126,9 @@ bool CPluginMediaImporter::Import(CMediaImportRetrievalTask* task) const
         mediaType = item->GetVideoInfoTag()->m_type;
       else if (item->HasMusicInfoTag() && !item->GetMusicInfoTag()->GetType().empty())
         mediaType = item->GetMusicInfoTag()->GetType();
-      else if (!GetImport().IsRecursive() && mediaTypes.size() == 1)
+      else if (!item->m_bIsFolder && mediaTypes.size() == 1)
       {
-        // for non-recursive imports with a single media type, force it
+        // for files within an import with a single media type, force it
         mediaType = mediaTypes.front();
 
         // fill in some obvious values into the info tags
@@ -148,7 +169,7 @@ bool CPluginMediaImporter::Import(CMediaImportRetrievalTask* task) const
     }
 
     // if we do selective importing, remove any item that hasn't already been imported before
-    // but only if we have already imported the items once
+    // but only if we have already imported the items once (TODO)
     if (!GetImport().IsRecursive() && GetImport().GetLastSynced().IsValid())
     {
       const auto& localItems = task->GetLocalItems(importedMediaType);
@@ -170,18 +191,6 @@ bool CPluginMediaImporter::Import(CMediaImportRetrievalTask* task) const
 
     task->AddItems(itemList, importedMediaType, MediaImportChangesetTypeNone);
   }
-
-  return true;
-}
-
-bool CPluginMediaImporter::getAddonId(const std::string& path, std::string& addonId)
-{
-  // can't import non-plugin:// paths
-  if (path.empty() || !URIUtils::IsPlugin(path))
-    return false;
-
-  CURL url(path);
-  addonId = url.GetHostName();
 
   return true;
 }

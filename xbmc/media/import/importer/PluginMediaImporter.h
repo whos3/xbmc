@@ -45,4 +45,6 @@ protected:
   CPluginMediaImporter(const CMediaImport& import);
 
   static bool getAddonId(const std::string& path, std::string& addonId);
+
+  bool importItems(CMediaImportRetrievalTask* task, const std::string& path) const;
 };

@@ -371,7 +371,6 @@ bool CAddonMgr::Init()
 
 void CAddonMgr::DeInit()
 {
-  // TODO: this needs to happen sooner
   // unregister any plugin-based import sources
   auto sources = CMediaImportManager::GetInstance().GetSources();
   for (const auto& source : sources)
