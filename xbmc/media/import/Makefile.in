@@ -1,4 +1,5 @@
 SRCS= MediaImport.cpp \
+      MediaImportHelper.cpp \
       MediaImportManager.cpp \
       MediaImportTaskProcessorJob.cpp \
       dialogs/GUIDialogMediaImportInfo.cpp \
@@ -8,6 +9,7 @@ SRCS= MediaImport.cpp \
       handler/SeasonImportHandler.cpp \
       handler/TvShowImportHandler.cpp \
       handler/VideoImportHandler.cpp \
+      importer/PluginMediaImporter.cpp \
       repositories/GenericMediaImportRepository.cpp \
       repositories/VideoImportRepository.cpp \
       task/MediaImportChangesetTask.cpp \

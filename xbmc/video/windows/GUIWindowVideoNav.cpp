@@ -51,6 +51,7 @@
 #include "video/dialogs/GUIDialogVideoInfo.h"
 #include "pvr/recordings/PVRRecording.h"
 #include "ContextMenuManager.h"
+#include "media/import/MediaImportHelper.h"
 #include "media/import/MediaImportManager.h"
 
 #include <utility>
@@ -992,7 +993,21 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
         }
       }
       if (item->IsPlugin() || item->IsScript() || m_vecItems->IsPlugin())
+      {
+        std::string importPath = item->GetPath();
+        if (!item->m_bIsFolder)
+          importPath = m_vecItems->GetPath();
+
+        if (CMediaImportManager::GetInstance().CanImport(importPath))
+        {
+          if (CMediaImportManager::GetInstance().IsImported(importPath))
+            buttons.Add(CONTEXT_BUTTON_SCAN, 39107);
+          else
+            buttons.Add(CONTEXT_BUTTON_IMPORT, 39400);
+        }
+
         buttons.Add(CONTEXT_BUTTON_PLUGIN_SETTINGS, 1045);
+      }
     }
     CContextMenuManager::GetInstance().AddVisibleItems(item, buttons);
   }
@@ -1083,6 +1098,31 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       }
       return true;
     }
+  case CONTEXT_BUTTON_SCAN:
+  {
+    std::string importPath = item->GetPath();
+    if (!item->m_bIsFolder)
+      importPath = m_vecItems->GetPath();
+
+    if (!CMediaImportManager::GetInstance().IsImported(importPath))
+      break;
+
+    if (!CMediaImportHelper::SynchroniseItem(importPath, item))
+      CGUIDialogOK::ShowAndGetInput(CVariant{/* TODO */ }, CVariant{/* TODO */ });
+
+    return true;
+  }
+  case CONTEXT_BUTTON_IMPORT:
+  {
+    std::string importPath = item->GetPath();
+    if (!item->m_bIsFolder)
+      importPath = m_vecItems->GetPath();
+
+    if (!CMediaImportHelper::ImportItem(importPath, item))
+      CGUIDialogOK::ShowAndGetInput(CVariant{/* TODO */ }, CVariant{/* TODO */ });
+
+    return true;
+  }
 
   default:
     break;

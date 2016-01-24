@@ -63,6 +63,9 @@
 #include "pvr/addons/PVRClient.h"
 #endif
 
+#include "media/import/MediaImportManager.h"
+#include "media/import/importer/PluginMediaImporter.h"
+
 using namespace XFILE;
 
 namespace ADDON
@@ -358,11 +361,28 @@ bool CAddonMgr::Init()
       CLog::Log(LOGNOTICE, "ADDONS: Using repository %s", (*it)->ID().c_str());
   }
 
+  // register the plugin media importer with the media import manager
+  if (m_mediaImporter == nullptr)
+    m_mediaImporter = std::make_shared<CPluginMediaImporter>();
+  CMediaImportManager::GetInstance().RegisterImporter(m_mediaImporter);
+
   return true;
 }
 
 void CAddonMgr::DeInit()
 {
+  // TODO: this needs to happen sooner
+  // unregister any plugin-based import sources
+  auto sources = CMediaImportManager::GetInstance().GetSources();
+  for (const auto& source : sources)
+  {
+    if (URIUtils::IsPlugin(source.GetIdentifier()))
+      CMediaImportManager::GetInstance().UnregisterSource(source.GetIdentifier());
+  }
+
+  // unregister the plugin media importer
+  CMediaImportManager::GetInstance().UnregisterImporter(m_mediaImporter);
+
   if (m_cpluff && m_cpluff->IsLoaded())
     m_cpluff->destroy();
   delete m_cpluff;
