@@ -153,9 +153,7 @@ CUPnPMediaImporter::~CUPnPMediaImporter()
 CUPnPMediaImporter::CUPnPMediaImporter(const CMediaImport &import)
   : IMediaImporter(import)
 {
-  CURL url(import.GetPath());
-  if (url.GetProtocol() == "upnp")
-    m_deviceUUID = url.GetHostName();
+  getDeviceIdentifier(import.GetPath(), m_deviceUUID);
 }
 
 bool CUPnPMediaImporter::CanImport(const std::string& path) const
@@ -176,6 +174,23 @@ bool CUPnPMediaImporter::CanImport(const std::string& path) const
     return false;
 
   return !searchCapabilities.IsEmpty() && searchCapabilities.Find("upnp:class") >= 0;
+}
+
+bool CUPnPMediaImporter::GetSourceIdentifier(const std::string& path, std::string& sourceIdentifier) const
+{
+  if (path.empty() || !URIUtils::IsUPnP(path))
+    return false;
+
+  std::string deviceIdentifier;
+  if (!getDeviceIdentifier(path, deviceIdentifier))
+    return false;
+
+  CURL url;
+  url.SetProtocol("upnp");
+  url.SetHostName(deviceIdentifier);
+  sourceIdentifier = url.Get();
+
+  return true;
 }
 
 bool CUPnPMediaImporter::CanUpdatePlaycountOnSource(const std::string& path) const
@@ -241,10 +256,10 @@ bool CUPnPMediaImporter::Import(CMediaImportRetrievalTask* task) const
 
     // ignore any items that are not part of the requested path
     std::vector<CFileItemPtr> itemList;
-    for (std::vector<CFileItemPtr>::iterator itItem = items.begin(); itItem != items.end(); ++itItem)
+    for (auto& item : items)
     {
-      if (URIUtils::IsInPath((*itItem)->GetPath(), GetPath()))
-        itemList.push_back(*itItem);
+      if (URIUtils::IsInPath(item->GetPath(), GetPath()))
+        itemList.push_back(item);
     }
 
     task->AddItems(itemList, importedMediaType, MediaImportChangesetTypeNone);
@@ -285,13 +300,23 @@ bool CUPnPMediaImporter::UpdateOnSource(CMediaImportUpdateTask* task) const
   return CUPnP::GetInstance()->UpdateItem(url, task->GetItem());
 }
 
-bool CUPnPMediaImporter::validatePath(const std::string& path, PLT_DeviceDataReference &device)
+bool CUPnPMediaImporter::getDeviceIdentifier(const std::string& path, std::string& deviceIdentifier)
 {
   if (path.empty() || !URIUtils::IsUPnP(path))
     return false;
 
   CURL url(path);
-  std::string deviceUUID = url.GetHostName();
+  deviceIdentifier = url.GetHostName();
+
+  return true;
+}
+
+bool CUPnPMediaImporter::validatePath(const std::string& path, PLT_DeviceDataReference &device)
+{
+  std::string deviceUUID;
+  if (!getDeviceIdentifier(path, deviceUUID))
+    return false;
+
   return FindServer(deviceUUID, device);
 }
 

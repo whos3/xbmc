@@ -32,6 +32,7 @@ public:
   virtual const char* GetIdentification() const override { return "UPnPMediaImporter"; }
 
   virtual bool CanImport(const std::string &path) const override;
+  virtual bool GetSourceIdentifier(const std::string& path, std::string& sourceIdentifier) const override;
   virtual bool CanUpdateMetadataOnSource(const std::string &path) const override { return false; }
   virtual bool CanUpdatePlaycountOnSource(const std::string &path) const override;
   virtual bool CanUpdateLastPlayedOnSource(const std::string &path) const override;
@@ -44,6 +45,7 @@ public:
 protected:
   CUPnPMediaImporter(const CMediaImport &import);
 
+  static bool getDeviceIdentifier(const std::string& path, std::string& deviceIdentifier);
   static bool validatePath(const std::string &path, PLT_DeviceDataReference &device);
   static bool isXbmcServer(const std::string &path);
 
