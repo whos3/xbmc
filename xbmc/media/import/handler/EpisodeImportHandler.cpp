@@ -190,7 +190,7 @@ bool CEpisodeImportHandler::RemoveImportedItem(const CMediaImport &import, const
 bool CEpisodeImportHandler::GetLocalItems(CVideoDatabase &videodb, const CMediaImport &import, std::vector<CFileItemPtr>& items) const
 {
   CFileItemList episodes;
-  if (!videodb.GetEpisodesByWhere("videodb://tvshows/titles/?imported", CDatabase::Filter(), episodes, true, SortDescription(), import.GetSettings().UpdateImportedMediaItems()))
+  if (!videodb.GetEpisodesByWhere("videodb://tvshows/titles/?imported&import=" + CURL::Encode(import.GetPath()), CDatabase::Filter(), episodes, true, SortDescription(), import.GetSettings().UpdateImportedMediaItems()))
     return false;
 
   for (int i = 0; i < episodes.Size(); ++i)

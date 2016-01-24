@@ -226,7 +226,7 @@ bool CTvShowImportHandler::CleanupImportedItems(const CMediaImport &import)
 bool CTvShowImportHandler::GetLocalItems(CVideoDatabase &videodb, const CMediaImport &import, std::vector<CFileItemPtr>& items) const
 {
   CFileItemList tvshows;
-  if (!videodb.GetTvShowsByWhere("videodb://tvshows/titles/?imported", CDatabase::Filter(), tvshows, SortDescription(), import.GetSettings().UpdateImportedMediaItems()))
+  if (!videodb.GetTvShowsByWhere("videodb://tvshows/titles/?imported&import=" + CURL::Encode(import.GetPath()), CDatabase::Filter(), tvshows, SortDescription(), import.GetSettings().UpdateImportedMediaItems()))
     return false;
 
   for (int i = 0; i < tvshows.Size(); ++i)

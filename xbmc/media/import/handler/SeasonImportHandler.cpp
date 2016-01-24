@@ -255,7 +255,7 @@ bool CSeasonImportHandler::CleanupImportedItems(const CMediaImport &import)
 bool CSeasonImportHandler::GetLocalItems(CVideoDatabase &videodb, const CMediaImport &import, std::vector<CFileItemPtr>& items) const
 {
   CFileItemList seasons;
-  if (!videodb.GetSeasonsByWhere("videodb://tvshows/titles/-1/?imported&showempty=true", CDatabase::Filter(), seasons, true))
+  if (!videodb.GetSeasonsByWhere("videodb://tvshows/titles/-1/?imported&showempty=true&import=" + CURL::Encode(import.GetPath()), CDatabase::Filter(), seasons, true))
     return false;
 
   for (int i = 0; i < seasons.Size(); ++i)

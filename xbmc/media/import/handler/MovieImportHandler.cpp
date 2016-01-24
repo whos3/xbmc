@@ -64,7 +64,7 @@ bool CMovieImportHandler::RemoveImportedItem(const CMediaImport &import, const C
 bool CMovieImportHandler::GetLocalItems(CVideoDatabase &videodb, const CMediaImport &import, std::vector<CFileItemPtr>& items) const
 {
   CFileItemList movies;
-  if (!videodb.GetMoviesByWhere("videodb://movies/titles/?imported", CDatabase::Filter(), movies, SortDescription(), import.GetSettings().UpdateImportedMediaItems()))
+  if (!videodb.GetMoviesByWhere("videodb://movies/titles/?imported&import=" + CURL::Encode(import.GetPath()), CDatabase::Filter(), movies, SortDescription(), import.GetSettings().UpdateImportedMediaItems()))
     return false;
 
   for (int i = 0; i < movies.Size(); ++i)
