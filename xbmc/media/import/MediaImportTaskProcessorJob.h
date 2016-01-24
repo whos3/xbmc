@@ -103,6 +103,7 @@ protected:
     std::vector<MediaTypeTaskData> m_mediaTypeData;
   } MediaImportTaskData;
 
-  std::map<GroupedMediaTypes, MediaImportTaskData> m_importTaskData;
+  using MediaImportTaskKey = std::pair<std::string, GroupedMediaTypes>;
+  std::map<MediaImportTaskKey, MediaImportTaskData> m_importTaskData;
   std::vector<MediaImportTaskType> m_taskTypesToBeProcessed;
 };

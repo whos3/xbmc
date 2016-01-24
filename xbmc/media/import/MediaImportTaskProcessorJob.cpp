@@ -378,7 +378,7 @@ void CMediaImportTaskProcessorJob::ProcessChangesetTasks()
       if (!ProcessTask(changesetTask))
       {
         CLog::Log(LOGWARNING, "CMediaImportTaskProcessorJob: import changeset task for %s items from %s failed", mediaTypeData->m_mediaType.c_str(), import.GetPath().c_str());
-        taskData.second.m_mediaTypeData.erase(mediaTypeData++);
+        mediaTypeData = taskData.second.m_mediaTypeData.erase(mediaTypeData);
         delete changesetTask;
         continue;
       }
@@ -389,11 +389,7 @@ void CMediaImportTaskProcessorJob::ProcessChangesetTasks()
 
       // if the changeset is empty there is nothing else to do
       if (mediaTypeData->m_importedItems.empty())
-      {
         CLog::Log(LOGWARNING, "CMediaImportTaskProcessorJob: no %s items from %s changed", mediaTypeData->m_mediaType.c_str(), import.GetPath().c_str());
-        taskData.second.m_mediaTypeData.erase(mediaTypeData++);
-        continue;
-      }
 
       ++mediaTypeData;
     }
@@ -411,13 +407,12 @@ void CMediaImportTaskProcessorJob::ProcessSynchronisationTasks()
   for (auto& taskData : m_importTaskData)
   {
     // go through all media types in the proper order and perform the synchronisation
-    for (auto&& mediaTypeData = taskData.second.m_mediaTypeData.begin(); mediaTypeData != taskData.second.m_mediaTypeData.end(); )
+    for (auto&& mediaTypeData = taskData.second.m_mediaTypeData.begin(); mediaTypeData != taskData.second.m_mediaTypeData.end(); ++mediaTypeData)
     {
       const CMediaImport& import = taskData.second.m_import;
       if (mediaTypeData->m_importedItems.empty())
       {
         CLog::Log(LOGWARNING, "CMediaImportTaskProcessorJob: no %s items from %s changed", mediaTypeData->m_mediaType.c_str(), import.GetPath().c_str());
-        taskData.second.m_mediaTypeData.erase(mediaTypeData++);
         continue;
       }
 
@@ -432,8 +427,6 @@ void CMediaImportTaskProcessorJob::ProcessSynchronisationTasks()
       }
 
       delete synchronisationTask;
-
-      ++mediaTypeData;
     }
   }
 }
@@ -490,8 +483,8 @@ bool CMediaImportTaskProcessorJob::OnTaskComplete(bool success, const IMediaImpo
 
 bool CMediaImportTaskProcessorJob::AddImport(const CMediaImport& import, std::vector<MediaImportTaskType> tasksToBeProcessed /* = std::vector<MediaImportTaskType>() */)
 {
-  // check if an import with that media type already exists
-  const auto& itImportTaskData = m_importTaskData.find(import.GetMediaTypes());
+  // check if an import with that path and media type already exists
+  const auto& itImportTaskData = m_importTaskData.find(std::make_pair(import.GetPath(), import.GetMediaTypes()));
   if (itImportTaskData != m_importTaskData.end())
     return false;
 
@@ -508,7 +501,7 @@ bool CMediaImportTaskProcessorJob::AddImport(const CMediaImport& import, std::ve
     importTaskData.m_mediaTypeData.push_back(mediaTypeData);
   }
 
-  m_importTaskData.insert(std::make_pair(import.GetMediaTypes(), importTaskData));
+  m_importTaskData.insert(std::make_pair(std::make_pair(import.GetPath(), import.GetMediaTypes()), importTaskData));
 
   // determine the tasks (and their order) to process
   if (tasksToBeProcessed.empty())
