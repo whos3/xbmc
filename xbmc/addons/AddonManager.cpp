@@ -63,6 +63,9 @@
 #include "pvr/addons/PVRClient.h"
 #endif
 
+#include "media/import/MediaImportManager.h"
+#include "media/import/importer/PluginMediaImporter.h"
+
 using namespace XFILE;
 
 namespace ADDON
@@ -358,11 +361,27 @@ bool CAddonMgr::Init()
       CLog::Log(LOGNOTICE, "ADDONS: Using repository %s", (*it)->ID().c_str());
   }
 
+  // register the plugin media importer with the media import manager
+  if (m_mediaImporter == nullptr)
+    m_mediaImporter = std::make_shared<CPluginMediaImporter>();
+  CMediaImportManager::GetInstance().RegisterImporter(m_mediaImporter);
+
   return true;
 }
 
 void CAddonMgr::DeInit()
 {
+  // unregister any plugin-based import sources
+  auto sources = CMediaImportManager::GetInstance().GetSources();
+  for (const auto& source : sources)
+  {
+    if (URIUtils::IsPlugin(source.GetIdentifier()))
+      CMediaImportManager::GetInstance().UnregisterSource(source.GetIdentifier());
+  }
+
+  // unregister the plugin media importer
+  CMediaImportManager::GetInstance().UnregisterImporter(m_mediaImporter);
+
   if (m_cpluff && m_cpluff->IsLoaded())
     m_cpluff->destroy();
   delete m_cpluff;
@@ -674,6 +693,10 @@ void CAddonMgr::UnregisterAddon(const std::string& ID)
 void CAddonMgr::OnPostUnInstall(const std::string& id)
 {
   CSingleLock lock(m_critSection);
+
+  // in case the addon was registered as a media importing source we need to remove it
+  CMediaImportManager::GetInstance().RemoveSource("plugin://" + id + "/");
+
   m_disabled.erase(id);
   m_updateBlacklist.erase(id);
 }
@@ -715,7 +738,13 @@ bool CAddonMgr::DisableAddon(const std::string& id)
 
   AddonPtr addon;
   if (GetAddon(id, addon, ADDON_UNKNOWN, false) && addon != NULL)
+  {
+    // in case the addon was registered as a media importing source we need to unregister it
+    if (addon->Type() == ADDON_PLUGIN)
+      CMediaImportManager::GetInstance().UnregisterSource("plugin://" + id + "/");
+
     CEventLog::GetInstance().Add(EventPtr(new CAddonManagementEvent(addon, 24141)));
+  }
 
   //success
   ADDON::OnDisabled(id);
@@ -735,7 +764,17 @@ bool CAddonMgr::EnableAddon(const std::string& id)
 
   AddonPtr addon;
   if (GetAddon(id, addon, ADDON_UNKNOWN, false) && addon != NULL)
+  {
+    if (addon->Type() == ADDON_PLUGIN)
+    {
+      // in case the addon is registered as a media importing source we need to register it
+      CMediaImportSource source("plugin://" + id + "/");
+      if (CMediaImportManager::GetInstance().GetSource(source.GetIdentifier(), source))
+        CMediaImportManager::GetInstance().RegisterSource(source.GetIdentifier());
+    }
+
     CEventLog::GetInstance().Add(EventPtr(new CAddonManagementEvent(addon, 24064)));
+  }
 
   //success
   ADDON::OnEnabled(id);

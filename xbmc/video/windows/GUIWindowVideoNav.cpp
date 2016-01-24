@@ -51,6 +51,7 @@
 #include "video/dialogs/GUIDialogVideoInfo.h"
 #include "pvr/recordings/PVRRecording.h"
 #include "ContextMenuManager.h"
+#include "media/import/MediaImportHelper.h"
 #include "media/import/MediaImportManager.h"
 
 #include <utility>
@@ -992,7 +993,24 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
         }
       }
       if (item->IsPlugin() || item->IsScript() || m_vecItems->IsPlugin())
+      {
+        std::string importPath = item->GetPath();
+        if (!item->m_bIsFolder)
+          importPath = m_vecItems->GetPath();
+
+        // check if the item can be imported
+        if (CMediaImportManager::GetInstance().CanImport(importPath))
+        {
+          // only support synchronisation if the item itself is imported
+          if (CMediaImportManager::GetInstance().IsImported(item->GetPath()))
+            buttons.Add(CONTEXT_BUTTON_SCAN, 39107);
+          // only support importing if none of the item's parent paths are already imported
+          else if (!(item->GetPath() != importPath && CMediaImportManager::GetInstance().IsImportedInHierarchy(importPath)))
+            buttons.Add(CONTEXT_BUTTON_IMPORT, 39400);
+        }
+
         buttons.Add(CONTEXT_BUTTON_PLUGIN_SETTINGS, 1045);
+      }
     }
     CContextMenuManager::GetInstance().AddVisibleItems(item, buttons);
   }
@@ -1083,6 +1101,31 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       }
       return true;
     }
+  case CONTEXT_BUTTON_SCAN:
+  {
+    if (!CMediaImportManager::GetInstance().IsImported(item->GetPath()))
+      break;
+
+    std::string importPath = item->GetPath();
+    if (!item->m_bIsFolder)
+      importPath = m_vecItems->GetPath();
+
+    if (!CMediaImportHelper::SynchroniseItem(item, importPath))
+      CGUIDialogOK::ShowAndGetInput(CVariant{/* TODO */ }, CVariant{/* TODO */ });
+
+    return true;
+  }
+  case CONTEXT_BUTTON_IMPORT:
+  {
+    std::string importPath = item->GetPath();
+    if (!item->m_bIsFolder)
+      importPath = m_vecItems->GetPath();
+
+    if (!CMediaImportHelper::ImportItem(item, importPath))
+      CGUIDialogOK::ShowAndGetInput(CVariant{/* TODO */ }, CVariant{/* TODO */ });
+
+    return true;
+  }
 
   default:
     break;

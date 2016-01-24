@@ -27,6 +27,8 @@
 #include <deque>
 #include "AddonDatabase.h"
 
+class CPluginMediaImporter;
+
 class DllLibCPluff;
 extern "C"
 {
@@ -274,6 +276,8 @@ namespace ADDON
     static std::map<TYPE, IAddonMgrCallback*> m_managers;
     CCriticalSection m_critSection;
     CAddonDatabase m_database;
+
+    std::shared_ptr<CPluginMediaImporter> m_mediaImporter;
   };
 
 }; /* namespace ADDON */

@@ -1198,6 +1198,14 @@ bool CApplication::Initialize()
 
   CAddonMgr::GetInstance().StartServices(true);
 
+  // check if there are any plugin-based import sources and register them
+  auto sources = CMediaImportManager::GetInstance().GetSources();
+  for (const auto& source : sources)
+  {
+    if (URIUtils::IsPlugin(source.GetIdentifier()) && !CAddonMgr::GetInstance().IsAddonDisabled(CURL(source.GetIdentifier()).GetHostName()))
+      CMediaImportManager::GetInstance().RegisterSource(source.GetIdentifier());
+  }
+
   // configure seek handler
   CSeekHandler::GetInstance().Configure();
 
