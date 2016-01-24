@@ -739,7 +739,7 @@ bool CGUIWindowMediaSourceBrowser::OnClick(int iItem, const std::string &player 
     }
 
     // add the new import (they aren't automatically synchronised)
-    if (!CMediaImportManager::GetInstance().AddImport(sourceID, sourceID, mediaTypesToImport))
+    if (!CMediaImportManager::GetInstance().AddImport(sourceID, sourceID, mediaTypesToImport, true))
     {
       CGUIDialogOK::ShowAndGetInput(39108, g_localizeStrings.Get(39109));
       return false;
