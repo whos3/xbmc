@@ -75,6 +75,14 @@ public:
    */
   virtual std::vector<CMediaImport> GetImportsByMediaType(const GroupedMediaTypes &mediaTypes) const = 0;
 
+  /*!
+   * \brief Gets all imports for the given path stored in the repository.
+   *
+   * \param path Path of the imports
+   * \param includeSubDirectories Whether to include subdirectories or not
+   */
+  virtual std::vector<CMediaImport> GetImportsByPath(const std::string &path, bool includeSubDirectories = false) const = 0;
+
   /*
    * \brief Gets the import for the given path and media type.
    *

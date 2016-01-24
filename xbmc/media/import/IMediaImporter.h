@@ -95,6 +95,15 @@ public:
    */
   virtual bool CanImport(const std::string& path) const = 0;
 
+  /*
+   * \brief Retrieves the source identifier for the given path.
+   *
+   * \param path Path to a source, import or item
+   * \param[out] sourceIdentifier Source identifier of the given path
+   * \return True if the source identifier could be retrieved, false otherwise
+   */
+  virtual bool GetSourceIdentifier(const std::string& path, std::string& sourceIdentifier) const = 0;
+
   /*!
    * \brief Checks if the implementation can update general metadata of an
    * imported item on the source with the given path.

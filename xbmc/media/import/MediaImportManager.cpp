@@ -446,61 +446,12 @@ GroupedMediaTypes CMediaImportManager::GetGroupedMediaTypes(const MediaType &med
 
 void CMediaImportManager::RegisterSource(const std::string& sourceID, const std::string& friendlyName, const std::string& iconUrl /* = "" */, const MediaTypes& mediaTypes /* = MediaTypes() */)
 {
-  if (sourceID.empty() || friendlyName.empty())
-  {
-    CLog::Log(LOGWARNING, "CMediaImportManager: unable to register source with invalid identifier \"%s\" or friendly name \"%s\"",
-      sourceID.c_str(), friendlyName.c_str());
-    return;
-  }
+  RegisterSourceInternal(sourceID, friendlyName, iconUrl, mediaTypes, false);
+}
 
-  CMediaImportSource source(sourceID, friendlyName, iconUrl, mediaTypes);
-
-  CSingleLock sourcesLock(m_sourcesLock);
-  auto&& itSource = m_sources.find(sourceID);
-  if (itSource == m_sources.end() || !FindSource(sourceID, source))
-  {
-    CMediaImportTaskProcessorJob *processorJob = CMediaImportTaskProcessorJob::RegisterSource(source, this);
-    AddTaskProcessorJob(source.GetIdentifier(), processorJob);
-
-    CLog::Log(LOGINFO, "CMediaImportManager: source registration task for %s (%s) started",
-      source.GetFriendlyName().c_str(), source.GetIdentifier().c_str());
-    return;
-  }
-
-  // update any possibly changed values
-  CMediaImportSource updatedSource = source;
-  updatedSource.SetIconUrl(iconUrl);
-  updatedSource.SetFriendlyName(friendlyName);
-  updatedSource.SetAvailableMediaTypes(mediaTypes);
-
-  bool added = false, updated = false;
-  CSingleLock repositoriesLock(m_importRepositoriesLock);
-  // try to update the source in at least one of the repositories
-  for (auto& repository : m_importRepositories)
-  {
-    // if the source doesn't exist in a repository, add it now
-    if (!repository->GetSource(updatedSource.GetIdentifier(), source))
-    {
-      if (repository->AddSource(updatedSource))
-        added = true;
-    }
-    else if (repository->UpdateSource(updatedSource))
-      updated = true;
-  }
-  repositoriesLock.Leave();
-  sourcesLock.Leave();
-
-  if (added)
-    OnSourceAdded(updatedSource);
-  if (updated)
-  {
-    CLog::Log(LOGDEBUG, "CMediaImportManager: source %s (%s) updated",
-      source.GetFriendlyName().c_str(), sourceID.c_str());
-    OnSourceUpdated(updatedSource);
-  }
-
-  // start processing all imports of the source
-  Import(updatedSource, true);
+void CMediaImportManager::RegisterSourceSync(const std::string& sourceID, const std::string& friendlyName, const std::string& iconUrl /* = "" */, const MediaTypes& mediaTypes /* = MediaTypes() */)
+{
+  RegisterSourceInternal(sourceID, friendlyName, iconUrl, mediaTypes, true);
 }
 
 void CMediaImportManager::UnregisterSource(const std::string& sourceID)
@@ -753,7 +704,7 @@ bool CMediaImportManager::HasImports(const CMediaImportSource &source) const
   return HasImports(source.GetIdentifier());
 }
 
-bool CMediaImportManager::AddImport(const std::string &sourceID, const std::string &path, const GroupedMediaTypes &mediaTypes)
+bool CMediaImportManager::AddImport(const std::string &sourceID, const std::string &path, const GroupedMediaTypes &mediaTypes, bool recursive)
 {
   if (sourceID.empty() || path.empty() || mediaTypes.empty())
   {
@@ -763,7 +714,7 @@ bool CMediaImportManager::AddImport(const std::string &sourceID, const std::stri
   }
 
   // check if the import already exists
-  CMediaImport import(path, mediaTypes, sourceID);
+  CMediaImport import(path, mediaTypes, sourceID, recursive);
   if (FindImport(path, mediaTypes, import))
   {
     CLog::Log(LOGERROR, "CMediaImportManager: unable to add already existing import from source \"%s\" with path \"%s\" and media type \"%s\"",
@@ -793,7 +744,7 @@ bool CMediaImportManager::AddImport(const std::string &sourceID, const std::stri
     }
   }
 
-  CMediaImport newImport(path, mediaTypes, source);
+  CMediaImport newImport(path, mediaTypes, source, recursive);
   if (!AddImport(newImport))
   {
     CLog::Log(LOGERROR, "CMediaImportManager: failed to add new import for source \"%s\" with path \"%s\" and media type \"%s\" to any import repository",
@@ -807,7 +758,7 @@ bool CMediaImportManager::AddImport(const std::string &sourceID, const std::stri
   return true;
 }
 
-bool CMediaImportManager::AddImports(const std::string &sourceID, const std::string &path, const std::set<GroupedMediaTypes> &mediaTypes)
+bool CMediaImportManager::AddImports(const std::string &sourceID, const std::string &path, const std::set<GroupedMediaTypes> &mediaTypes, bool recursive)
 {
   if (sourceID.empty() || path.empty() || mediaTypes.empty())
   {
@@ -832,7 +783,7 @@ bool CMediaImportManager::AddImports(const std::string &sourceID, const std::str
   for (const auto& itMediaTypes : mediaTypes)
   {
     // check if the import already exists
-    CMediaImport import(path, itMediaTypes, sourceID);
+    CMediaImport import(path, itMediaTypes, sourceID, recursive);
     if (FindImport(path, itMediaTypes, import))
     {
       CLog::Log(LOGERROR, "CMediaImportManager: unable to add already existing import from source \"%s\" with path \"%s\" and media type \"%s\"",
@@ -856,7 +807,7 @@ bool CMediaImportManager::AddImports(const std::string &sourceID, const std::str
     if (!mediaTypesHandled)
       continue;
 
-    CMediaImport newImport(path, itMediaTypes, source);
+    CMediaImport newImport(path, itMediaTypes, source, recursive);
     if (!AddImport(newImport))
     {
       CLog::Log(LOGERROR, "CMediaImportManager: failed to add new import for source \"%s\" with path \"%s\" and media type \"%s\" to any import repository",
@@ -977,6 +928,31 @@ std::vector<CMediaImport> CMediaImportManager::GetImportsBySource(const std::str
   return imports;
 }
 
+std::vector<CMediaImport> CMediaImportManager::GetImportsByPath(const std::string &path, bool includeSubDirectories /* = false */) const
+{
+  std::vector<CMediaImport> imports;
+  if (path.empty())
+    return imports;
+
+  CSingleLock importRepositoriesLock(m_importRepositoriesLock);
+  CSingleLock sourcesLock(m_sourcesLock);
+  for (const auto& repository : m_importRepositories)
+  {
+    std::vector<CMediaImport> repoImports = repository->GetImportsByPath(path, includeSubDirectories);
+    for (auto& import : repoImports)
+    {
+      const auto& itSource = m_sources.find(import.GetSource().GetIdentifier());
+      if (itSource == m_sources.end() || itSource->second.removing)
+        continue;
+
+      import.SetActive(itSource->second.active);
+      imports.push_back(import);
+    }
+  }
+
+  return imports;
+}
+
 bool CMediaImportManager::GetImport(const std::string &path, const GroupedMediaTypes &mediaTypes, CMediaImport &import) const
 {
   if (path.empty())
@@ -996,6 +972,18 @@ bool CMediaImportManager::CanImport(const std::string& path) const
     return false;
 
   return true;
+}
+
+bool CMediaImportManager::IsImported(const std::string& path) const
+{
+  if (path.empty())
+    return false;
+
+  // get any imports matching the given path
+  auto imports = GetImportsByPath(path, false);
+
+  // check if there's a matching import
+  return !imports.empty();
 }
 
 bool CMediaImportManager::Import()
@@ -1081,6 +1069,70 @@ void CMediaImportManager::Import(const CMediaImport &import, bool automatically 
   AddTaskProcessorJob(import.GetSource().GetIdentifier(), processorJob);
 
   CLog::Log(LOGINFO, "CMediaImportManager: import task for %s items from %s started", CMediaTypes::Join(import.GetMediaTypes()).c_str(), import.GetPath().c_str());
+}
+
+void CMediaImportManager::RegisterSourceInternal(const std::string& sourceID, const std::string& friendlyName, const std::string& iconUrl, const MediaTypes& mediaTypes, bool synchronous)
+{
+  if (sourceID.empty() || friendlyName.empty())
+  {
+    CLog::Log(LOGWARNING, "CMediaImportManager: unable to register source with invalid identifier \"%s\" or friendly name \"%s\"",
+      sourceID.c_str(), friendlyName.c_str());
+    return;
+  }
+
+  CMediaImportSource source(sourceID, friendlyName, iconUrl, mediaTypes);
+
+  CSingleLock sourcesLock(m_sourcesLock);
+  auto&& itSource = m_sources.find(sourceID);
+  if (itSource == m_sources.end() || !FindSource(sourceID, source))
+  {
+    CMediaImportTaskProcessorJob *processorJob = CMediaImportTaskProcessorJob::RegisterSource(source, this);
+    if (synchronous)
+      processorJob->DoWork();
+    else
+    {
+      AddTaskProcessorJob(source.GetIdentifier(), processorJob);
+
+      CLog::Log(LOGINFO, "CMediaImportManager: source registration task for %s (%s) started",
+        source.GetFriendlyName().c_str(), source.GetIdentifier().c_str());
+    }
+    return;
+  }
+
+  // update any possibly changed values
+  CMediaImportSource updatedSource = source;
+  updatedSource.SetIconUrl(iconUrl);
+  updatedSource.SetFriendlyName(friendlyName);
+  updatedSource.SetAvailableMediaTypes(mediaTypes);
+
+  bool added = false, updated = false;
+  CSingleLock repositoriesLock(m_importRepositoriesLock);
+  // try to update the source in at least one of the repositories
+  for (auto& repository : m_importRepositories)
+  {
+    // if the source doesn't exist in a repository, add it now
+    if (!repository->GetSource(updatedSource.GetIdentifier(), source))
+    {
+      if (repository->AddSource(updatedSource))
+        added = true;
+    }
+    else if (repository->UpdateSource(updatedSource))
+      updated = true;
+  }
+  repositoriesLock.Leave();
+  sourcesLock.Leave();
+
+  if (added)
+    OnSourceAdded(updatedSource);
+  if (updated)
+  {
+    CLog::Log(LOGDEBUG, "CMediaImportManager: source %s (%s) updated",
+      source.GetFriendlyName().c_str(), sourceID.c_str());
+    OnSourceUpdated(updatedSource);
+  }
+
+  // start processing all imports of the source
+  Import(updatedSource, true);
 }
 
 bool CMediaImportManager::AddSource(const CMediaImportSource &source)
@@ -1300,7 +1352,7 @@ void CMediaImportManager::OnJobProgress(unsigned int jobID, unsigned int progres
   }
 }
 
-bool CMediaImportManager::OnTaskComplete(bool success, IMediaImportTask *task)
+bool CMediaImportManager::OnTaskComplete(bool success, const IMediaImportTask *task)
 {
   if (task == nullptr)
     return false;
@@ -1308,7 +1360,7 @@ bool CMediaImportManager::OnTaskComplete(bool success, IMediaImportTask *task)
   MediaImportTaskType taskType = task->GetType();
   if (taskType == MediaImportTaskType::SourceRegistration)
   {
-    CMediaImportSourceRegistrationTask* sourceRegistrationTask = dynamic_cast<CMediaImportSourceRegistrationTask*>(task);
+    const CMediaImportSourceRegistrationTask* sourceRegistrationTask = dynamic_cast<const CMediaImportSourceRegistrationTask*>(task);
     if (sourceRegistrationTask == nullptr)
       return false;
 
@@ -1336,7 +1388,7 @@ bool CMediaImportManager::OnTaskComplete(bool success, IMediaImportTask *task)
   }
   else if (taskType == MediaImportTaskType::Synchronisation)
   {
-    CMediaImportSynchronisationTask* synchronisationTask = dynamic_cast<CMediaImportSynchronisationTask*>(task);
+    const CMediaImportSynchronisationTask* synchronisationTask = dynamic_cast<const CMediaImportSynchronisationTask*>(task);
     if (synchronisationTask == nullptr)
       return false;
 
@@ -1357,7 +1409,7 @@ bool CMediaImportManager::OnTaskComplete(bool success, IMediaImportTask *task)
   }
   else if (taskType == MediaImportTaskType::Removal)
   {
-    CMediaImportRemovalTask* removalTask = dynamic_cast<CMediaImportRemovalTask*>(task);
+    const CMediaImportRemovalTask* removalTask = dynamic_cast<const CMediaImportRemovalTask*>(task);
     if (removalTask == nullptr)
       return false;
 

@@ -160,7 +160,7 @@ public:
   GroupedMediaTypes GetGroupedMediaTypes(const MediaType &mediaType) const;
   
   /*!
-   * \brief Registers a discovered source
+   * \brief Registers a discovered source asynchronously
    * If the source is new/unknown the user will be prompted with a dialog with
    * the option to import media items from the source or to ignore it.
    * If the source is already known all imports from that source are being
@@ -171,6 +171,19 @@ public:
    * \param mediaTypes Media types supported by the source
    */
   void RegisterSource(const std::string& sourceID, const std::string& friendlyName, const std::string& iconUrl = "", const MediaTypes& mediaTypes = MediaTypes());
+
+  /*!
+  * \brief Registers a discovered source synchronously
+  * If the source is new/unknown the user will be prompted with a dialog with
+  * the option to import media items from the source or to ignore it.
+  * If the source is already known all imports from that source are being
+  * triggered.
+  *
+  * \param sourceID Unique identifier (VFS path) of the source
+  * \param friendlyName Friendly name of the source
+  * \param mediaTypes Media types supported by the source
+  */
+  void RegisterSourceSync(const std::string& sourceID, const std::string& friendlyName, const std::string& iconUrl = "", const MediaTypes& mediaTypes = MediaTypes());
 
   /*!
    * \brief Unregisters the source with the given identifier
@@ -272,9 +285,10 @@ public:
    * \param sourceID Source identifier
    * \param path Path from where to import media items
    * \param mediaTypes Types of the media items to import
+   * \param recursive Whether items will be imported recursively or selectively
    * \return True if the import was successfully added, false otherwise
    */
-  bool AddImport(const std::string &sourceID, const std::string &path, const GroupedMediaTypes &mediaTypes);
+  bool AddImport(const std::string &sourceID, const std::string &path, const GroupedMediaTypes &mediaTypes, bool recursive);
 
   /*!
    * \brief Adds new imports to the given source for the given path and media types.
@@ -282,9 +296,10 @@ public:
    * \param sourceID Source identifier
    * \param path Path from where to import media items
    * \param mediaTypes Set of types of the media items to import
+   * \param recursive Whether items will be imported recursively or selectively
    * \return True if the imports were successfully added, false otherwise
    */
-  bool AddImports(const std::string &sourceID, const std::string &path, const std::set<GroupedMediaTypes> &mediaTypes);
+  bool AddImports(const std::string &sourceID, const std::string &path, const std::set<GroupedMediaTypes> &mediaTypes, bool recursive);
 
   /*!
    * \brief Updates the details and settings of the given import.
@@ -324,6 +339,14 @@ public:
   std::vector<CMediaImport> GetImportsBySource(const std::string &sourceID) const;
 
   /*!
+   * \brief Returns a list of media imports belonging to the given path.
+   *
+   * \param path Path of the imports
+   * \param includeSubDirectories Whether to include subdirectories or not
+   */
+  std::vector<CMediaImport> GetImportsByPath(const std::string &path, bool includeSubDirectories = false) const;
+
+  /*!
    * \brief Gets the import for the given path and media type.
    *
    * \param path Path of the import
@@ -338,6 +361,13 @@ public:
    * \return True if the given path can be imported, false otherwise
    */
   bool CanImport(const std::string& path) const;
+
+  /*!
+   * \brief Checks if the given path is imported
+   *
+   * \return True if the given path is imported, false otherwise
+   */
+  bool IsImported(const std::string& path) const;
 
   /*!
    * \brief Import media items from all registered sources and imports
@@ -376,13 +406,14 @@ public:
   virtual void OnJobProgress(unsigned int jobID, unsigned int progress, unsigned int total, const CJob *job);
 
   // implementation of IMediaImportTaskCallback
-  virtual bool OnTaskComplete(bool success, IMediaImportTask *task);
+  virtual bool OnTaskComplete(bool success, const IMediaImportTask *task);
 
 private:
   CMediaImportManager();
   CMediaImportManager(const CMediaImportManager&);
   CMediaImportManager const& operator=(CMediaImportManager const&);
 
+  void RegisterSourceInternal(const std::string& sourceID, const std::string& friendlyName, const std::string& iconUrl, const MediaTypes& mediaTypes, bool synchronous);
   bool AddSource(const CMediaImportSource &source);
   bool FindSource(const std::string &sourceID, CMediaImportSource &source) const;
 

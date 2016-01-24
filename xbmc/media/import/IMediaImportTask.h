@@ -148,5 +148,5 @@ public:
    * \param task The task that has completed
    * \return True if the callback succeeded, false otherwise
    */
-  virtual bool OnTaskComplete(bool success, IMediaImportTask *task) = 0;
+  virtual bool OnTaskComplete(bool success, const IMediaImportTask *task) = 0;
 };

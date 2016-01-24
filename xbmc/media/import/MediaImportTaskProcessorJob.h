@@ -80,7 +80,7 @@ protected:
   void ProcessSynchronisationTasks();
   void ProcessCleanupTasks();
   void ProcessRemovalTasks();
-  bool OnTaskComplete(bool success, IMediaImportTask *task);
+  bool OnTaskComplete(bool success, const IMediaImportTask *task);
 
   bool AddImport(const CMediaImport& import, std::vector<MediaImportTaskType> tasksToBeProcessed = std::vector<MediaImportTaskType>());
 

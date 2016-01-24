@@ -480,7 +480,7 @@ void CMediaImportTaskProcessorJob::ProcessRemovalTasks()
   }
 }
 
-bool CMediaImportTaskProcessorJob::OnTaskComplete(bool success, IMediaImportTask *task)
+bool CMediaImportTaskProcessorJob::OnTaskComplete(bool success, const IMediaImportTask *task)
 {
   if (m_callback == nullptr)
     return true;
