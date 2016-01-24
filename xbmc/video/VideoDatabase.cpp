@@ -148,7 +148,7 @@ void CVideoDatabase::CreateTables()
   m_pDS->exec("CREATE TABLE source ( source_id integer primary key, identifier text NOT NULL, name text NOT NULL, media_types text NOT NULL)");
 
   CLog::Log(LOGINFO, "create import table");
-  m_pDS->exec("CREATE TABLE import ( import_id integer primary key, idPath integer NOT NULL, source_id integer NOT NULL, media_type text NOT NULL, last_sync text, settings text)");
+  m_pDS->exec("CREATE TABLE import ( import_id integer primary key, idPath integer NOT NULL, source_id integer NOT NULL, media_type text NOT NULL, recursive bool, last_sync text, settings text)");
   m_pDS->exec("CREATE TABLE import_link ( import_id integer NOT NULL, media_id integer NOT NULL, media_type text NOT NULL, enabled bool NOT NULL DEFAULT 1)");
 
   CLog::Log(LOGINFO, "create tvshow table");
@@ -5184,7 +5184,7 @@ void CVideoDatabase::UpdateTables(int iVersion)
   if (iVersion < 104)
   {
     m_pDS->exec("CREATE TABLE source (source_id integer primary key, identifier text NOT NULL, name text NOT NULL, media_types text NOT NULL)");
-    m_pDS->exec("CREATE TABLE import (import_id integer primary key, idPath integer NOT NULL, source_id integer NOT NULL, media_type text NOT NULL, last_sync text, settings text)");
+    m_pDS->exec("CREATE TABLE import (import_id integer primary key, idPath integer NOT NULL, source_id integer NOT NULL, media_type text NOT NULL, recursive bool, last_sync text, settings text)");
     m_pDS->exec("CREATE TABLE import_link (import_id integer NOT NULL, media_id integer NOT NULL, media_type text NOT NULL, enabled bool NOT NULL DEFAULT 1)");
   }
 }
@@ -9709,15 +9709,15 @@ std::vector<CMediaImport> CVideoDatabase::GetImports()
     if (m_pDB.get() == NULL || m_pDS.get() == NULL)
       return imports;
 
-    strSQL = PrepareSQL("SELECT path.strPath, source.identifier, import.media_type, import.last_sync, import.settings FROM import "
+    strSQL = PrepareSQL("SELECT path.strPath, source.identifier, import.media_type, import.recursive, import.last_sync, import.settings FROM import "
                         "JOIN path ON path.idPath = import.idPath "
                         "JOIN source ON source.source_id = import.source_id");
     m_pDS->query(strSQL.c_str());
     while (!m_pDS->eof())
     {
-      CDateTime lastSynced; lastSynced.SetFromDBDateTime(m_pDS->fv(3).get_asString());
-      CMediaImport import(m_pDS->fv(0).get_asString(), CMediaTypes::Split(m_pDS->fv(2).get_asString()), m_pDS->fv(1).get_asString(), lastSynced);
-      import.GetSettings().Deserialize(m_pDS->fv(4).get_asString());
+      CDateTime lastSynced; lastSynced.SetFromDBDateTime(m_pDS->fv(4).get_asString());
+      CMediaImport import(m_pDS->fv(0).get_asString(), CMediaTypes::Split(m_pDS->fv(2).get_asString()), m_pDS->fv(1).get_asString(), m_pDS->fv(3).get_asBool(), lastSynced);
+      import.GetSettings().Deserialize(m_pDS->fv(5).get_asString());
       imports.push_back(import);
 
       m_pDS->next();
@@ -9759,8 +9759,9 @@ int CVideoDatabase::AddImport(const CMediaImport &import)
     if (idImport > 0)
       return idImport;
     
-    strSQL = PrepareSQL("INSERT INTO import (import_id, idPath, source_id, media_type, settings) values(NULL, %d, %d, '%s', '%s')",
+    strSQL = PrepareSQL("INSERT INTO import (import_id, idPath, source_id, media_type, recursive, settings) values(NULL, %d, %d, '%s', %d, '%s')",
                         idPath, idSource, CMediaTypes::Join(import.GetMediaTypes()).c_str(),
+                        import.IsRecursive() ? 1 : 0,
                         import.GetSettings().Serialize().c_str());
     m_pDS->exec(strSQL.c_str());
 
@@ -9787,8 +9788,10 @@ bool CVideoDatabase::SetDetailsForImport(const CMediaImport &import)
     if (idImport <= 0)
       return false;
     
-    strSQL = PrepareSQL("UPDATE import SET media_type = '%s', last_sync = '%s', settings='%s' WHERE import_id = %d",
-                        CMediaTypes::Join(import.GetMediaTypes()).c_str(), import.GetLastSynced().GetAsDBDateTime().c_str(),
+    strSQL = PrepareSQL("UPDATE import SET media_type = '%s', recursive = %d, last_sync = '%s', settings='%s' WHERE import_id = %d",
+                        CMediaTypes::Join(import.GetMediaTypes()).c_str(),
+                        import.IsRecursive() ? 1 : 0,
+                        import.GetLastSynced().GetAsDBDateTime().c_str(),
                         import.GetSettings().Serialize().c_str(), idImport);
     m_pDS->exec(strSQL.c_str());
 
