@@ -65,19 +65,21 @@ class CMediaImport
 {
 public:
   CMediaImport(const std::string &importPath, const GroupedMediaTypes& importedMediaTypes,
-               const CMediaImportSource &source,
+               const CMediaImportSource &source, bool recursive = true,
                const CDateTime &lastSynced = CDateTime())
     : m_importPath(importPath),
       m_mediaTypes(importedMediaTypes),
       m_source(source),
+      m_recursive(recursive),
       m_lastSynced(lastSynced)
   { }
   CMediaImport(const std::string &importPath, const GroupedMediaTypes& importedMediaTypes,
-               const std::string &sourceIdentifier = "",
+               const std::string &sourceIdentifier = "", bool recursive = true,
                const CDateTime &lastSynced = CDateTime())
     : m_importPath(importPath),
       m_mediaTypes(importedMediaTypes),
       m_source(sourceIdentifier, "", "", MediaTypes(), lastSynced),
+      m_recursive(recursive),
       m_lastSynced(lastSynced)
   {
     m_source.SetAvailableMediaTypes(MediaTypes(importedMediaTypes.begin(), importedMediaTypes.end()));
@@ -88,6 +90,7 @@ public:
     if (m_importPath.compare(other.m_importPath) != 0 ||
         m_source != other.m_source ||
         m_mediaTypes != other.m_mediaTypes ||
+        m_recursive != other.m_recursive ||
         m_lastSynced != other.m_lastSynced)
       return false;
 
@@ -109,6 +112,9 @@ public:
   const GroupedMediaTypes& GetMediaTypes() const { return m_mediaTypes; }
   void SetMediaTypes(const GroupedMediaTypes &mediaTypes) { m_mediaTypes = mediaTypes; }
 
+  bool IsRecursive() const { return m_recursive; }
+  void SetRecursive(bool recursive) { m_recursive = recursive; }
+
   const CDateTime& GetLastSynced() const { return m_lastSynced; }
   void SetLastSynced(const CDateTime &lastSynced)
   {
@@ -126,6 +132,7 @@ private:
   std::string m_importPath;
   GroupedMediaTypes m_mediaTypes;
   CMediaImportSource m_source;
+  bool m_recursive;
   CDateTime m_lastSynced;
   CMediaImportSettings m_settings;
 };
