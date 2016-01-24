@@ -38,6 +38,7 @@ public:
   virtual std::vector<CMediaImport> GetImports() const override;
   virtual std::vector<CMediaImport> GetImportsBySource(const std::string &sourceIdentifier) const override;
   virtual std::vector<CMediaImport> GetImportsByMediaType(const GroupedMediaTypes &mediaTypes) const override;
+  virtual std::vector<CMediaImport> GetImportsByPath(const std::string &path, bool includeSubDirectories = false) const override;
   virtual bool GetImport(const std::string &path, const GroupedMediaTypes &mediaTypes, CMediaImport &import) const override;
 
   virtual bool AddImport(const CMediaImport &import) override;

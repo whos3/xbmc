@@ -24,6 +24,7 @@
 #include "guilib/LocalizeStrings.h"
 #include "threads/SingleLock.h"
 #include "utils/StringUtils.h"
+#include "utils/URIUtils.h"
 
 CGenericMediaImportRepository::~CGenericMediaImportRepository()
 {
@@ -116,6 +117,24 @@ std::vector<CMediaImport> CGenericMediaImportRepository::GetImportsByMediaType(c
   for (const auto& it : m_imports)
   {
     if (it.first.second == mediaTypes)
+      imports.push_back(it.second);
+  }
+
+  return imports;
+}
+
+std::vector<CMediaImport> CGenericMediaImportRepository::GetImportsByPath(const std::string &path, bool includeSubDirectories /* = false */) const
+{
+  std::vector<CMediaImport> imports;
+
+  if (!m_loaded || path.empty())
+    return imports;
+
+  CSingleLock importsLock(m_importsLock);
+  for (const auto& it : m_imports)
+  {
+    if (it.second.GetPath() == path ||
+       (includeSubDirectories && URIUtils::PathStarts(it.second.GetPath(), path.c_str())))
       imports.push_back(it.second);
   }
 
