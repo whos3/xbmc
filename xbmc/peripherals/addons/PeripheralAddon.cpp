@@ -573,6 +573,15 @@ void CPeripheralAddon::ResetButtonMap(const CPeripheral* device, const std::stri
   catch (std::exception &e) { LogException(e, "ResetButtonMap()"); return; }
 }
 
+void CPeripheralAddon::PowerOffJoystick(unsigned int index)
+{
+  if (!HasFeature(FEATURE_JOYSTICK))
+    return;
+
+  try { m_pStruct->PowerOffJoystick(index); }
+  catch (std::exception &e) { LogException(e, "PowerOffJoystick()"); return; }
+}
+
 void CPeripheralAddon::RegisterButtonMap(CPeripheral* device, IButtonMap* buttonMap)
 {
   UnregisterButtonMap(buttonMap);
@@ -622,6 +631,7 @@ void CPeripheralAddon::GetJoystickInfo(const CPeripheral* device, ADDON::Joystic
     joystickInfo.SetButtonCount(joystick->ButtonCount());
     joystickInfo.SetHatCount(joystick->HatCount());
     joystickInfo.SetAxisCount(joystick->AxisCount());
+    joystickInfo.SetSupportsPowerOff(joystick->SupportsPowerOff());
   }
 }
 
@@ -632,6 +642,7 @@ void CPeripheralAddon::SetJoystickInfo(CPeripheralJoystick& joystick, const ADDO
   joystick.SetButtonCount(joystickInfo.ButtonCount());
   joystick.SetHatCount(joystickInfo.HatCount());
   joystick.SetAxisCount(joystickInfo.AxisCount());
+  joystick.SetSupportsPowerOff(joystickInfo.SupportsPowerOff());
 }
 
 bool CPeripheralAddon::LogError(const PERIPHERAL_ERROR error, const char *strMethod) const

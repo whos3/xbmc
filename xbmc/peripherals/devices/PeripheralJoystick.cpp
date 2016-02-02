@@ -35,7 +35,8 @@ CPeripheralJoystick::CPeripheralJoystick(const PeripheralScanResult& scanResult,
   m_requestedPort(JOYSTICK_PORT_UNKNOWN),
   m_buttonCount(0),
   m_hatCount(0),
-  m_axisCount(0)
+  m_axisCount(0),
+  m_supportsPowerOff(false)
 {
   m_features.push_back(FEATURE_JOYSTICK);
 }

@@ -74,12 +74,14 @@ namespace PERIPHERALS
     unsigned int ButtonCount(void) const { return m_buttonCount; }
     unsigned int HatCount(void) const    { return m_hatCount; }
     unsigned int AxisCount(void) const   { return m_axisCount; }
+    bool SupportsPowerOff(void) const    { return m_supportsPowerOff; }
 
-    void SetProvider(const std::string& provider) { m_strProvider   = provider; }
-    void SetRequestedPort(int port)               { m_requestedPort = port; }
-    void SetButtonCount(unsigned int buttonCount) { m_buttonCount   = buttonCount; }
-    void SetHatCount(unsigned int hatCount)       { m_hatCount      = hatCount; }
-    void SetAxisCount(unsigned int axisCount)     { m_axisCount     = axisCount; }
+    void SetProvider(const std::string& provider)   { m_strProvider   = provider; }
+    void SetRequestedPort(int port)                 { m_requestedPort = port; }
+    void SetButtonCount(unsigned int buttonCount)   { m_buttonCount   = buttonCount; }
+    void SetHatCount(unsigned int hatCount)         { m_hatCount      = hatCount; }
+    void SetAxisCount(unsigned int axisCount)       { m_axisCount     = axisCount; }
+    void SetSupportsPowerOff(bool supportsPowerOff) { m_supportsPowerOff = supportsPowerOff; }
 
   protected:
     struct DriverHandler
@@ -93,6 +95,7 @@ namespace PERIPHERALS
     unsigned int                        m_buttonCount;
     unsigned int                        m_hatCount;
     unsigned int                        m_axisCount;
+    bool                                m_supportsPowerOff;
     JOYSTICK::CDefaultJoystick          m_defaultInputHandler;
     JOYSTICK::CJoystickMonitor          m_joystickMonitor;
     std::vector<DriverHandler>          m_driverHandlers;

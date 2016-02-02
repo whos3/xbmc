@@ -243,7 +243,8 @@ namespace ADDON
       m_requestedPort(NO_PORT_REQUESTED),
       m_buttonCount(0),
       m_hatCount(0),
-      m_axisCount(0)
+      m_axisCount(0),
+      m_supportsPowerOff(false)
     {
     }
 
@@ -258,7 +259,8 @@ namespace ADDON
       m_requestedPort(info.requested_port),
       m_buttonCount(info.button_count),
       m_hatCount(info.hat_count),
-      m_axisCount(info.axis_count)
+      m_axisCount(info.axis_count),
+      m_supportsPowerOff(info.supports_poweroff)
     {
     }
 
@@ -270,20 +272,22 @@ namespace ADDON
       {
         Peripheral::operator=(rhs);
 
-        m_provider      = rhs.m_provider;
-        m_requestedPort = rhs.m_requestedPort;
-        m_buttonCount   = rhs.m_buttonCount;
-        m_hatCount      = rhs.m_hatCount;
-        m_axisCount     = rhs.m_axisCount;
+        m_provider          = rhs.m_provider;
+        m_requestedPort     = rhs.m_requestedPort;
+        m_buttonCount       = rhs.m_buttonCount;
+        m_hatCount          = rhs.m_hatCount;
+        m_axisCount         = rhs.m_axisCount;
+        m_supportsPowerOff  = rhs.m_supportsPowerOff;
       }
       return *this;
     }
 
-    const std::string& Provider(void) const      { return m_provider; }
-    int                RequestedPort(void) const { return m_requestedPort; }
-    unsigned int       ButtonCount(void) const   { return m_buttonCount; }
-    unsigned int       HatCount(void) const      { return m_hatCount; }
-    unsigned int       AxisCount(void) const     { return m_axisCount; }
+    const std::string& Provider(void) const         { return m_provider; }
+    int                RequestedPort(void) const    { return m_requestedPort; }
+    unsigned int       ButtonCount(void) const      { return m_buttonCount; }
+    unsigned int       HatCount(void) const         { return m_hatCount; }
+    unsigned int       AxisCount(void) const        { return m_axisCount; }
+    bool               SupportsPowerOff(void) const { return m_supportsPowerOff; }
 
     // Derived property: Counts are unknown if all are zero
     bool AreElementCountsKnown(void) const { return m_buttonCount != 0 || m_hatCount != 0 || m_axisCount != 0; }
@@ -293,16 +297,18 @@ namespace ADDON
     void SetButtonCount(unsigned int buttonCount)     { m_buttonCount   = buttonCount; }
     void SetHatCount(unsigned int hatCount)           { m_hatCount      = hatCount; }
     void SetAxisCount(unsigned int axisCount)         { m_axisCount     = axisCount; }
+    void SetSupportsPowerOff(bool supportsPowerOff)   { m_supportsPowerOff = supportsPowerOff; }
 
     void ToStruct(JOYSTICK_INFO& info) const
     {
       Peripheral::ToStruct(info.peripheral);
 
-      info.provider       = new char[m_provider.size() + 1];
-      info.requested_port = m_requestedPort;
-      info.button_count   = m_buttonCount;
-      info.hat_count      = m_hatCount;
-      info.axis_count     = m_axisCount;
+      info.provider           = new char[m_provider.size() + 1];
+      info.requested_port     = m_requestedPort;
+      info.button_count       = m_buttonCount;
+      info.hat_count          = m_hatCount;
+      info.axis_count         = m_axisCount;
+      info.supports_poweroff  = m_supportsPowerOff;
 
       std::strcpy(info.provider, m_provider.c_str());
     }
@@ -320,6 +326,7 @@ namespace ADDON
     unsigned int                  m_buttonCount;
     unsigned int                  m_hatCount;
     unsigned int                  m_axisCount;
+    bool                          m_supportsPowerOff;
   };
 
   typedef PeripheralVector<Joystick, JOYSTICK_INFO> Joysticks;
