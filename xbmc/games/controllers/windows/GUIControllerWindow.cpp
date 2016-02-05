@@ -231,54 +231,14 @@ void CGUIControllerWindow::OnFeatureSelected(unsigned int featureIndex)
 
 void CGUIControllerWindow::GetMoreControllers(void)
 {
-  using namespace ADDON;
-
-  // TODO: Move this check into CGUIWindowAddonBrowser::SelectAddonID().
-  //
-  // CGUIWindowAddonBrowser::SelectAddonID() will silently fail if there are
-  // no installable controller add-ons. It should be modified to show a dialog,
-  // but the function is such a mess that this could have negative
-  // repercussions. It should be refactored, and then this code can be removed.
-
-  bool bWillSilentlyFail = true;
-
-  VECADDONS installableAddons;
-  CAddonDatabase database;
-  if (database.Open() && database.GetAddons(installableAddons))
-  {
-    for (IVECADDONS it = installableAddons.begin(); it != installableAddons.end(); ++it)
-    {
-      const AddonPtr& addon = *it;
-
-      // Based on checks in CGUIWindowAddonBrowser::SelectAddonID()
-
-      if (!addon->IsType(ADDON_GAME_CONTROLLER))
-        continue;
-
-      if (CAddonMgr::GetInstance().IsAddonDisabled(addon->ID()))
-        continue;
-
-      if (CAddonMgr::GetInstance().IsAddonInstalled(addon->ID()))
-        continue;
-
-      if (!CAddonMgr::GetInstance().CanAddonBeInstalled(addon))
-        continue;
-
-      bWillSilentlyFail = false;
-      break;
-    }
-  }
-
-  if (bWillSilentlyFail)
+  std::string strAddonId;
+  if (CGUIWindowAddonBrowser::SelectAddonID(ADDON::ADDON_GAME_CONTROLLER, strAddonId, false, true, false, true, false) < 0)
   {
     // "Controller profiles"
     // "All available controller profiles are installed."
-    CGUIDialogOK::ShowAndGetInput(CVariant{35050}, CVariant{35062});
+    CGUIDialogOK::ShowAndGetInput(CVariant{ 35050 }, CVariant{ 35062 });
     return;
   }
-
-  std::string strAddonId;
-  CGUIWindowAddonBrowser::SelectAddonID(ADDON::ADDON_GAME_CONTROLLER, strAddonId, false, true, false, true, false);
 }
 
 void CGUIControllerWindow::ResetController(void)
