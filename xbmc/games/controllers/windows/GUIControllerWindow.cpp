@@ -92,7 +92,7 @@ bool CGUIControllerWindow::OnMessage(CGUIMessage& message)
       }
       else if (CONTROL_CONTROLLER_BUTTONS_START <= controlId && controlId < CONTROL_CONTROLLER_BUTTONS_END)
       {
-        OnControllerSelected(controlId - CONTROL_FEATURE_BUTTONS_START);
+        OnControllerSelected(controlId - CONTROL_CONTROLLER_BUTTONS_START);
         return true;
       }
       else if (CONTROL_FEATURE_BUTTONS_START <= controlId && controlId < CONTROL_FEATURE_BUTTONS_END)
