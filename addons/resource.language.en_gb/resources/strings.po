@@ -15642,6 +15642,18 @@ msgctxt "#35064"
 msgid "Pair your controllers with the various input devices of different game systems."
 msgstr ""
 
+#. Name of the setting that enables/disables powering off controllers on exit
+#: system/settings/settings.xml
+msgctxt "#35065"
+msgid "Power off controllers on exit"
+msgstr ""
+
+#. Description for the setting that enables/disables powering off controllers on exit
+#: system/settings/settings.xml
+msgctxt "#35066"
+msgid "Powers off any controller that supports it on exit."
+msgstr ""
+
 #empty strings from id 35065 to 35089
 
 #. Button prompt without timeout. %s - button name
