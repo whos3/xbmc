@@ -20,6 +20,7 @@
 #pragma once
 
 #include "Peripheral.h"
+#include "addons/include/kodi_peripheral_types.h"
 #include "input/joysticks/DefaultJoystick.h"
 #include "input/joysticks/IDriverHandler.h"
 #include "input/joysticks/JoystickMonitor.h"
@@ -75,6 +76,7 @@ namespace PERIPHERALS
     unsigned int HatCount(void) const    { return m_hatCount; }
     unsigned int AxisCount(void) const   { return m_axisCount; }
     bool SupportsPowerOff(void) const    { return m_supportsPowerOff; }
+    JOYSTICK_BATTERY_LEVEL BatteryLevel(void) const { return m_batteryLevel; }
 
     void SetProvider(const std::string& provider)   { m_strProvider   = provider; }
     void SetRequestedPort(int port)                 { m_requestedPort = port; }
@@ -82,6 +84,7 @@ namespace PERIPHERALS
     void SetHatCount(unsigned int hatCount)         { m_hatCount      = hatCount; }
     void SetAxisCount(unsigned int axisCount)       { m_axisCount     = axisCount; }
     void SetSupportsPowerOff(bool supportsPowerOff) { m_supportsPowerOff = supportsPowerOff; }
+    void SetBatteryLevel(JOYSTICK_BATTERY_LEVEL batteryLevel) { m_batteryLevel = batteryLevel; }
 
   protected:
     struct DriverHandler
@@ -100,5 +103,6 @@ namespace PERIPHERALS
     JOYSTICK::CJoystickMonitor          m_joystickMonitor;
     std::vector<DriverHandler>          m_driverHandlers;
     CCriticalSection                    m_handlerMutex;
+    JOYSTICK_BATTERY_LEVEL              m_batteryLevel;
   };
 }

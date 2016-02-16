@@ -163,6 +163,15 @@ extern "C"
   } ATTRIBUTE_PACKED PERIPHERAL_EVENT;
   ///}
 
+  typedef enum JOYSTICK_BATTERY_LEVEL
+  {
+    JOYSTICK_BATTERY_LEVEL_NOTSUPPORTED,
+    JOYSTICK_BATTERY_LEVEL_EMPTY,
+    JOYSTICK_BATTERY_LEVEL_LOW,
+    JOYSTICK_BATTERY_LEVEL_MEDIUM,
+    JOYSTICK_BATTERY_LEVEL_FULL
+  } JOYSTICK_BATTERY_LEVEL;
+
   /// @name Joystick types
   ///{
   typedef struct JOYSTICK_INFO
@@ -174,6 +183,7 @@ extern "C"
     unsigned int    hat_count;          /*!< @brief number of hats reported by the driver */
     unsigned int    axis_count;         /*!< @brief number of axes reported by the driver */
     bool            supports_poweroff;  /*!< @brief whether the joystick supports being powered off */
+    JOYSTICK_BATTERY_LEVEL battery_level; /*!< @brief battery level of the joystick */
   } ATTRIBUTE_PACKED JOYSTICK_INFO;
 
   typedef enum JOYSTICK_DRIVER_PRIMITIVE_TYPE

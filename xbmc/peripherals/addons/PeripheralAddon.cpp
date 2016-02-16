@@ -646,6 +646,7 @@ void CPeripheralAddon::GetJoystickInfo(const CPeripheral* device, ADDON::Joystic
     joystickInfo.SetHatCount(joystick->HatCount());
     joystickInfo.SetAxisCount(joystick->AxisCount());
     joystickInfo.SetSupportsPowerOff(joystick->SupportsPowerOff());
+    joystickInfo.SetBatteryLevel(joystick->BatteryLevel());
   }
 }
 
@@ -657,6 +658,7 @@ void CPeripheralAddon::SetJoystickInfo(CPeripheralJoystick& joystick, const ADDO
   joystick.SetHatCount(joystickInfo.HatCount());
   joystick.SetAxisCount(joystickInfo.AxisCount());
   joystick.SetSupportsPowerOff(joystickInfo.SupportsPowerOff());
+  joystick.SetBatteryLevel(joystickInfo.BatteryLevel());
 }
 
 bool CPeripheralAddon::LogError(const PERIPHERAL_ERROR error, const char *strMethod) const
