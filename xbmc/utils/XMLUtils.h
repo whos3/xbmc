@@ -35,6 +35,8 @@ public:
   static bool GetHex(const TiXmlNode* pRootNode, const char* strTag, uint32_t& dwHexValue);
   static bool GetUInt(const TiXmlNode* pRootNode, const char* strTag, uint32_t& dwUIntValue);
   static bool GetLong(const TiXmlNode* pRootNode, const char* strTag, long& lLongValue);
+  static bool GetInt64(const TiXmlNode* pRootNode, const char* strTag, int64_t& int64Value);
+  static bool GetUInt64(const TiXmlNode* pRootNode, const char* strTag, uint64_t& uInt64Value);
   static bool GetFloat(const TiXmlNode* pRootNode, const char* strTag, float& value);
   static bool GetDouble(const TiXmlNode* pRootNode, const char* strTag, double &value);
   static bool GetInt(const TiXmlNode* pRootNode, const char* strTag, int& iIntValue);
@@ -97,6 +99,8 @@ public:
   static void SetHex(TiXmlNode* pRootNode, const char *strTag, uint32_t value);
   static void SetPath(TiXmlNode* pRootNode, const char *strTag, const std::string& strValue);
   static void SetLong(TiXmlNode* pRootNode, const char *strTag, long iValue);
+  static void SetInt64(TiXmlNode* pRootNode, const char *strTag, int64_t int64Value);
+  static void SetUInt64(TiXmlNode* pRootNode, const char *strTag, uint64_t uint64Value);
   static void SetDate(TiXmlNode* pRootNode, const char *strTag, const CDateTime& date);
   static void SetDateTime(TiXmlNode* pRootNode, const char *strTag, const CDateTime& dateTime);
 

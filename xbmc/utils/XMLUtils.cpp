@@ -60,6 +60,22 @@ bool XMLUtils::GetLong(const TiXmlNode* pRootNode, const char* strTag, long& lLo
   return true;
 }
 
+bool XMLUtils::GetInt64(const TiXmlNode* pRootNode, const char* strTag, int64_t& int64Value)
+{
+  const TiXmlNode* pNode = pRootNode->FirstChild(strTag);
+  if (!pNode || !pNode->FirstChild()) return false;
+  int64Value = strtoll(pNode->FirstChild()->Value(), nullptr, 0);
+  return true;
+}
+
+bool XMLUtils::GetUInt64(const TiXmlNode* pRootNode, const char* strTag, uint64_t& uint64Value)
+{
+  const TiXmlNode* pNode = pRootNode->FirstChild(strTag);
+  if (!pNode || !pNode->FirstChild()) return false;
+  uint64Value = strtoull(pNode->FirstChild()->Value(), nullptr, 0);
+  return true;
+}
+
 bool XMLUtils::GetInt(const TiXmlNode* pRootNode, const char* strTag, int& iIntValue)
 {
   const TiXmlNode* pNode = pRootNode->FirstChild(strTag );
@@ -308,6 +324,18 @@ void XMLUtils::SetInt(TiXmlNode* pRootNode, const char *strTag, int value)
 void XMLUtils::SetLong(TiXmlNode* pRootNode, const char *strTag, long value)
 {
   std::string strValue = StringUtils::Format("%ld", value);
+  SetString(pRootNode, strTag, strValue);
+}
+
+void XMLUtils::SetInt64(TiXmlNode* pRootNode, const char *strTag, int64_t value)
+{
+  std::string strValue = StringUtils::Format("%lld", value);
+  SetString(pRootNode, strTag, strValue);
+}
+
+void XMLUtils::SetUInt64(TiXmlNode* pRootNode, const char *strTag, uint64_t value)
+{
+  std::string strValue = StringUtils::Format("%ulld", value);
   SetString(pRootNode, strTag, strValue);
 }
 
