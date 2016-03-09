@@ -3986,6 +3986,7 @@ msgid "Video"
 msgstr ""
 
 #: xbmc/dialogs/GUIDialogMediaSource.cpp
+#: xbmc/media/MediaType.cpp
 msgctxt "#1213"
 msgid "Pictures"
 msgstr ""
@@ -17968,7 +17969,22 @@ msgctxt "#36921"
 msgid "songs"
 msgstr ""
 
-#empty strings from id 36922 to 36999
+#: xbmc/media/MediaType.cpp
+msgctxt "#36922"
+msgid "picture"
+msgstr ""
+
+#: xbmc/media/MediaType.cpp
+msgctxt "#36923"
+msgid "pictures"
+msgstr ""
+
+#: xbmc/media/MediaType.cpp
+msgctxt "#36924"
+msgid "Picture"
+msgstr ""
+
+#empty strings from id 36925 to 36999
 
 #: xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamNavigator.cpp
 msgctxt "#37000"
