@@ -6305,6 +6305,9 @@
     <ClInclude Include="..\..\xbmc\pvr\recordings\PVRRecordingsPath.h">
       <Filter>pvr\recordings</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\PerformanceMeasurement.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">
