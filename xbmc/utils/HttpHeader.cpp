@@ -18,7 +18,10 @@
  *
  */
 
+#include <algorithm>
+
 #include "HttpHeader.h"
+#include "URL.h"
 #include "utils/StringUtils.h"
 
 // header white space characters according to RFC 2616
@@ -167,7 +170,7 @@ std::vector<std::string> CHttpHeader::GetValues(std::string strParam) const
   return values;
 }
 
-std::string CHttpHeader::GetHeader(void) const
+std::string CHttpHeader::GetHeader() const
 {
   if (m_protoLine.empty() && m_params.empty())
     return "";
@@ -181,7 +184,7 @@ std::string CHttpHeader::GetHeader(void) const
   return strHeader;
 }
 
-std::string CHttpHeader::GetMimeType(void) const
+std::string CHttpHeader::GetMimeType() const
 {
   std::string strValue(GetValueRaw("content-type"));
 
@@ -191,7 +194,7 @@ std::string CHttpHeader::GetMimeType(void) const
   return mimeType;
 }
 
-std::string CHttpHeader::GetCharset(void) const
+std::string CHttpHeader::GetCharset() const
 {
   std::string strValue(GetValueRaw("content-type"));
   if (strValue.empty())
@@ -241,6 +244,35 @@ std::string CHttpHeader::GetCharset(void) const
   }
 
   return ""; // no charset is detected
+}
+
+std::string CHttpHeader::GetFilename() const
+{
+  static const std::string FilenameKey = "filename=\"";
+
+  std::string strValue(GetValueRaw("content-disposition"));
+  if (strValue.empty())
+    return "";
+
+  const auto& valueParts = StringUtils::Split(strValue, ";");
+  if (valueParts.empty())
+    return "";
+
+  auto filenamePart = std::find_if(valueParts.cbegin(), valueParts.cend(),
+    [](const std::string& part)
+    {
+      return part.find(FilenameKey) != std::string::npos;
+    });
+  if (filenamePart == valueParts.cend())
+    return "";
+
+  size_t pos = filenamePart->find(FilenameKey);
+  std::string filename = filenamePart->substr(pos + FilenameKey.size());
+
+  pos = filename.find_last_of("\"");
+  filename = filename.substr(0, pos);
+
+  return CURL::Decode(filename);
 }
 
 void CHttpHeader::Clear()

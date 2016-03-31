@@ -40,15 +40,14 @@ public:
   std::string GetValue(const std::string& strParam) const;
   std::vector<std::string> GetValues(std::string strParam) const;
 
-  std::string GetHeader(void) const;
+  std::string GetHeader() const;
 
-  std::string GetMimeType(void) const;
-  std::string GetCharset(void) const;
-  inline std::string GetProtoLine() const
-  { return m_protoLine; }
+  std::string GetMimeType() const;
+  std::string GetCharset() const;
+  inline std::string GetProtoLine() const { return m_protoLine; }
+  std::string GetFilename() const;
 
-  inline bool IsHeaderDone(void) const
-  { return m_headerdone; }
+  inline bool IsHeaderDone() const { return m_headerdone; }
 
   void Clear();
 
