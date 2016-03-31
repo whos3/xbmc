@@ -74,7 +74,7 @@ public:
    \param job the job that has been processed.
    \sa CJobManager and CJob
    */
-  virtual void OnJobProgress(unsigned int jobID, unsigned int progress, unsigned int total, const CJob *job) {};
+  virtual void OnJobProgress(unsigned int jobID, uint64_t progress, uint64_t total, const CJob *job) {};
 };
 
 class CJobManager;
@@ -163,7 +163,7 @@ public:
    
    \sa IJobCallback::OnJobProgress()
    */
-  virtual bool ShouldCancel(unsigned int progress, unsigned int total) const;
+  virtual bool ShouldCancel(uint64_t progress, uint64_t total) const;
 private:
   friend class CJobManager;
   CJobManager *m_callback;

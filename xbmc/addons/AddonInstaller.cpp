@@ -85,7 +85,7 @@ void CAddonInstaller::OnJobComplete(unsigned int jobID, bool success, CJob* job)
   g_windowManager.SendThreadMessage(msg);
 }
 
-void CAddonInstaller::OnJobProgress(unsigned int jobID, unsigned int progress, unsigned int total, const CJob *job)
+void CAddonInstaller::OnJobProgress(unsigned int jobID, uint64_t progress, uint64_t total, const CJob *job)
 {
   CSingleLock lock(m_critSection);
   JobMap::iterator i = find_if(m_downloadJobs.begin(), m_downloadJobs.end(), bind2nd(find_map(), jobID));
@@ -127,7 +127,7 @@ void CAddonInstaller::GetInstallList(VECADDONS &addons) const
   }
 }
 
-bool CAddonInstaller::GetProgress(const std::string &addonID, unsigned int &percent) const
+bool CAddonInstaller::GetProgress(const std::string &addonID, uint64_t &percent) const
 {
   CSingleLock lock(m_critSection);
   JobMap::const_iterator i = m_downloadJobs.find(addonID);

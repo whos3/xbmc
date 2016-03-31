@@ -41,7 +41,7 @@ public:
 
   float Percentage(void) const          { return m_fPercentage;}
   void SetPercentage(float fPercentage) { m_fPercentage = fPercentage; }
-  void SetProgress(int currentItem, int itemCount);
+  void SetProgress(uint64_t currentItem, uint64_t itemCount);
 
 private:
   CCriticalSection  m_critSection;

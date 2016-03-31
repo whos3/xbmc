@@ -280,7 +280,7 @@ void CTextureCache::OnJobComplete(unsigned int jobID, bool success, CJob *job)
   return CJobQueue::OnJobComplete(jobID, success, job);
 }
 
-void CTextureCache::OnJobProgress(unsigned int jobID, unsigned int progress, unsigned int total, const CJob *job)
+void CTextureCache::OnJobProgress(unsigned int jobID, uint64_t progress, uint64_t total, const CJob *job)
 {
   if (strcmp(job->GetType(), kJobTypeCacheImage) == 0 && !progress)
   { // check our processing list

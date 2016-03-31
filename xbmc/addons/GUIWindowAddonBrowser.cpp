@@ -379,10 +379,10 @@ void CGUIWindowAddonBrowser::UpdateStatus(const CFileItemPtr& item)
   if (!item || item->m_bIsFolder)
     return;
 
-  unsigned int percent;
+  uint64_t percent;
   if (CAddonInstaller::GetInstance().GetProgress(item->GetProperty("Addon.ID").asString(), percent))
   {
-    std::string progress = StringUtils::Format(g_localizeStrings.Get(24042).c_str(), percent);
+    std::string progress = StringUtils::Format(g_localizeStrings.Get(24042).c_str(), static_cast<int>(percent));
     item->SetProperty("Addon.Status", progress);
     item->SetProperty("Addon.Downloading", true);
   }

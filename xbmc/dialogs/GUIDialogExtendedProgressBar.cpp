@@ -49,11 +49,11 @@ void CGUIDialogProgressBarHandle::SetTitle(const std::string &strTitle)
   m_strTitle = strTitle;
 }
 
-void CGUIDialogProgressBarHandle::SetProgress(int currentItem, int itemCount)
+void CGUIDialogProgressBarHandle::SetProgress(uint64_t currentItem, uint64_t itemCount)
 {
-  float fPercentage = (currentItem*100.0f)/itemCount;
-  if (!std::isnan(fPercentage))
-    m_fPercentage = std::min(100.0f, fPercentage);
+  double percentage = (currentItem * 100.0) / itemCount;
+  if (!std::isnan(percentage))
+    m_fPercentage = static_cast<float>(std::min(100.0, percentage));
 }
 
 CGUIDialogExtendedProgressBar::CGUIDialogExtendedProgressBar(void)

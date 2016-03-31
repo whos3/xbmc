@@ -36,7 +36,7 @@ public:
 
   bool IsDownloading() const;
   void GetInstallList(ADDON::VECADDONS &addons) const;
-  bool GetProgress(const std::string &addonID, unsigned int &percent) const;
+  bool GetProgress(const std::string &addonID, uint64_t &percent) const;
   bool Cancel(const std::string &addonID);
 
   /*! \brief Installs the addon while showing a modal progress dialog
@@ -94,8 +94,8 @@ public:
 
   void InstallUpdates(bool includeBlacklisted = false);
 
-  void OnJobComplete(unsigned int jobID, bool success, CJob* job);
-  void OnJobProgress(unsigned int jobID, unsigned int progress, unsigned int total, const CJob *job);
+  void OnJobComplete(unsigned int jobID, bool success, CJob* job) override;
+  void OnJobProgress(unsigned int jobID, uint64_t progress, uint64_t total, const CJob *job) override;
 
   /*! \brief Get the repository which hosts the most recent version of add-on
    *  \param addonId The id of the add-on to find the repository for
@@ -112,7 +112,7 @@ public:
       progress = 0;
     }
     unsigned int jobID;
-    unsigned int progress;
+    uint64_t progress;
   };
 
   typedef std::map<std::string, CDownloadJob> JobMap;

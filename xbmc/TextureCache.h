@@ -208,8 +208,8 @@ private:
    */
   bool SetCachedTextureValid(const std::string &url, bool updateable);
 
-  virtual void OnJobComplete(unsigned int jobID, bool success, CJob *job);
-  virtual void OnJobProgress(unsigned int jobID, unsigned int progress, unsigned int total, const CJob *job);
+  virtual void OnJobComplete(unsigned int jobID, bool success, CJob *job) override;
+  virtual void OnJobProgress(unsigned int jobID, uint64_t progress, uint64_t total, const CJob *job) override;
 
   /*! \brief Called when a caching job has completed.
    Removes the job from our processing list, updates the database

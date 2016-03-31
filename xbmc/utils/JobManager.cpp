@@ -27,7 +27,7 @@
 
 #include "system.h"
 
-bool CJob::ShouldCancel(unsigned int progress, unsigned int total) const
+bool CJob::ShouldCancel(uint64_t progress, uint64_t total) const
 {
   if (m_callback)
     return m_callback->OnJobProgress(progress, total, this);
@@ -374,7 +374,7 @@ CJob *CJobManager::GetNextJob(const CJobWorker *worker)
   return NULL;
 }
 
-bool CJobManager::OnJobProgress(unsigned int progress, unsigned int total, const CJob *job) const
+bool CJobManager::OnJobProgress(uint64_t progress, uint64_t total, const CJob *job) const
 {
   CSingleLock lock(m_section);
   // find the job in the processing queue, and check whether it's cancelled (no callback)

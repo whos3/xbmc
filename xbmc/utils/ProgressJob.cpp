@@ -52,7 +52,7 @@ CProgressJob::~CProgressJob()
   m_progressDialog = NULL;
 }
 
-bool CProgressJob::ShouldCancel(unsigned int progress, unsigned int total) const
+bool CProgressJob::ShouldCancel(uint64_t progress, uint64_t total) const
 {
   if (IsCancelled())
     return true;
@@ -161,7 +161,7 @@ void CProgressJob::SetProgress(float percentage) const
   }
 }
 
-void CProgressJob::SetProgress(int currentStep, int totalSteps) const
+void CProgressJob::SetProgress(uint64_t currentStep, uint64_t totalSteps) const
 {
   if (!m_updateProgress)
     return;

@@ -38,7 +38,7 @@ public:
   // implementation of CJob
   virtual const char *GetType() const { return "ProgressJob"; }
   virtual bool operator==(const CJob* job) const { return false; }
-  virtual bool ShouldCancel(unsigned int progress, unsigned int total) const;
+  virtual bool ShouldCancel(uint64_t progress, uint64_t total) const override;
 
   /*!
    \brief Executes the job showing a modal progress dialog.
@@ -152,7 +152,7 @@ protected:
    \param[in] currentStep Current step being processed
    \param[in] totalSteps Total steps to be processed
   */
-  void SetProgress(int currentStep, int totalSteps) const;
+  void SetProgress(uint64_t currentStep, uint64_t totalSteps) const;
 
   /*!
    \brief Marks the progress as finished by setting it to 100%.
