@@ -578,6 +578,19 @@ std::string CMime::GetMimeType(const CURL &url, bool lookup)
   return strMimeType;
 }
 
+std::string CMime::GetExtension(std::string mimeType)
+{
+  StringUtils::ToLower(mimeType);
+
+  for (const auto& mime : m_mimetypes)
+  {
+    if (mime.second == mimeType)
+      return mime.first;
+  }
+
+  return "";
+}
+
 CMime::EFileType CMime::GetFileTypeFromMime(const std::string& mimeType)
 {
   // based on http://mimesniff.spec.whatwg.org/

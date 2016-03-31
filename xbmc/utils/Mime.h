@@ -33,6 +33,8 @@ public:
   static std::string GetMimeType(const CFileItem &item);
   static std::string GetMimeType(const CURL &url, bool lookup = true);
 
+  static std::string GetExtension(std::string mimeType);
+
   enum EFileType
   {
     FileTypeUnknown = 0,
