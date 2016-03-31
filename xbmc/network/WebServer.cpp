@@ -852,6 +852,11 @@ int CWebServer::CreateFileDownloadResponse(const std::shared_ptr<IHTTPRequestHan
   if (!mimeType.empty())
     handler->AddResponseHeader(MHD_HTTP_HEADER_CONTENT_TYPE, mimeType);
 
+  // add the filename into the Content-Disposition header
+  std::string filename = URIUtils::GetFileName(filePath);
+  if (!filename.empty())
+    handler->AddResponseHeader("Content-Disposition", StringUtils::Format("attachment; filename=\"%s\"", CURL::Encode(filename).c_str()));
+
   return MHD_YES;
 }
 
