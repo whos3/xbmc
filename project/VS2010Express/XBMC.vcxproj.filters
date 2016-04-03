@@ -6316,6 +6316,9 @@
     <ClInclude Include="..\..\xbmc\network\httprequesthandler\HTTPRequestHandlerUtils.h">
       <Filter>network\httprequesthandler</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\TransferSpeed.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">
