@@ -119,8 +119,6 @@ namespace VIDEO
     static std::string GetImage(CFileItem *pItem, bool useLocal, bool bApplyToDir, const std::string &type = "");
     static std::string GetFanart(CFileItem *pItem, bool useLocal);
 
-    bool EnumerateEpisodeItem(const CFileItem *item, EPISODELIST& episodeList);
-
   protected:
     virtual void Process();
     bool DoScan(const std::string& strDirectory) override;
@@ -157,21 +155,6 @@ namespace VIDEO
      \return true if information is found, false if an error occurred, the lookup was cancelled, or no information was found.
      */
     bool GetDetails(CFileItem *pItem, CScraperUrl &url, const ADDON::ScraperPtr &scraper, CNfoFile *nfoFile=NULL, CGUIDialogProgress* pDialog=NULL);
-
-    /*! \brief Extract episode and season numbers from a processed regexp
-     \param reg Regular expression object with at least 2 matches
-     \param episodeInfo Episode information to fill in.
-     \param defaultSeason Season to use if not found in reg.
-     \return true on success (2 matches), false on failure (fewer than 2 matches)
-     */
-    bool GetEpisodeAndSeasonFromRegExp(CRegExp &reg, EPISODE &episodeInfo, int defaultSeason);
-
-    /*! \brief Extract episode air-date from a processed regexp
-     \param reg Regular expression object with at least 3 matches
-     \param episodeInfo Episode information to fill in.
-     \return true on success (3 matches), false on failure (fewer than 3 matches)
-     */
-    bool GetAirDateFromRegExp(CRegExp &reg, EPISODE &episodeInfo);
 
     /*! \brief Fetch thumbs for actors
      Updates each actor with their thumb (local or online)

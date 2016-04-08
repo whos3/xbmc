@@ -2809,6 +2809,9 @@
     <ClCompile Include="..\..\xbmc\network\httprequesthandler\HTTPRequestHandlerUtils.cpp">
       <Filter>network\httprequesthandler</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\ScraperUtils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\media\MediaType.cpp">
@@ -6317,6 +6320,9 @@
       <Filter>network\httprequesthandler</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\utils\TransferSpeed.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\ScraperUtils.h">
       <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>

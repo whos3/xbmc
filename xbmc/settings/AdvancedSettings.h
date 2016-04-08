@@ -28,6 +28,7 @@
 #include "settings/lib/ISettingCallback.h"
 #include "settings/lib/ISettingsHandler.h"
 #include "utils/GlobalsHandling.h"
+#include "utils/ScraperUtils.h"
 
 class CVariant;
 
@@ -69,19 +70,6 @@ public:
   bool compression;
 };
 
-struct TVShowRegexp
-{
-  bool byDate;
-  std::string regexp;
-  int defaultSeason;
-  TVShowRegexp(bool d, const std::string& r, int s = 1):
-    regexp(r)
-  {
-    byDate = d;
-    defaultSeason = s;
-  }
-};
-
 struct RefreshOverride
 {
   float fpsmin;
@@ -93,7 +81,6 @@ struct RefreshOverride
   bool  fallback;
 };
 
-
 struct RefreshVideoLatency
 {
   float refreshmin;
@@ -101,8 +88,6 @@ struct RefreshVideoLatency
 
   float delay;
 };
-
-typedef std::vector<TVShowRegexp> SETTINGS_TVSHOWLIST;
 
 class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
 {
@@ -122,7 +107,7 @@ class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
     bool Load();
     void Clear();
 
-    static void GetCustomTVRegexps(TiXmlElement *pRootElement, SETTINGS_TVSHOWLIST& settings);
+    static void GetCustomTVRegexps(TiXmlElement *pRootElement, TvShowRegexpList& settings);
     static void GetCustomRegexps(TiXmlElement *pRootElement, std::vector<std::string> &settings);
     static void GetCustomExtensions(TiXmlElement *pRootElement, std::string& extensions);
 
@@ -222,7 +207,7 @@ class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
     std::vector<std::string> m_videoStackRegExps;
     std::vector<std::string> m_folderStackRegExps;
     std::vector<std::string> m_trailerMatchRegExps;
-    SETTINGS_TVSHOWLIST m_tvshowEnumRegExps;
+    TvShowRegexpList m_tvshowEnumRegExps;
     std::string m_tvshowMultiPartEnumRegExp;
     typedef std::vector< std::pair<std::string, std::string> > StringMapping;
     StringMapping m_pathSubstitutions;

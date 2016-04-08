@@ -1154,7 +1154,7 @@ void CAdvancedSettings::Clear()
   m_userAgent.clear();
 }
 
-void CAdvancedSettings::GetCustomTVRegexps(TiXmlElement *pRootElement, SETTINGS_TVSHOWLIST& settings)
+void CAdvancedSettings::GetCustomTVRegexps(TiXmlElement *pRootElement, TvShowRegexpList& settings)
 {
   TiXmlElement *pElement = pRootElement;
   while (pElement)

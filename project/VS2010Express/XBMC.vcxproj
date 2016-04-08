@@ -1221,6 +1221,7 @@
     <ClInclude Include="..\..\xbmc\utils\ProgressJob.h" />
     <ClInclude Include="..\..\xbmc\utils\rfft.h" />
     <ClInclude Include="..\..\xbmc\utils\RssManager.h" />
+    <ClInclude Include="..\..\xbmc\utils\ScraperUtils.h" />
     <ClInclude Include="..\..\xbmc\utils\Speed.h" />
     <ClInclude Include="..\..\xbmc\utils\StringValidation.h" />
     <ClInclude Include="..\..\xbmc\utils\Temperature.h" />
@@ -1358,6 +1359,7 @@
     <ClCompile Include="..\..\xbmc\utils\ProgressJob.cpp" />
     <ClCompile Include="..\..\xbmc\utils\rfft.cpp" />
     <ClCompile Include="..\..\xbmc\utils\RssManager.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\ScraperUtils.cpp" />
     <ClCompile Include="..\..\xbmc\utils\Speed.cpp" />
     <ClCompile Include="..\..\xbmc\utils\StringValidation.cpp" />
     <ClCompile Include="..\..\xbmc\utils\Temperature.cpp" />
