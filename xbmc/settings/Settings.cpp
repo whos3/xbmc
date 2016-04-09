@@ -649,11 +649,16 @@ void CSettings::Uninitialize()
 
 void CSettings::RegisterCallback(ISettingCallback *callback, const std::set<std::string> &settingList)
 {
+  assert(m_initialized);
+  assert(m_settingsManager != nullptr);
+
   m_settingsManager->RegisterCallback(callback, settingList);
 }
 
 void CSettings::UnregisterCallback(ISettingCallback *callback)
 {
+  assert(m_settingsManager != nullptr);
+
   m_settingsManager->UnregisterCallback(callback);
 }
 
