@@ -34,6 +34,18 @@
 std::map<int, std::unique_ptr<CEventLog> > CEventLog::s_eventLogs;
 CCriticalSection CEventLog::s_critical;
 
+CEventLog::CEventLog()
+{
+  CSettings::GetInstance().RegisterCallback(this, {
+    CSettings::SETTING_EVENTLOG_SHOW
+  });
+}
+
+CEventLog::~CEventLog()
+{
+  CSettings::GetInstance().UnregisterCallback(this);
+}
+
 std::string CEventLog::EventLevelToString(EventLevel level)
 {
   switch (level)
