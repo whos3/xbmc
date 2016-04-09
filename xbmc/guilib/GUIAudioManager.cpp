@@ -75,10 +75,15 @@ bool CGUIAudioManager::OnSettingUpdate(CSetting* &setting, const char *oldSettin
 
 void CGUIAudioManager::Initialize()
 {
+  CSettings::GetInstance().RegisterCallback(this, {
+    CSettings::SETTING_LOOKANDFEEL_SOUNDSKIN
+  });
 }
 
 void CGUIAudioManager::DeInitialize()
 {
+  CSettings::GetInstance().UnregisterCallback(this);
+
   CSingleLock lock(m_cs);
   UnLoad();
 }

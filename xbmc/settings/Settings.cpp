@@ -33,7 +33,6 @@
 #include "cores/VideoPlayer/VideoRenderers/BaseRenderer.h"
 #include "filesystem/File.h"
 #include "guilib/GraphicContext.h"
-#include "guilib/GUIAudioManager.h"
 #include "guilib/GUIFontManager.h"
 #include "guilib/StereoscopicsManager.h"
 #include "input/KeyboardLayoutManager.h"
@@ -596,7 +595,6 @@ void CSettings::Uninitialize()
   m_settingsManager->UnregisterCallback(&CSeekHandler::GetInstance());
   m_settingsManager->UnregisterCallback(&CStereoscopicsManager::GetInstance());
   m_settingsManager->UnregisterCallback(&g_application);
-  m_settingsManager->UnregisterCallback(&g_audioManager);
   m_settingsManager->UnregisterCallback(&g_charsetConverter);
   m_settingsManager->UnregisterCallback(&g_graphicsContext);
   m_settingsManager->UnregisterCallback(&g_langInfo);
@@ -1081,10 +1079,6 @@ void CSettings::InitializeISettingCallbacks()
   settingSet.insert(CSettings::SETTING_VIDEOPLAYER_USEMEDIACODEC);
   settingSet.insert(CSettings::SETTING_VIDEOPLAYER_USEMEDIACODECSURFACE);
   m_settingsManager->RegisterCallback(&g_application, settingSet);
-
-  settingSet.clear();
-  settingSet.insert(CSettings::SETTING_LOOKANDFEEL_SOUNDSKIN);
-  m_settingsManager->RegisterCallback(&g_audioManager, settingSet);
 
   settingSet.clear();
   settingSet.insert(CSettings::SETTING_SUBTITLES_CHARSET);
