@@ -593,7 +593,6 @@ void CSettings::Uninitialize()
   m_settingsManager->UnregisterCallback(&CMediaSettings::GetInstance());
   m_settingsManager->UnregisterCallback(&CDisplaySettings::GetInstance());
   m_settingsManager->UnregisterCallback(&CSeekHandler::GetInstance());
-  m_settingsManager->UnregisterCallback(&CStereoscopicsManager::GetInstance());
   m_settingsManager->UnregisterCallback(&g_charsetConverter);
   m_settingsManager->UnregisterCallback(&g_graphicsContext);
   m_settingsManager->UnregisterCallback(&g_langInfo);
@@ -1032,10 +1031,6 @@ void CSettings::InitializeISettingCallbacks()
   settingSet.insert(CSettings::SETTING_MUSICPLAYER_SEEKDELAY);
   settingSet.insert(CSettings::SETTING_MUSICPLAYER_SEEKSTEPS);
   m_settingsManager->RegisterCallback(&CSeekHandler::GetInstance(), settingSet);
-
-  settingSet.clear();
-  settingSet.insert(CSettings::SETTING_VIDEOSCREEN_STEREOSCOPICMODE);
-  m_settingsManager->RegisterCallback(&CStereoscopicsManager::GetInstance(), settingSet);
 
   settingSet.clear();
   settingSet.insert(CSettings::SETTING_SUBTITLES_CHARSET);

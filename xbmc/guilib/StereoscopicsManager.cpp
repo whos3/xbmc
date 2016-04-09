@@ -104,6 +104,7 @@ CStereoscopicsManager::CStereoscopicsManager(void)
 
 CStereoscopicsManager::~CStereoscopicsManager(void)
 {
+  CSettings::GetInstance().UnregisterCallback(this);
 }
 
 CStereoscopicsManager& CStereoscopicsManager::GetInstance()
@@ -116,6 +117,10 @@ void CStereoscopicsManager::Initialize(void)
 {
   // turn off stereo mode on XBMC startup
   SetStereoMode(RENDER_STEREO_MODE_OFF);
+
+  CSettings::GetInstance().RegisterCallback(this, {
+    CSettings::SETTING_VIDEOSCREEN_STEREOSCOPICMODE
+  });
 }
 
 RENDER_STEREO_MODE CStereoscopicsManager::GetStereoMode(void)
