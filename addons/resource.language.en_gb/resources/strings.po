@@ -7392,6 +7392,7 @@ msgid "Keep"
 msgstr ""
 
 #: xbmc/dialogs/GUIDialogFavourites.cpp
+#: xbmc/dialogs/GUIDialogJobManager.cpp
 #: xbmc/video/VideoDatabase.cpp
 msgctxt "#15015"
 msgid "Remove"
@@ -7402,7 +7403,12 @@ msgctxt "#15016"
 msgid "Games"
 msgstr ""
 
-#empty strings from id 15017 to 15018
+#: xbmc/dialogs/GUIDialogJobManager.cpp
+msgctxt "#15017"
+msgid "Stop"
+msgstr ""
+
+#empty string with id 15018
 
 msgctxt "#15019"
 msgid "Add"

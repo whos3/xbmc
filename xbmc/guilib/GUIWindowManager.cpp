@@ -86,6 +86,7 @@
 #include "profiles/dialogs/GUIDialogLockSettings.h"
 #include "settings/dialogs/GUIDialogContentSettings.h"
 #include "dialogs/GUIDialogBusy.h"
+#include "dialogs/GUIDialogJobManager.h"
 #include "dialogs/GUIDialogKeyboardGeneric.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "dialogs/GUIDialogOK.h"
@@ -270,6 +271,7 @@ void CGUIWindowManager::CreateWindows()
   Add(new ActiveAE::CGUIDialogAudioDSPSettings);
 
   Add(new CGUIDialogSelect);
+  Add(new CGUIDialogJobManager);
   Add(new CGUIDialogMusicInfo);
   Add(new CGUIDialogOK);
   Add(new CGUIDialogVideoInfo);

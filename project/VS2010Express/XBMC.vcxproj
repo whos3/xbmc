@@ -311,6 +311,7 @@
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogFavourites.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogFileBrowser.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogGamepad.cpp" />
+    <ClCompile Include="..\..\xbmc\dialogs\GUIDialogJobManager.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogKaiToast.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogKeyboardGeneric.cpp" />
     <ClCompile Include="..\..\xbmc\dialogs\GUIDialogMediaFilter.cpp" />
@@ -1049,6 +1050,7 @@
     <ClInclude Include="..\..\xbmc\cores\VideoPlayer\VideoRenderers\VideoShaders\WinVideoFilter.h" />
     <ClInclude Include="..\..\xbmc\cores\VideoPlayer\VideoRenderers\VideoShaders\YUV2RGBShader.h" />
     <ClInclude Include="..\..\xbmc\cores\VideoPlayer\VideoRenderers\WinRenderer.h" />
+    <ClInclude Include="..\..\xbmc\dialogs\GUIDialogJobManager.h" />
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogKeyboardGeneric.h" />
     <ClInclude Include="..\..\xbmc\DbUrl.h" />
     <ClInclude Include="..\..\xbmc\dialogs\GUIDialogMediaFilter.h" />
@@ -1338,6 +1340,7 @@
     <ClInclude Include="..\..\xbmc\utils\IXmlDeserializable.h" />
     <ClInclude Include="..\..\xbmc\utils\LegacyPathTranslation.h" />
     <ClInclude Include="..\..\xbmc\utils\Locale.h" />
+    <ClInclude Include="..\..\xbmc\utils\ManageableJob.h" />
     <ClInclude Include="..\..\xbmc\utils\params_check_macros.h" />
     <ClInclude Include="..\..\xbmc\utils\PerformanceMeasurement.h" />
     <ClInclude Include="..\..\xbmc\utils\ProgressJob.h" />
@@ -1480,6 +1483,7 @@
     <ClCompile Include="..\..\xbmc\utils\HttpRangeUtils.cpp" />
     <ClCompile Include="..\..\xbmc\utils\LegacyPathTranslation.cpp" />
     <ClCompile Include="..\..\xbmc\utils\Locale.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\ManageableJob.cpp" />
     <ClCompile Include="..\..\xbmc\utils\ProgressJob.cpp" />
     <ClCompile Include="..\..\xbmc\utils\rfft.cpp" />
     <ClCompile Include="..\..\xbmc\utils\RssManager.cpp" />
