@@ -623,6 +623,7 @@ public:
   already been sorted with the same options before.
   */
   void Sort(SortDescription sortDescription);
+  void Sort(FILEITEMLISTCOMPARISONFUNC func);
   void Randomize();
   void FillInDefaultIcons();
   int GetFolderCount() const;
@@ -710,7 +711,6 @@ public:
 
   void ClearSortState();
 private:
-  void Sort(FILEITEMLISTCOMPARISONFUNC func);
   void FillSortFields(FILEITEMFILLFUNC func);
   std::string GetDiscFileCache(int windowID) const;
 
