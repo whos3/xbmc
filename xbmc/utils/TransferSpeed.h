@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  *      Copyright (C) 2016 Team Kodi
  *      http://kodi.tv
@@ -59,11 +58,7 @@ public:
     m_transferred = std::min(initialBytesTransferred, m_total);
 
     // nothing else to do if we reached the end
-    if (m_transferred >= m_total)
-      return;
-
-    // nothing else to do if we reached the end
-    if (m_transferred >= m_total)
+    if (m_total > 0 && m_transferred >= m_total)
       return;
 
     m_timeMeasurement.Restart();
@@ -74,18 +69,17 @@ public:
   {
     CSingleLock lock(m_critical);
 
-    // nothing to do 
-    //   if we don't know the total size or
+    // nothing to do
     //   if nothing has been transferred or
     //   if the total size has already been reached
-    if (m_total == 0 || bytesTransferred == 0 ||
-        m_transferred >= m_total)
+    if (bytesTransferred == 0 ||
+       (m_total > 0 && m_transferred >= m_total))
       return;
 
     // make sure that we don't go past the end
     bool update = false;
     m_transferred += bytesTransferred;
-    if (m_transferred <= m_total)
+    if (m_total == 0 || m_transferred <= m_total)
       m_lastTransferred += bytesTransferred;
     else
     {
@@ -100,6 +94,9 @@ public:
   inline uint64_t GetRemainingSeconds() const
   {
     CSingleLock lock(m_critical);
+
+    if (m_total == 0)
+      return 0;
 
     return static_cast<uint64_t>(static_cast<double>(m_total - m_transferred) / m_averageSpeed);
   }
@@ -127,7 +124,7 @@ protected:
     m_lastTransferred = 0LL;
 
     // nothing else to do if we reached the end
-    if (m_transferred >= m_total)
+    if (m_total > 0 && m_transferred >= m_total)
       return;
 
     // restart the time measurement
