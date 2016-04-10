@@ -38,4 +38,6 @@ public:
 
   // specializations of IFileItemElement
   virtual bool CanHandleFileItem(const CFileItem& item) const override;
+  virtual bool ToFileItem(CFileItem& item, const OhUPnPControlPointContext& context) const override;
+  virtual bool FromFileItem(const CFileItem& item, const OhUPnPRootDeviceContext& context) override;
 };

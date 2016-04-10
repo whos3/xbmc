@@ -33,8 +33,9 @@ public:
   virtual CUPnPGenreContainer* Create() const override { return Clone(); }
   virtual CUPnPGenreContainer* Clone() const override { return new CUPnPGenreContainer(*this); }
   virtual std::string GetIdentifier() const { return "GenreContainer"; }
-  virtual std::set<std::string> Extends() const { return { "Container" }; }
+  virtual std::set<std::string> Extends() const { return{ "Container" }; }
 
   // specializations of IFileItemElement
-  virtual bool CanHandleFileItem(const CFileItem& item) const override { return false; /* TODO */ }
+  virtual bool ToFileItem(CFileItem& item, const OhUPnPControlPointContext& context) const override;
+  virtual bool FromFileItem(const CFileItem& item, const OhUPnPRootDeviceContext& context) override;
 };

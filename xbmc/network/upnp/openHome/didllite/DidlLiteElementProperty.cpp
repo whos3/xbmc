@@ -91,9 +91,9 @@ static bool deserializePropertyValue(CDidlLiteElementProperty::Type type, const 
       *reinterpret_cast<bool*>(propertyValue) = false;
     else if (value.compare("1") == 0)
       *reinterpret_cast<bool*>(propertyValue) = true;
-    else if (StringUtils::EqualsNoCase(value, "false"))
+    else if (StringUtils::EqualsNoCase(value, "false") || StringUtils::EqualsNoCase(value, "no"))
       *reinterpret_cast<bool*>(propertyValue) = false;
-    else if (StringUtils::EqualsNoCase(value, "true"))
+    else if (StringUtils::EqualsNoCase(value, "true") || StringUtils::EqualsNoCase(value, "yes"))
       *reinterpret_cast<bool*>(propertyValue) = true;
     else
       return false;

@@ -23,6 +23,8 @@
 #include "network/upnp/openHome/didllite/objects/IFileItemElement.h"
 #include "network/upnp/openHome/didllite/objects/properties/UPnPClass.h"
 #include "network/upnp/openHome/didllite/objects/properties/UPnPDateTime.h"
+#include "network/upnp/openHome/didllite/objects/properties/UPnPEnums.h"
+#include "network/upnp/openHome/didllite/objects/properties/UPnPPrice.h"
 
 class CUPnPActor;
 class CUPnPAlbumArt;
@@ -129,10 +131,15 @@ protected:
   void SetRecordedStartDateTime(const CDateTime& recordedStartDateTime);
   const CDateTime& GetRecordedEndDateTime() const { return m_recordedEndDateTime.GetDateTime(); }
   void SetRecordedEndDateTime(const CDateTime& recordedEndDateTime);
-  // TODO: upnp:recordedDuration
-  // TODO: upnp:recordedDayOfWeek
-  // TODO: upnp:srsRecordScheduleID
-  // TODO: upnp:srsRecordTaskID
+  int64_t GetRecordedDuration() const { return DidlLiteUtils::GetDurationInSeconds(m_recordedDuration); }
+  void SetRecordedDuration(int64_t recordedDuration);
+  const std::string& GetRecordedDayOfWeekString() const { return m_recordedDayOfWeek; }
+  void SetRecordedDayOfWeek(const std::string& recordedDayOfWeek);
+  void SetRecordedDayOfWeek(UPnPDayOfWeek recordedDayOfWeek);
+  const std::string& GetSrsRecordScheduleID() const { return m_srsRecordScheduleID; }
+  void SetSrsRecordScheduleID(const std::string& srsRecordScheduleID);
+  const std::string& GetSrsRecordTaskID() const { return m_srsRecordTaskID; }
+  void SetSrsRecordTaskID(const std::string& srsRecordTaskID);
   bool IsRecordable() const { return m_recordable; }
   void SetRecordable(bool recordable);
   const std::string& GetProgramTitle() const { return m_programTitle; }
@@ -142,7 +149,9 @@ protected:
   // TODO: upnp:programID, @type
   // TODO: upnp:seriesID, @type
   // TODO: upnp:channelID, @type, @distriNetworkName (min: 3), @distriNetworkID (min: 3)
-  // TODO: upnp:episodeType
+  const std::string& GetEpisodeTypeString() const { return m_episodeType; }
+  void SetEpisodeType(const std::string& episodeType);
+  void SetEpisodeType(UPnPRecordedEpisodeType episodeType);
   uint32_t GetEpisodeCount() const { return m_episodeCount; }
   void SetEpisodeCount(uint32_t episodeCount);
   uint32_t GetEpisodeNumber() const { return m_episodeNumber; }
@@ -154,42 +163,64 @@ protected:
   void SetRatings(const std::vector<CUPnPRating*>& ratings);
   void SetRatings(const std::vector<std::string>& ratings);
   // TODO: upnp:channelGroupName, @id
-  // TODO: upnp:callSign
-  // TODO: upnp:networkAffiliation
-  // TODO: upnp:serviceProvider
-  // TODO: upnp:price, upnp:price@currency
-  // TODO: upnp:payPerView
-  // TODO: upnp:epgProviderName
+  const std::string& GetCallSign() const { return m_callSign; }
+  void SetCallSign(const std::string& callSign);
+  const std::string& GetNetworkAffiliation() const { return m_networkAffiliation; }
+  void SetNetworkAffiliation(const std::string& networkAffiliation);
+  const std::string& GetServiceProvider() const { return m_serviceProvider; }
+  void SetServiceProvider(const std::string& serviceProvider);
+  const CUPnPPrice& GetPrice() const { return m_price; }
+  void SetPrice(float price);
+  void SetPrice(float price, const std::string& currency);
+  bool IsPayPerView() const { return m_payPerView; }
+  void SetPayPerView(bool payPerView);
+  const std::string& SetEpgProviderName() const { return m_epgProviderName; }
+  void SetEpgProviderName(const std::string& epgProviderName);
   // TODO: upnp:dateTimeRange, @daylightSaving (min: 3)
   // TODO: upnp:programPreserved, @startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
   // TODO: upnp:preservedTimeRange, e@startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
   // TODO: upnp:programList, ::program, ::program@preserved
-  // TODO: upnp:radioCallSign
-  // TODO: upnp:radioStationID
-  // TODO: upnp:radioBand
-  // TODO: upnp:channelNr
+  const std::string& GetRadioCallSign() const { return m_radioCallSign; }
+  void SetRadioCallSign(const std::string& radioCallSign);
+  const std::string& GetRadioStationID() const { return m_radioStationID; }
+  void SetRadioStationID(const std::string& radioStationID);
+  UPnPRadioBand GetRadioBand() const { return UPnPEnums::RadioBandFromString(m_radioBand); }
+  const std::string& GetRadioBandString() const { return m_radioBand; }
+  void SetRadioBand(const std::string& radioBand);
+  void SetRadioBand(UPnPRadioBand radioBand);
+  int32_t GetChannelNr() const { return m_channelNr; }
+  void SetChannelNr(int32_t channelNr);
   const std::string& GetChannelName() const { return m_channelName; }
   void SetChannelName(const std::string& channelName);
   // TODO: upnp:scheduledStartTime, @usage (min: 3), @daylightSaving (min: 3)
-  // TODO: upnp:scheduledEndTime, @daylightSaving (min: 3)
+  const CDateTime& GetScheduledEndTime() const { return m_scheduledEndTime.GetDateTime(); }
+  void SetScheduledEndTime(const CDateTime& scheduledEndTime);
   int64_t GetScheduledDuration() const { return DidlLiteUtils::GetDurationInSeconds(m_scheduledDuration); }
   void SetScheduledDuration(int64_t scheduledDuration);
-  // TODO: upnp:signalStrength
-  // TODO: upnp:tuned
+  int32_t GetSignalStrength() const { return m_signalStrength; }
+  void SetSignalStrength(int32_t signalStrength);
+  bool IsSignalLocked() const { return m_signalLocked; }
+  void SetSignalLocked(bool signalLocked);
+  bool IsTuned() const { return m_tuned; }
+  void SetTuned(bool tuned);
   bool IsNeverPlayable() const { return m_neverPlayable; }
   void SetNeverPlayable(bool neverPlayable);
-  // TODO: upnp:segmentID
+  const std::vector<std::string>& GetSegmentIDs() const { return m_segmentIDs; }
+  void SetSegmentIDs(const std::vector<std::string>& segmentIDs);
   const std::vector<std::string>& GetBookmarkIDs() const { return m_bookmarkIDs; }
   void SetBookmarkIDs(const std::vector<std::string>& bookmarkIDs);
-  // TODO: upnp:bookmarkedObjectID
+  const std::string& GetBookmarkedObjectID() const { return m_bookmarkedObjectID; }
+  void SetBookmarkedObjectID(const std::string& bookmarkedObjectID);
   // TODO: upnp:deviceUDN, @serviceType, @serviceID
   // TODO: upnp:stateVariableCollection, @serviceName, @rcsInstanceType, ::stateVariable, ::stateVariable@variableName
   int32_t GetDVDRegionCode() const { return m_DVDRegionCode; }
   void SetDVDRegionCode(int32_t DVDRegionCode);
-  // TODO: upnp:originalTrackNumber
+  int32_t GetOriginalTrackNumber() const { return m_originalTrackNumber; }
+  void SetOriginalTrackNumber(int32_t originalTrackNumber);
   const std::string& GetTableOfContents() const { return m_toc; }
   void SetTableOfContents(const std::string& toc);
-  // TODO: upnp:userAnnotation
+  const std::string& GetUserAnnotation() const { return m_userAnnotation; }
+  void SetUserAnnotation(const std::string& userAnnotation);
   uint32_t GetObjectUpdateID() const { return m_objectUpdateID; }
   void SetObjectUpdateID(uint32_t objectUpdateID);
   // TODO: upnp:inclusionControl, ::role
@@ -247,17 +278,17 @@ private:
   std::string m_lastPlaybackPosition;
   CUPnPDateTime m_recordedStartDateTime;
   CUPnPDateTime m_recordedEndDateTime;
-  // TODO: upnp:recordedDuration (min: 2)
-  // TODO: upnp:recordedDayOfWeek (min: 2)
-  // TODO: upnp:srsRecordScheduleID (min: 2)
-  // TODO: upnp:srsRecordTaskID (min: 2)
+  std::string m_recordedDuration;
+  std::string m_recordedDayOfWeek;
+  std::string m_srsRecordScheduleID;
+  std::string m_srsRecordTaskID;
   bool m_recordable;
   std::string m_programTitle;
   std::string m_seriesTitle;
   // TODO: upnp:programID (min: 2), @type
   // TODO: upnp:seriesID (min: 2), @type
   // TODO: upnp:channelID (min: 2), @type, @distriNetworkName, @distriNetworkID
-  // TODO: upnp:episodeType (min: 2)
+  std::string m_episodeType;
   uint32_t m_episodeCount;
   uint32_t m_episodeNumber;
   uint32_t m_episodeSeason;
@@ -265,37 +296,37 @@ private:
   std::vector<CUPnPRating*> m_rating;
   // TODO: upnp:recommendationID (min: 4), @type
   // TODO: upnp:channelGroupName (min: 2), @id
-  // TODO: upnp:callSign (min: 2)
-  // TODO: upnp:networkAffiliation (min: 2)
-  // TODO: upnp:serviceProvider (min: 2)
-  // TODO: upnp:price (min: 2), upnp:price@currency
-  // TODO: upnp:payPerView (min: 2)
-  // TODO: upnp:epgProviderName (min: 2)
+  std::string m_callSign;
+  std::string m_networkAffiliation;
+  std::string m_serviceProvider;
+  CUPnPPrice m_price;
+  bool m_payPerView;
+  std::string m_epgProviderName;
   // TODO: upnp:dateTimeRange (min: 2), @daylightSaving
   // TODO: upnp:programPreserved (min: 4), @startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
   // TODO: upnp:preservedTimeRange (min: 4), e@startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
   // TODO: upnp:programList (min: 4), ::program, ::program@preserved
-  // TODO: upnp:radioCallSign
-  // TODO: upnp:radioStationID
-  // TODO: upnp:radioBand
-  // TODO: upnp:channelNr
+  std::string m_radioCallSign;
+  std::string m_radioStationID;
+  std::string m_radioBand;
+  int32_t m_channelNr;
   std::string m_channelName;
   // TODO: upnp:scheduledStartTime, @usage, @daylightSaving
-  // TODO: upnp:scheduledEndTime, @daylightSaving
+  CUPnPDateTime m_scheduledEndTime;
   std::string m_scheduledDuration;
-  // TODO: upnp:signalStrength (min: 2)
-  // TODO: upnp:signalLocked (min: 2)
-  // TODO: upnp:tuned (min: 2)
+  int32_t m_signalStrength;
+  bool m_signalLocked;
+  bool m_tuned;
   bool m_neverPlayable;
-  // TODO: upnp:segmentID (min: 4)
+  std::vector<std::string> m_segmentIDs;
   std::vector<std::string> m_bookmarkIDs;
-  // TODO: upnp:bookmarkedObjectID (min: 2)
+  std::string m_bookmarkedObjectID;
   // TODO: upnp:deviceUDN (min: 2), @serviceType, @serviceID
   // TODO: upnp:stateVariableCollection (min: 2), @serviceName, @rcsInstanceType, ::stateVariable, ::stateVariable@variableName
   int32_t m_DVDRegionCode;
-  // TODO: upnp:originalTrackNumber
+  int m_originalTrackNumber;
   std::string m_toc;
-  // TODO: upnp:userAnnotation
+  std::string m_userAnnotation;
   uint32_t m_objectUpdateID;
   // TODO: upnp:inclusionControl (min: 4), ::role
   // TODO: upnp:objectOwner (min: 4), @lock, ::role

@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2015 Team XBMC
+ *      Copyright (C) 2016 Team XBMC
  *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,21 +19,21 @@
  *
  */
 
-#include "network/upnp/openHome/didllite/objects/container/genre/UPnPGenreContainer.h"
+#include "network/upnp/openHome/didllite/objects/item/audio/UPnPAudioItem.h"
 
-class CUPnPMovieGenreContainer : public CUPnPGenreContainer
+class CUPnPMusicTrackItem : public CUPnPAudioItem
 {
 public:
-  CUPnPMovieGenreContainer();
-  CUPnPMovieGenreContainer(const std::string& classType, const std::string& className = "");
-  CUPnPMovieGenreContainer(const CUPnPMovieGenreContainer& movieGenreContainer);
-  virtual ~CUPnPMovieGenreContainer();
+  CUPnPMusicTrackItem();
+  CUPnPMusicTrackItem(const std::string& classType, const std::string& className = "");
+  CUPnPMusicTrackItem(const CUPnPMusicTrackItem& musicTrackItem);
+  virtual ~CUPnPMusicTrackItem();
 
   // implementations of IDidlLiteElement
-  virtual CUPnPMovieGenreContainer* Create() const override { return Clone(); }
-  virtual CUPnPMovieGenreContainer* Clone() const override { return new CUPnPMovieGenreContainer(*this); }
-  virtual std::string GetIdentifier() const { return "MovieGenreContainer"; }
-  virtual std::set<std::string> Extends() const { return { "GenreContainer" }; }
+  virtual CUPnPMusicTrackItem* Create() const override { return Clone(); }
+  virtual CUPnPMusicTrackItem* Clone() const override { return new CUPnPMusicTrackItem(*this); }
+  virtual std::string GetIdentifier() const { return "MusicTrackItem"; }
+  virtual std::set<std::string> Extends() const { return { "AudioItem" }; }
 
   // specializations of IFileItemElement
   virtual bool CanHandleFileItem(const CFileItem& item) const override;

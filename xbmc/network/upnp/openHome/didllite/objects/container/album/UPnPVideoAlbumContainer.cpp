@@ -50,7 +50,7 @@ CUPnPVideoAlbumContainer::~CUPnPVideoAlbumContainer()
 
 bool CUPnPVideoAlbumContainer::CanHandleFileItem(const CFileItem& item) const
 {
-  return CUPnPAlbumContainer::CanHandleFileItem(item) && item.HasVideoInfoTag() &&
+  return CUPnPContainer::CanHandleFileItem(item) && item.HasVideoInfoTag() &&
     (item.GetVideoInfoTag()->m_type == MediaTypeTvShow || item.GetVideoInfoTag()->m_type == MediaTypeSeason);
 }
 
@@ -133,6 +133,8 @@ bool CUPnPVideoAlbumContainer::ToFileItem(CFileItem& item, const OhUPnPControlPo
   item.SetProperty("watchedepisodes", videoInfo.m_playCount > 0 ? videoInfo.m_iEpisode : 0);
   item.SetProperty("unwatchedepisodes", videoInfo.m_playCount > 0 ? 0 : videoInfo.m_iEpisode);
   item.SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, videoInfo.m_playCount > 0);
+
+  item.SetLabelPreformated(false);
 
   return true;
 }

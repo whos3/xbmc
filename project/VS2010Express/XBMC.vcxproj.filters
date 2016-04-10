@@ -439,6 +439,9 @@
     <Filter Include="network\upnp\openHome\transfer">
       <UniqueIdentifier>{4781ad24-2a32-4887-86d6-348b30734529}</UniqueIdentifier>
     </Filter>
+    <Filter Include="network\upnp\openHome\didllite\objects\item\audio">
+      <UniqueIdentifier>{c5a4eabd-3bdb-425b-bb0a-47110e42efbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -3042,6 +3045,24 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\utils\ByteFormatter.cpp">
       <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\properties\UPnPEnums.cpp">
+      <Filter>network\upnp\openHome\didllite\objects\properties</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\properties\UPnPPrice.cpp">
+      <Filter>network\upnp\openHome\didllite\objects\properties</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPAudioBookItem.cpp">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPAudioBroadcastItem.cpp">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPAudioItem.cpp">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPMusicTrackItem.cpp">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -6762,6 +6783,24 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\utils\ByteFormatter.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\properties\UPnPEnums.h">
+      <Filter>network\upnp\openHome\didllite\objects\properties</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\properties\UPnPPrice.h">
+      <Filter>network\upnp\openHome\didllite\objects\properties</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPAudioBookItem.h">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPAudioBroadcastItem.h">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPAudioItem.h">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPMusicTrackItem.h">
+      <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

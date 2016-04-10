@@ -19,6 +19,9 @@
  */
 
 #include "UPnPMovieGenreContainer.h"
+#include "FileItem.h"
+#include "filesystem/VideoDatabaseDirectory.h"
+#include "video/VideoInfoTag.h"
 
 CUPnPMovieGenreContainer::CUPnPMovieGenreContainer()
   : CUPnPMovieGenreContainer("object.container.genre.movieGenre")
@@ -34,3 +37,51 @@ CUPnPMovieGenreContainer::CUPnPMovieGenreContainer(const CUPnPMovieGenreContaine
 
 CUPnPMovieGenreContainer::~CUPnPMovieGenreContainer()
 { }
+
+bool CUPnPMovieGenreContainer::CanHandleFileItem(const CFileItem& item) const
+{
+  if (!CUPnPGenreContainer::CanHandleFileItem(item))
+    return false;
+
+  if (item.HasVideoInfoTag())
+    return item.GetVideoInfoTag()->m_type == "genre";
+
+  if (item.IsVideoDb())
+  {
+    XFILE::VIDEODATABASEDIRECTORY::NODE_TYPE node = XFILE::CVideoDatabaseDirectory::GetDirectoryType(item.GetPath());
+    return node == XFILE::VIDEODATABASEDIRECTORY::NODE_TYPE_GENRE;
+  }
+
+  return false;
+}
+
+bool CUPnPMovieGenreContainer::ToFileItem(CFileItem& item, const OhUPnPControlPointContext& context) const
+{
+  if (!CUPnPGenreContainer::ToFileItem(item, context))
+    return false;
+
+  CVideoInfoTag& videoInfo = *item.GetVideoInfoTag();
+
+  const auto& longDescription = GetLongDescription();
+  const auto& description = GetDescription();
+  videoInfo.m_strPlot = !longDescription.empty() ? longDescription : description;
+  videoInfo.m_strTagLine = description;
+
+  return true;
+}
+
+bool CUPnPMovieGenreContainer::FromFileItem(const CFileItem& item, const OhUPnPRootDeviceContext& context)
+{
+  if (!CUPnPGenreContainer::FromFileItem(item, context))
+    return false;
+
+  if (!item.HasVideoInfoTag())
+    return true;
+
+  const CVideoInfoTag& videoInfo = *item.GetVideoInfoTag();
+
+  if (!videoInfo.m_strPlot.empty())
+    SetLongDescription(videoInfo.m_strPlot);
+
+  return true;
+}

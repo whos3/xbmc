@@ -47,8 +47,15 @@ CUPnPObject::CUPnPObject(const std::string& elementName, const std::string& clas
     m_episodeCount(0),
     m_episodeNumber(-1),
     m_episodeSeason(-1),
+    m_payPerView(false),
+    m_channelNr(0),
+    m_scheduledEndTime("scheduledEndTime"),
+    m_signalStrength(-1),
+    m_signalLocked(false),
+    m_tuned(false),
     m_neverPlayable(true),
     m_DVDRegionCode(0),
+    m_originalTrackNumber(0),
     m_objectUpdateID(0)
 {
   initializeProperties();
@@ -86,52 +93,53 @@ CUPnPObject::CUPnPObject(const CUPnPObject& obj)
     m_lastPlaybackPosition(obj.m_lastPlaybackPosition),
     m_recordedStartDateTime(obj.m_recordedStartDateTime),
     m_recordedEndDateTime(obj.m_recordedEndDateTime),
-    // TODO: upnp:recordedDuration
-    // TODO: upnp:recordedDayOfWeek
-    // TODO: upnp:srsRecordScheduleID
-    // TODO: upnp:srsRecordTaskID
+    m_recordedDuration(obj.m_recordedDuration),
+    m_recordedDayOfWeek(obj.m_recordedDayOfWeek),
+    m_srsRecordScheduleID(obj.m_srsRecordScheduleID),
+    m_srsRecordTaskID(obj.m_srsRecordTaskID),
     m_recordable(obj.m_recordable),
     m_programTitle(obj.m_programTitle),
     m_seriesTitle(obj.m_seriesTitle),
     // TODO: upnp:programID, @type
     // TODO: upnp:seriesID, @type
     // TODO: upnp:channelID, @type, @distriNetworkName, @distriNetworkID
-    // TODO: upnp:episodeType
+    m_episodeType(obj.m_episodeType),
     m_episodeCount(obj.m_episodeCount),
     m_episodeNumber(obj.m_episodeNumber),
     m_episodeSeason(obj.m_episodeSeason),
     // TODO: upnp:programCode, @type
     // TODO: upnp:channelGroupName, @id
-    // TODO: upnp:callSign
-    // TODO: upnp:networkAffiliation
-    // TODO: upnp:serviceProvider
-    // TODO: upnp:price, upnp:price@currency
-    // TODO: upnp:payPerView
-    // TODO: upnp:epgProviderName
+    m_callSign(obj.m_callSign),
+    m_networkAffiliation(obj.m_networkAffiliation),
+    m_serviceProvider(obj.m_serviceProvider),
+    m_price(obj.m_price),
+    m_payPerView(obj.m_payPerView),
+    m_epgProviderName(obj.m_epgProviderName),
     // TODO: upnp:dateTimeRange, @daylightSaving
     // TODO: upnp:programPreserved, @startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
     // TODO: upnp:preservedTimeRange, e@startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
     // TODO: upnp:programList, ::program, ::program@preserved
-    // TODO: upnp:radioCallSign
-    // TODO: upnp:radioStationID
-    // TODO: upnp:radioBand
-    // TODO: upnp:channelNr
+    m_radioCallSign(obj.m_radioCallSign),
+    m_radioStationID(obj.m_radioStationID),
+    m_radioBand(obj.m_radioBand),
+    m_channelNr(obj.m_channelNr),
     m_channelName(obj.m_channelName),
     // TODO: upnp:scheduledStartTime, @usage, @daylightSaving
-    // TODO: upnp:scheduledEndTime, @daylightSaving
+    m_scheduledEndTime(obj.m_scheduledEndTime),
     m_scheduledDuration(obj.m_scheduledDuration),
-    // TODO: upnp:signalStrength
-    // TODO: upnp:tuned
+    m_signalStrength(obj.m_signalStrength),
+    m_signalLocked(obj.m_signalLocked),
+    m_tuned(obj.m_tuned),
     m_neverPlayable(obj.m_neverPlayable),
-    // TODO: upnp:segmentID
+    m_segmentIDs(obj.m_segmentIDs),
     m_bookmarkIDs(obj.m_bookmarkIDs),
-    // TODO: upnp:bookmarkedObjectID
+    m_bookmarkedObjectID(obj.m_bookmarkedObjectID),
     // TODO: upnp:deviceUDN, @serviceType, @serviceID
     // TODO: upnp:stateVariableCollection, @serviceName, @rcsInstanceType, ::stateVariable, ::stateVariable@variableName
     m_DVDRegionCode(obj.m_DVDRegionCode),
-    // TODO: upnp:originalTrackNumber
+    m_originalTrackNumber(obj.m_originalTrackNumber),
     m_toc(obj.m_toc),
-    // TODO: upnp:userAnnotation
+    m_userAnnotation(obj.m_userAnnotation),
     m_objectUpdateID(obj.m_objectUpdateID)
     // TODO: upnp:inclusionControl, ::role
     // TODO: upnp:objectOwner, @lock, ::role
@@ -431,6 +439,33 @@ void CUPnPObject::SetRecordedEndDateTime(const CDateTime& recordedEndDateTime)
   setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "recordedEndDateTime", m_recordedEndDateTime.GetDateTime().IsValid());
 }
 
+void CUPnPObject::SetRecordedDuration(int64_t recordedDuration)
+{
+  m_recordedDuration = DidlLiteUtils::GetDurationFromSeconds(recordedDuration);
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "recordedDuration", recordedDuration > 0);
+}
+
+void CUPnPObject::SetRecordedDayOfWeek(const std::string& recordedDayOfWeek)
+{
+  m_recordedDayOfWeek = recordedDayOfWeek;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "recordedDayOfWeek", !m_recordedDayOfWeek.empty());
+}
+
+void CUPnPObject::SetRecordedDayOfWeek(UPnPDayOfWeek recordedDayOfWeek)
+{
+  std::string recordedDayOfWeekStr;
+  if (!UPnPEnums::DayOfWeekToString(recordedDayOfWeek, recordedDayOfWeekStr))
+    recordedDayOfWeekStr.clear();
+
+  SetRecordedDayOfWeek(recordedDayOfWeekStr);
+}
+
+void CUPnPObject::SetSrsRecordScheduleID(const std::string& srsRecordScheduleID)
+{
+  m_srsRecordScheduleID = srsRecordScheduleID;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "srsRecordScheduleID", !m_srsRecordScheduleID.empty());
+}
+
 void CUPnPObject::SetLastPlaybackPosition(int64_t lastPlaybackPosition)
 {
   m_lastPlaybackPosition = DidlLiteUtils::GetDurationFromSeconds(lastPlaybackPosition);
@@ -453,6 +488,21 @@ void CUPnPObject::SetSeriesTitle(const std::string& seriesTitle)
 {
   m_seriesTitle = seriesTitle;
   setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "seriesTitle", !m_seriesTitle.empty());
+}
+
+void CUPnPObject::SetEpisodeType(const std::string& episodeType)
+{
+  m_episodeType = episodeType;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "episodeType", !m_episodeType.empty());
+}
+
+void CUPnPObject::SetEpisodeType(UPnPRecordedEpisodeType episodeType)
+{
+  std::string episodeTypeStr;
+  if (!UPnPEnums::RecordedEpisodeTypeToString(episodeType, episodeTypeStr))
+    episodeTypeStr.clear();
+
+  SetEpisodeType(episodeTypeStr);
 }
 
 void CUPnPObject::SetEpisodeCount(uint32_t episodeCount)
@@ -483,10 +533,92 @@ void CUPnPObject::SetRatings(const std::vector<std::string>& ratings)
   setAndValidateMultiValueProperty(m_rating, ratings, UPNP_DIDL_UPNP_NAMESPACE, "rating");
 }
 
+void CUPnPObject::SetCallSign(const std::string& callSign)
+{
+  m_callSign = callSign;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "callSign", !m_callSign.empty());
+}
+
+void CUPnPObject::SetNetworkAffiliation(const std::string& networkAffiliation)
+{
+  m_networkAffiliation = networkAffiliation;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "networkAffiliation", !m_networkAffiliation.empty());
+}
+
+void CUPnPObject::SetServiceProvider(const std::string& serviceProvider)
+{
+  m_serviceProvider = serviceProvider;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "serviceProvider", !m_serviceProvider.empty());
+}
+
+void CUPnPObject::SetPrice(float price)
+{
+  m_price.SetPrice(price);
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "price", m_price.GetPrice() > 0.0f);
+}
+
+void CUPnPObject::SetPrice(float price, const std::string& currency)
+{
+  m_price.SetPrice(price);
+  m_price.SetCurrency(currency);
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "price", m_price.GetPrice() > 0.0f);
+}
+
+void CUPnPObject::SetPayPerView(bool payPerView)
+{
+  m_payPerView = payPerView;
+  setPropertyValid(UPNP_DIDL_UPNP_NAMESPACE, "payPerView");
+}
+
+void CUPnPObject::SetEpgProviderName(const std::string& epgProviderName)
+{
+  m_epgProviderName = epgProviderName;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "epgProviderName", !m_epgProviderName.empty());
+}
+
+void CUPnPObject::SetRadioCallSign(const std::string& radioCallSign)
+{
+  m_radioCallSign = radioCallSign;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "radioCallSign", !m_radioCallSign.empty());
+}
+
+void CUPnPObject::SetRadioStationID(const std::string& radioStationID)
+{
+  m_radioStationID = radioStationID;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "radioStationID", !m_radioStationID.empty());
+}
+
+void CUPnPObject::SetRadioBand(const std::string& radioBand)
+{
+  m_radioBand = radioBand;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "radioBand", !m_radioBand.empty());
+}
+
+void CUPnPObject::SetRadioBand(UPnPRadioBand radioBand)
+{
+  std::string radioBandStr;
+  if (!UPnPEnums::RadioBandToString(radioBand, radioBandStr))
+    radioBandStr.clear();
+
+  SetRadioBand(radioBandStr);
+}
+
+void CUPnPObject::SetChannelNr(int32_t channelNr)
+{
+  m_channelNr = channelNr;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "channelNr", channelNr > 0);
+}
+
 void CUPnPObject::SetChannelName(const std::string& channelName)
 {
   m_channelName = channelName;
   setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "channelName", !m_channelName.empty());
+}
+
+void CUPnPObject::SetScheduledEndTime(const CDateTime& scheduledEndTime)
+{
+  m_scheduledEndTime.SetDateTime(scheduledEndTime);
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "scheduledEndTime", m_scheduledEndTime.GetDateTime().IsValid());
 }
 
 void CUPnPObject::SetScheduledDuration(int64_t scheduledDuration)
@@ -495,10 +627,39 @@ void CUPnPObject::SetScheduledDuration(int64_t scheduledDuration)
   setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "scheduledDuration", scheduledDuration > 0);
 }
 
+void CUPnPObject::SetSignalStrength(int32_t signalStrength)
+{
+  if (signalStrength < -1)
+    signalStrength = -1;
+  else if (signalStrength > 100)
+    signalStrength = 100;
+
+  m_signalStrength = signalStrength;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "signalStrength", m_signalStrength > -1);
+}
+
+void CUPnPObject::SetSignalLocked(bool signalLocked)
+{
+  m_signalLocked = signalLocked;
+  setPropertyValid(UPNP_DIDL_UPNP_NAMESPACE, "signalLocked");
+}
+
+void CUPnPObject::SetTuned(bool tuned)
+{
+  m_tuned = tuned;
+  setPropertyValid(UPNP_DIDL_UPNP_NAMESPACE, "tuned");
+}
+
 void CUPnPObject::SetNeverPlayable(bool neverPlayable)
 {
   m_neverPlayable = neverPlayable;
   setPropertyValid("@neverPlayable");
+}
+
+void CUPnPObject::SetSegmentIDs(const std::vector<std::string>& segmentIDs)
+{
+  m_segmentIDs = segmentIDs;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "segmentID", !m_segmentIDs.empty());
 }
 
 void CUPnPObject::SetBookmarkIDs(const std::vector<std::string>& bookmarkIDs)
@@ -507,16 +668,34 @@ void CUPnPObject::SetBookmarkIDs(const std::vector<std::string>& bookmarkIDs)
   setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "bookmarkID", !m_bookmarkIDs.empty());
 }
 
+void CUPnPObject::SetBookmarkedObjectID(const std::string& bookmarkedObjectID)
+{
+  m_bookmarkedObjectID = bookmarkedObjectID;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "bookmarkedObjectID", !m_bookmarkedObjectID.empty());
+}
+
 void CUPnPObject::SetDVDRegionCode(int32_t DVDRegionCode)
 {
   m_DVDRegionCode = DVDRegionCode;
   setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "DVDRegionCode");
 }
 
+void CUPnPObject::SetOriginalTrackNumber(int32_t originalTrackNumber)
+{
+  m_originalTrackNumber = originalTrackNumber;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "originalTrackNumber", m_originalTrackNumber > 0);
+}
+
 void CUPnPObject::SetTableOfContents(const std::string& toc)
 {
   m_toc = toc;
   setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "toc", !m_toc.empty());
+}
+
+void CUPnPObject::SetUserAnnotation(const std::string& userAnnotation)
+{
+  m_userAnnotation = userAnnotation;
+  setPropertyValidity(UPNP_DIDL_UPNP_NAMESPACE, "userAnnotation", !m_userAnnotation.empty());
 }
 
 void CUPnPObject::SetObjectUpdateID(uint32_t objectUpdateID)
@@ -564,53 +743,55 @@ void CUPnPObject::initializeProperties()
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "lastPlaybackPosition", &m_lastPlaybackPosition).SetOptional().SetMinimumVersion(2);
   addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedStartDateTime", &m_recordedStartDateTime).SetOptional().SetGenerator(std::make_shared<CUPnPDateTime>("recordedStartDateTime")).SetMinimumVersion(2);
   addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedEndDateTime", &m_recordedEndDateTime).SetOptional().SetGenerator(std::make_shared<CUPnPDateTime>("recordedEndDateTime")).SetMinimumVersion(2);
-  // TODO: upnp:recordedDuration
-  // TODO: upnp:recordedDayOfWeek
-  // TODO: upnp:srsRecordScheduleID
-  // TODO: upnp:srsRecordTaskID
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedDuration", &m_recordedDuration).SetOptional().SetMinimumVersion(2);
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedDayOfWeek", &m_recordedDayOfWeek).SetOptional().SetMinimumVersion(2);
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "srsRecordScheduleID", &m_srsRecordScheduleID).SetOptional().SetMinimumVersion(2);
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "srsRecordTaskID", &m_srsRecordTaskID).SetOptional().SetMinimumVersion(2);
   addBooleanProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordable", &m_programTitle).SetOptional().SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "programTitle", &m_programTitle).SetOptional().SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "seriesTitle", &m_seriesTitle).SetOptional().SetMinimumVersion(2);
   // TODO: upnp:programID, @type
   // TODO: upnp:seriesID, @type
   // TODO: upnp:channelID, @type, @distriNetworkName, @distriNetworkID
-  // TODO: upnp:episodeType
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "episodeType", &m_episodeType).SetOptional().SetMinimumVersion(2);
   addUnsignedIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "episodeCount", &m_episodeCount).SetOptional().SetMinimumVersion(2);
   addUnsignedIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "episodeNumber", &m_episodeNumber).SetOptional().SetMinimumVersion(2);
   addUnsignedIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "episodeSeason", &m_episodeSeason).SetOptional().SetMinimumVersion(4);
   // TODO: upnp:programCode, @type
   addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "rating", &m_rating).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPRating>()).SetMinimumVersion(2);
   // TODO: upnp:channelGroupName, @id
-  // TODO: upnp:callSign
-  // TODO: upnp:networkAffiliation
-  // TODO: upnp:serviceProvider
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "callSign", &m_callSign).SetOptional().SetMinimumVersion(2);
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "networkAffiliation", &m_networkAffiliation).SetOptional().SetMinimumVersion(2);
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "serviceProvider", &m_serviceProvider).SetOptional().SetMinimumVersion(2);
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "price", &m_price).SetOptional().SetGenerator(std::make_shared<CUPnPPrice>()).SetMinimumVersion(2);
   // TODO: upnp:price, upnp:price@currency
-  // TODO: upnp:payPerView
-  // TODO: upnp:epgProviderName
+  addBooleanProperty(UPNP_DIDL_UPNP_NAMESPACE, "payPerView", &m_tuned).SetOptional().SetMinimumVersion(2);
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "epgProviderName", &m_epgProviderName).SetOptional().SetMinimumVersion(2);
   // TODO: upnp:dateTimeRange, @daylightSaving
   // TODO: upnp:programPreserved, @startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
   // TODO: upnp:preservedTimeRange, e@startTime, @startTimeDaylightSaving, @endTime, @endTimeDaylightSaving
   // TODO: upnp:programList, ::program, ::program@preserved
-  // TODO: upnp:radioCallSign
-  // TODO: upnp:radioStationID
-  // TODO: upnp:radioBand
-  // TODO: upnp:channelNr
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "radioCallSign", &m_radioCallSign).SetOptional();
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "radioStationID", &m_radioStationID).SetOptional();
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "radioBand", &m_radioBand).SetOptional();
+  addIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "channelNr", &m_channelNr).SetOptional();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "channelName", &m_channelName).SetOptional();
   // TODO: upnp:scheduledStartTime, @usage, @daylightSaving
-  // TODO: upnp:scheduledEndTime, @daylightSaving
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "scheduledEndTime", &m_scheduledEndTime).SetOptional().SetGenerator(std::make_shared<CUPnPDateTime>("scheduledEndTime")).SetMinimumVersion(3);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "scheduledDuration", &m_scheduledDuration).SetOptional().SetMinimumVersion(3);
-  // TODO: upnp:signalStrength
-  // TODO: upnp:tuned
+  addIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "signalStrength", &m_signalStrength).SetOptional().SetMinimumVersion(2);
+  addBooleanProperty(UPNP_DIDL_UPNP_NAMESPACE, "signalLocked", &m_signalLocked).SetOptional().SetMinimumVersion(2);
+  addBooleanProperty(UPNP_DIDL_UPNP_NAMESPACE, "tuned", &m_tuned).SetOptional().SetMinimumVersion(2);
   addBooleanProperty("@neverPlayable", &m_neverPlayable).AsAttribute().SetOptional().SetMinimumVersion(2);
-  // TODO: upnp:segmentID
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "segmentID", &m_bookmarkIDs).SetOptional().SupportMultipleValues().SetMinimumVersion(4);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "bookmarkID", &m_bookmarkIDs).SetOptional().SupportMultipleValues().SetMinimumVersion(2);
-  // TODO: upnp:bookmarkedObjectID
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "bookmarkedObjectID", &m_bookmarkedObjectID).SetOptional().SetMinimumVersion(2);
   // TODO: upnp:deviceUDN, @serviceType, @serviceID
   // TODO: upnp:stateVariableCollection, @serviceName, @rcsInstanceType, ::stateVariable, ::stateVariable@variableName
   addIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "DVDRegionCode", &m_DVDRegionCode).SetOptional();
-  // TODO: upnp:originalTrackNumber
+  addIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "originalTrackNumber", &m_originalTrackNumber).SetOptional();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "toc", &m_toc).SetOptional();
-  // TODO: upnp:userAnnotation
+  addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "userAnnotation", &m_userAnnotation).SetOptional();
   addUnsignedIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "objectUpdateID", &m_objectUpdateID).SetOptional().SetMinimumVersion(3);
   // TODO: upnp:inclusionControl, ::role
   // TODO: upnp:objectOwner, @lock, ::role

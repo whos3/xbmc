@@ -18,6 +18,8 @@
  *
  */
 
+#include <math.h>
+
 #include "UPnPResource.h"
 #include "network/upnp/openHome/ohUPnPDefinitions.h"
 #include "utils/StringUtils.h"
@@ -414,12 +416,17 @@ double CUPnPResource::GetDurationInSeconds(std::string duration)
 
   //
   std::vector<std::string> parts = StringUtils::Split(duration, ":");
-  if (parts.size() < 3)
+  if (parts.size() < 2)
     return 0.0;
 
-  std::string strHours = parts.at(0);
-  std::string strMinutes = parts.at(1);
-  std::string strSeconds = parts.at(2);
+  std::string strHours = "0";
+  if (parts.size() > 2)
+  {
+    strHours = parts.at(0);
+    parts.erase(parts.cbegin());
+  }
+  std::string strMinutes = parts.at(0);
+  std::string strSeconds = parts.at(1);
   std::string strFractions;
 
   // check if the seconds part contains a fraction
@@ -485,14 +492,18 @@ double CUPnPResource::GetDurationInSeconds(std::string duration)
 std::string CUPnPResource::GetDurationFromSeconds(double duration)
 {
   int minutes = static_cast<int>(duration / 60);
-  double seconds = duration - 60 * minutes;
+  int seconds = static_cast<int>(duration) - 60 * minutes;
   int hours = minutes / 60;
   minutes %= 60;
+
+  double temp;
+  double fractions = modf(duration, &temp);
+  fractions *= 1000;
 
   std::string strDuration;
   if (hours > 0)
     strDuration = StringUtils::Format("%d:", hours);
-  strDuration += StringUtils::Format("%02d:%02.03f", minutes, seconds);
+  strDuration += StringUtils::Format("%02d:%02d.%03.0f", minutes, seconds, fractions);
 
   return strDuration;
 }

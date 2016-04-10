@@ -34,4 +34,7 @@ public:
   virtual CUPnPAlbumContainer* Clone() const override { return new CUPnPAlbumContainer(*this); }
   virtual std::string GetIdentifier() const { return "AlbumContainer"; }
   virtual std::set<std::string> Extends() const { return { "Container" }; }
+
+  // specializations of IFileItemElement
+  virtual bool CanHandleFileItem(const CFileItem& item) const override { return false; }
 };

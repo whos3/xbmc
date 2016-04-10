@@ -19,6 +19,8 @@
  */
 
 #include "UPnPGenreContainer.h"
+#include "FileItem.h"
+#include "network/upnp/openHome/didllite/objects/properties/UPnPGenre.h"
 
 CUPnPGenreContainer::CUPnPGenreContainer()
   : CUPnPGenreContainer("object.container.genre")
@@ -36,3 +38,25 @@ CUPnPGenreContainer::CUPnPGenreContainer(const CUPnPGenreContainer& genreContain
 
 CUPnPGenreContainer::~CUPnPGenreContainer()
 { }
+
+bool CUPnPGenreContainer::ToFileItem(CFileItem& item, const OhUPnPControlPointContext& context) const
+{
+  if (!CUPnPContainer::ToFileItem(item, context))
+    return false;
+
+  const auto& genres = GetGenres();
+  if (genres.size() == 1)
+    item.SetLabel(genres.front()->GetGenre());
+
+  return true;
+}
+
+bool CUPnPGenreContainer::FromFileItem(const CFileItem& item, const OhUPnPRootDeviceContext& context)
+{
+  if (!CUPnPContainer::FromFileItem(item, context))
+    return false;
+
+  SetGenres({ item.GetLabel() });
+
+  return true;
+}

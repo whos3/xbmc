@@ -46,7 +46,7 @@ static void FillResource(const CFileItem& item, CUPnPResource* resource, const s
 
   const auto& videoDetails = *item.GetVideoInfoTag();
 
-  // set the duration (might be overwritten by stream details
+  // set the duration (might be overwritten by stream details)
   resource->SetDuration(videoDetails.m_duration);
 
   // set the protocol
@@ -213,6 +213,8 @@ bool CUPnPVideoItem::ToFileItem(CFileItem& item, const OhUPnPControlPointContext
       videoInfo.m_streamDetails.AddStream(detail);
     }
   }
+
+  item.SetLabelPreformated(false);
 
   return true;
 }

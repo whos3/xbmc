@@ -46,6 +46,10 @@
 #include "network/upnp/openHome/didllite/objects/container/storage/UPnPStorageSystemContainer.h"
 #include "network/upnp/openHome/didllite/objects/container/storage/UPnPStorageVolumeContainer.h"
 #include "network/upnp/openHome/didllite/objects/item/UPnPItem.h"
+#include "network/upnp/openHome/didllite/objects/item/audio/UPnPAudioBookItem.h"
+#include "network/upnp/openHome/didllite/objects/item/audio/UPnPAudioBroadcastItem.h"
+#include "network/upnp/openHome/didllite/objects/item/audio/UPnPAudioItem.h"
+#include "network/upnp/openHome/didllite/objects/item/audio/UPnPMusicTrackItem.h"
 #include "network/upnp/openHome/didllite/objects/item/image/UPnPImageItem.h"
 #include "network/upnp/openHome/didllite/objects/item/image/UPnPPhotoImageItem.h"
 #include "network/upnp/openHome/didllite/objects/item/video/UPnPMovieItem.h"
@@ -158,6 +162,10 @@ bool COhUPnP::Initialize()
   m_fileItemElementFactory.RegisterElement(new CUPnPStorageVolumeContainer());
   m_fileItemElementFactory.RegisterElement(new CUPnPBookmarkFolderContainer());
   m_fileItemElementFactory.RegisterElement(new CUPnPItem());
+  m_fileItemElementFactory.RegisterElement(new CUPnPAudioItem());
+  m_fileItemElementFactory.RegisterElement(new CUPnPAudioBookItem());
+  m_fileItemElementFactory.RegisterElement(new CUPnPAudioBroadcastItem());
+  m_fileItemElementFactory.RegisterElement(new CUPnPMusicTrackItem());
   m_fileItemElementFactory.RegisterElement(new CUPnPImageItem());
   m_fileItemElementFactory.RegisterElement(new CUPnPPhotoImageItem());
   m_fileItemElementFactory.RegisterElement(new CUPnPVideoItem());

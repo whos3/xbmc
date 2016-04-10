@@ -34,7 +34,4 @@ public:
   virtual CUPnPPersonContainer* Clone() const override { return new CUPnPPersonContainer(*this); }
   virtual std::string GetIdentifier() const { return "PersonContainer"; }
   virtual std::set<std::string> Extends() const { return { "Container" }; }
-
-  // specializations of IFileItemElement
-  virtual bool CanHandleFileItem(const CFileItem& item) const override { return false; /* TODO */ }
 };

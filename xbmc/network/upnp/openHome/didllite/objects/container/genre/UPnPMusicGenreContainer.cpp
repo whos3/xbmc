@@ -19,6 +19,9 @@
  */
 
 #include "UPnPMusicGenreContainer.h"
+#include "FileItem.h"
+#include "filesystem/MusicDatabaseDirectory.h"
+#include "music/tags/MusicInfoTag.h"
 
 CUPnPMusicGenreContainer::CUPnPMusicGenreContainer()
   : CUPnPMusicGenreContainer("object.container.genre.musicGenre")
@@ -34,3 +37,51 @@ CUPnPMusicGenreContainer::CUPnPMusicGenreContainer(const CUPnPMusicGenreContaine
 
 CUPnPMusicGenreContainer::~CUPnPMusicGenreContainer()
 { }
+
+bool CUPnPMusicGenreContainer::CanHandleFileItem(const CFileItem& item) const
+{
+  if (!CUPnPGenreContainer::CanHandleFileItem(item))
+    return false;
+
+  if (item.HasMusicInfoTag())
+    return item.GetMusicInfoTag()->GetType() == "genre";
+
+  if (item.IsMusicDb())
+  {
+    XFILE::MUSICDATABASEDIRECTORY::NODE_TYPE node = XFILE::CMusicDatabaseDirectory::GetDirectoryType(item.GetPath());
+    return node == XFILE::MUSICDATABASEDIRECTORY::NODE_TYPE_GENRE;
+  }
+
+  return false;
+}
+
+bool CUPnPMusicGenreContainer::ToFileItem(CFileItem& item, const OhUPnPControlPointContext& context) const
+{
+  if (!CUPnPGenreContainer::ToFileItem(item, context))
+    return false;
+
+  MUSIC_INFO::CMusicInfoTag& musicInfo = *item.GetMusicInfoTag();
+
+  auto description = GetLongDescription();
+  if (description.empty())
+    description = GetDescription();
+  musicInfo.SetComment(description);
+
+  return true;
+}
+
+bool CUPnPMusicGenreContainer::FromFileItem(const CFileItem& item, const OhUPnPRootDeviceContext& context)
+{
+  if (!CUPnPGenreContainer::FromFileItem(item, context))
+    return false;
+
+  if (!item.HasMusicInfoTag())
+    return true;
+
+  const MUSIC_INFO::CMusicInfoTag& musicInfo = *item.GetMusicInfoTag();
+
+  if (musicInfo.GetComment().empty())
+    SetLongDescription(musicInfo.GetComment());
+
+  return true;
+}
