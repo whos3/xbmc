@@ -1170,6 +1170,7 @@ void CSettings::InitializeISettingCallbacks()
   settingSet.insert(CSettings::SETTING_SERVICES_UPNPINTERFACE);
   settingSet.insert(CSettings::SETTING_SERVICES_UPNPTRANSFER);
   settingSet.insert(CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT);
+  settingSet.insert(CSettings::SETTING_SERVICES_UPNPTRANSFERMANAGE);
   settingSet.insert(CSettings::SETTING_DEBUG_EXTRALOGGING);
   settingSet.insert(CSettings::SETTING_DEBUG_SETEXTRALOGLEVEL);
   m_settingsManager->RegisterCallback(&COhUPnP::GetInstance(), settingSet);

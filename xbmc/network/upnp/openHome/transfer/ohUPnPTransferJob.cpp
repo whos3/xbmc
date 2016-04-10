@@ -27,6 +27,7 @@
 #include "filesystem/CurlFile.h"
 #include "filesystem/Directory.h"
 #include "filesystem/FileFactory.h"
+#include "guilib/LocalizeStrings.h"
 #include "guilib/GUIWindowManager.h"
 #include "media/MediaType.h"
 #include "music/tags/MusicInfoTag.h"
@@ -36,10 +37,12 @@
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
 #include "threads/Thread.h"
+#include "utils/ByteFormatter.h"
 #include "utils/log.h"
 #include "utils/Mime.h"
 #include "utils/ScraperUtils.h"
 #include "utils/SystemInfo.h"
+#include "utils/TransferSpeedFormatter.h"
 #include "utils/URIUtils.h"
 #include "video/Episode.h"
 #include "video/VideoInfoTag.h"
@@ -100,6 +103,7 @@ static std::string GetImportDestinationPath(const std::string& destinationDirect
     {
       destinationPath = URIUtils::AddFileToFolder(destinationPath, CMediaTypes::ToPlural(mediaType));
 
+      // TODO: check if the filename already contains the additional information or completely rewrite it
       // for movies if available add the year to the end of the filename
       if (mediaType == MediaTypeMovie && item.GetVideoInfoTag()->m_iYear > 0)
       {
@@ -107,6 +111,9 @@ static std::string GetImportDestinationPath(const std::string& destinationDirect
         const std::string name = filename.substr(0, filename.size() - extension.size());
         filename = StringUtils::Format("%s (%d)%s", name.c_str(), item.GetVideoInfoTag()->m_iYear, extension.c_str());
       }
+      // for musicvideos if available add the artist(s) to the beginning of the filename
+      else if (mediaType == MediaTypeMusicVideo && !item.GetVideoInfoTag()->m_artist.empty())
+        filename = StringUtils::Format("%s - %s", StringUtils::Join(item.GetVideoInfoTag()->m_artist, ", ").c_str(), filename.c_str()); // TODO: artists serialization
     }
     else if (mediaType == MediaTypeEpisode)
     {
@@ -170,72 +177,77 @@ static bool PrepareDestinationPath(const std::string& destinationPath)
 
 COhUPnPTransferJob::COhUPnPTransferJob(const COhUPnPDevice& device, const std::string& sourceUri,
   const CFileItem& item, IOhUPnPTransferCallbacks* callback)
-  : COhUPnPTransferJob(s_nextId, device, sourceUri, item, callback)
+  : COhUPnPTransferJob(s_nextId++, device, sourceUri, item, callback)
 { }
 
 COhUPnPTransferJob::COhUPnPTransferJob(uint32_t id, const COhUPnPDevice& device, const std::string& sourceUri,
   const CFileItem& item, IOhUPnPTransferCallbacks* callback)
-  : CProgressJob()
-  , m_id(id)
+  : CManageableJob()
+  , m_transferId(id)
   , m_device(device)
   , m_sourceUri(sourceUri)
   , m_item(item)
-  , m_progress(0L)
-  , m_total(0L)
   , m_speed(nullptr)
-  , m_status(ohUPnPTransferStatus::InProgress)
+  , m_transferStatus(ohUPnPTransferStatus::InProgress)
   , m_callback(callback)
 {
-  m_label = item.GetLabel();
+  std::string label = item.GetLabel();
 
   // for episodes adjust the label to contain the tvshow, season and episode number
   // TODO: localization
   if (item.HasVideoInfoTag() && item.GetVideoInfoTag()->m_type == MediaTypeEpisode)
   {
     if (!item.GetVideoInfoTag()->m_strShowTitle.empty())
-      m_label = item.GetVideoInfoTag()->m_strShowTitle + ": ";
+      label = item.GetVideoInfoTag()->m_strShowTitle + ": ";
 
     bool needSeparator = false;
     if (item.GetVideoInfoTag()->m_iSeason >= 0)
     {
-      m_label += StringUtils::Format("S%02d", item.GetVideoInfoTag()->m_iSeason);
+      label += StringUtils::Format("S%02d", item.GetVideoInfoTag()->m_iSeason);
       needSeparator = true;
     }
     if (item.GetVideoInfoTag()->m_iEpisode >= 0)
     {
-      m_label += StringUtils::Format("E%02d", item.GetVideoInfoTag()->m_iEpisode);
+      label += StringUtils::Format("E%02d", item.GetVideoInfoTag()->m_iEpisode);
       needSeparator = true;
     }
 
     if (needSeparator)
-      m_label += " - ";
+      label += " - ";
 
     if (!item.GetVideoInfoTag()->m_strTitle.empty())
-      m_label += item.GetVideoInfoTag()->m_strTitle;
+      label += item.GetVideoInfoTag()->m_strTitle;
     else
-      m_label += item.GetLabel();
+      label += item.GetLabel();
   }
+
+  SetLabel(label);
 }
 
 COhUPnPTransferJob::COhUPnPTransferJob(const COhUPnPTransferJob& other)
-  : CProgressJob()
-  , m_id(other.m_id)
+  : CManageableJob(other)
+  , m_transferId(other.m_transferId)
   , m_device(other.m_device)
   , m_sourceUri(other.m_sourceUri)
   , m_item(other.m_item)
-  , m_label(other.m_label)
-  , m_progress(other.m_progress)
-  , m_total(other.m_total)
   , m_speed(other.m_speed)
-  , m_status(other.m_status)
+  , m_transferStatus(other.m_transferStatus)
+  , m_callback(other.m_callback)
+{ }
+
+COhUPnPTransferJob::COhUPnPTransferJob(const COhUPnPTransferJob& other, ManageableJobStatus status)
+  : CManageableJob(other, status)
+  , m_transferId(other.m_transferId)
+  , m_device(other.m_device)
+  , m_sourceUri(other.m_sourceUri)
+  , m_item(other.m_item)
+  , m_speed(nullptr)
+  , m_transferStatus(other.m_transferStatus)
   , m_callback(other.m_callback)
 { }
 
 COhUPnPTransferJob::~COhUPnPTransferJob()
-{
-  delete m_speed;
-  m_speed = nullptr;
-}
+{ }
 
 double COhUPnPTransferJob::GetTransferSpeed() const
 {
@@ -259,36 +271,103 @@ bool COhUPnPTransferJob::operator==(const CJob* job) const
   if (transferJob == nullptr)
     return false;
 
+  if (!CManageableJob::operator==(job))
+    return false;
+
   return m_device.GetUuid() == transferJob->m_device.GetUuid() &&
     m_sourceUri == transferJob->m_sourceUri &&
     m_item.IsSamePath(&transferJob->m_item);
 }
 
+bool COhUPnPTransferJob::UpdateFileItem(CFileItem* fileItem) const
+{
+  static const std::string FileItemPropertyIsTransferJob = "IsTransferJob";
+  static const std::string FileItemPropertyPrefix = "TransferJob.";
+  static const std::string FileItemPropertySpeed = FileItemPropertyPrefix + "Speed";
+  static const std::string FileItemPropertyLength = FileItemPropertyPrefix + "Length";
+
+  if (fileItem == nullptr)
+    return false;
+
+  bool changed = CManageableJob::UpdateFileItem(fileItem);
+
+  // set that this is a transfer job
+  if (!fileItem->HasProperty(FileItemPropertyIsTransferJob))
+  {
+    fileItem->SetProperty(FileItemPropertyIsTransferJob, { true });
+    changed = true;
+  }
+
+  // set an icon if available
+  if (!m_item.GetIconImage().empty())
+  {
+    if (m_item.GetIconImage() != fileItem->GetIconImage())
+    {
+      fileItem->SetIconImage(m_item.GetIconImage());
+      changed = true;
+    }
+  }
+  else if (m_item.HasArt("thumb"))
+  {
+    const std::string thumbArt = m_item.GetArt("thumb");
+    if (thumbArt != fileItem->GetArt("thumb"))
+    {
+      fileItem->SetIconImage(thumbArt);
+      changed = true;
+    }
+  }
+
+  // set the total length
+  const std::string oldLength = fileItem->GetProperty(FileItemPropertyLength).asString();
+  const std::string currentLength = ByteFormatter::ToString(static_cast<double>(GetTotal()), 1);
+  if (oldLength != currentLength)
+  {
+    fileItem->SetProperty(FileItemPropertyLength, { currentLength });
+    changed = true;
+  }
+
+  // set the transfer speed
+  if (m_speed != nullptr)
+  {
+    const std::string oldSpeed = fileItem->GetProperty(FileItemPropertySpeed).asString();
+    std::string currentSpeed;
+    if (m_speed->GetCurrentTransferSpeed() == 0.0)
+      currentSpeed = g_localizeStrings.Get(13205);
+    else
+      currentSpeed = TransferSpeedFormatter::ToString(*m_speed, 0);
+
+    if (oldSpeed != currentSpeed)
+    {
+      fileItem->SetProperty(FileItemPropertySpeed, { currentSpeed });
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
 bool COhUPnPTransferJob::DoWork()
 {
-  m_status = ohUPnPTransferStatus::InProgress;
+  m_transferStatus = ohUPnPTransferStatus::InProgress;
 
   if (!Transfer())
   {
-    if (m_status != ohUPnPTransferStatus::Stopped)
-      m_status = ohUPnPTransferStatus::Error;
+    if (m_transferStatus != ohUPnPTransferStatus::Stopped)
+      m_transferStatus = ohUPnPTransferStatus::Error;
 
     return false;
   }
 
-  m_status = ohUPnPTransferStatus::Completed;
+  m_transferStatus = ohUPnPTransferStatus::Completed;
   return true;
 }
 
 bool COhUPnPTransferJob::ShouldCancel(uint64_t progress, uint64_t total) const
 {
-  m_progress = progress;
-  m_total = total;
-
-  if (!CProgressJob::ShouldCancel(progress, total))
+  if (!CManageableJob::ShouldCancel(progress, total))
     return false;
 
-  m_status = ohUPnPTransferStatus::Stopped;
+  m_transferStatus = ohUPnPTransferStatus::Stopped;
   return true;
 }
 
@@ -301,6 +380,11 @@ COhUPnPImportTransferJob::COhUPnPImportTransferJob(const COhUPnPDevice& device, 
 COhUPnPImportTransferJob::COhUPnPImportTransferJob(const COhUPnPTransferJob& other)
   : COhUPnPTransferJob(other),
     m_destinationDirectory(CSettings::GetInstance().GetString(CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORTPATH))
+{ }
+
+COhUPnPImportTransferJob::COhUPnPImportTransferJob(const COhUPnPImportTransferJob& other, ManageableJobStatus status)
+  : COhUPnPTransferJob(other, status),
+    m_destinationDirectory(other.m_destinationDirectory)
 { }
 
 bool COhUPnPImportTransferJob::IsValid() const
@@ -332,7 +416,7 @@ bool COhUPnPImportTransferJob::Transfer()
   // issue GET request
   if (!sourceFile.Open(sourceUrl))
   {
-    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to access \"%s\" through HTTP GET", m_label.c_str());
+    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to access \"%s\" through HTTP GET", GetLabel().c_str());
     return false;
   }
 
@@ -340,7 +424,7 @@ bool COhUPnPImportTransferJob::Transfer()
   std::string filename = GetImportFilename(sourceFile, sourceUrl, m_item);
   if (filename.empty())
   {
-    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to determine a filename for \"%s\"", m_label.c_str());
+    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to determine a filename for \"%s\"", GetLabel().c_str());
     return false;
   }
  
@@ -350,7 +434,7 @@ bool COhUPnPImportTransferJob::Transfer()
   // make sure the destination path exists and is writable
   if (!PrepareDestinationPath(destinationFilePath))
   {
-    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to import \"%s\" to \"%s\"", m_label.c_str(), destinationFilePath.c_str());
+    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to import \"%s\" to \"%s\"", GetLabel().c_str(), destinationFilePath.c_str());
     return false;
   }
 
@@ -359,13 +443,13 @@ bool COhUPnPImportTransferJob::Transfer()
   std::unique_ptr<XFILE::IFile> destinationFile(XFILE::CFileFactory::CreateLoader(destinationFileUrl));
   if (destinationFile == nullptr)
   {
-    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to create file loader for \"%s\" with \"%s\"", m_label.c_str(), destinationFilePath.c_str());
+    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to create file loader for \"%s\" with \"%s\"", GetLabel().c_str(), destinationFilePath.c_str());
     return false;
   }
 
   if (!destinationFile->OpenForWrite(destinationFileUrl, true))
   {
-    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to open file at \"%s\" for \"%s\"", destinationFilePath.c_str(), m_label.c_str());
+    CLog::Log(LOGERROR, "COhUPnPImportTransferJob: unable to open file at \"%s\" for \"%s\"", destinationFilePath.c_str(), GetLabel().c_str());
     return false;
   }
 
@@ -378,10 +462,10 @@ bool COhUPnPImportTransferJob::Transfer()
     CGUIDialogExtendedProgressBar* dialog =
       (CGUIDialogExtendedProgressBar*)g_windowManager.GetWindow(WINDOW_DIALOG_EXT_PROGRESS);
     SetProgressBar(dialog->GetHandle("UPnP import")); // TODO: localization
-    SetText(StringUtils::Format("Importing %s...", m_label.c_str())); // TODO: localization
+    SetText(StringUtils::Format("Importing %s...", GetLabel().c_str())); // TODO: localization
   }
 
-  m_speed = new CTransferSpeed<>(length);
+  m_speed = std::make_shared<CTransferSpeed<>>(length);
   char buffer[ImportReadBufferSize] = { 0 };
   ssize_t read = 0;
   while ((read = sourceFile.Read(buffer, sizeof(buffer))) > 0)
@@ -391,7 +475,7 @@ bool COhUPnPImportTransferJob::Transfer()
 
     if (destinationFile->Write(buffer, read) != read)
     {
-      CLog::Log(LOGERROR, "COhUPnPImportTransferJob: error writing imported data to \"%s\" for \"%s\"", destinationFilePath.c_str(), m_label.c_str());
+      CLog::Log(LOGERROR, "COhUPnPImportTransferJob: error writing imported data to \"%s\" for \"%s\"", destinationFilePath.c_str(), GetLabel().c_str());
       break;
     }
 
@@ -417,13 +501,18 @@ bool COhUPnPImportTransferJob::Transfer()
 
     // try to delete the destination file
     if (!destinationFile->Delete(destinationFileUrl))
-      CLog::Log(LOGWARNING, "COhUPnPImportTransferJob: failed to delete partially imported \"%s\" at \"%s\"", m_label.c_str(), destinationFilePath.c_str());
+      CLog::Log(LOGWARNING, "COhUPnPImportTransferJob: failed to delete partially imported \"%s\" at \"%s\"", GetLabel().c_str(), destinationFilePath.c_str());
 
     return false;
   }
 
-  CLog::Log(LOGINFO, "COhUPnPImportTransferJob: successfully imported \"%s\" to \"%s\"", m_label.c_str(), destinationFilePath.c_str());
+  CLog::Log(LOGINFO, "COhUPnPImportTransferJob: successfully imported \"%s\" to \"%s\"", GetLabel().c_str(), destinationFilePath.c_str());
   return true;
+}
+
+CManageableJob* COhUPnPImportTransferJob::Clone(ManageableJobStatus status) const
+{
+  return new COhUPnPImportTransferJob(*this, status);
 }
 
 COhUPnPExportTransferJob::COhUPnPExportTransferJob(uint32_t id, const COhUPnPDevice& device, const std::string& sourceUri,
@@ -435,6 +524,10 @@ COhUPnPExportTransferJob::COhUPnPExportTransferJob(const COhUPnPTransferJob& oth
   : COhUPnPTransferJob(other)
 { }
 
+COhUPnPExportTransferJob::COhUPnPExportTransferJob(const COhUPnPExportTransferJob& other, ManageableJobStatus status)
+  : COhUPnPTransferJob(other, status)
+{ }
+
 bool COhUPnPExportTransferJob::Transfer()
 {
   const auto& contentDirectoryControlPoint = COhUPnP::GetInstance().GetContentDirectoryClient();
@@ -444,29 +537,34 @@ bool COhUPnPExportTransferJob::Transfer()
     CGUIDialogExtendedProgressBar* dialog =
       (CGUIDialogExtendedProgressBar*)g_windowManager.GetWindow(WINDOW_DIALOG_EXT_PROGRESS);
     SetProgressBar(dialog->GetHandle("UPnP export")); // TODO: localization
-    SetText(StringUtils::Format("Exporting %s to %s...", m_label.c_str(), m_device.GetFriendlyName().c_str())); // TODO: localization
+    SetText(StringUtils::Format("Exporting %s to %s...", GetLabel().c_str(), m_device.GetFriendlyName().c_str())); // TODO: localization
   }
 
   const auto& uuid = m_device.GetUuid();
-  m_status = ohUPnPTransferStatus::InProgress;
+  m_transferStatus = ohUPnPTransferStatus::InProgress;
 
   uint64_t lastProgress = 0;
-  while (m_status == ohUPnPTransferStatus::InProgress)
+  uint64_t progress, total;
+  while (m_transferStatus == ohUPnPTransferStatus::InProgress)
   {
-    if (m_speed )
-    if (!contentDirectoryControlPoint.GetTransferProgress(uuid, m_id, m_status, m_progress, m_total) ||
-        ShouldCancel(m_progress, m_total))
+    if (!contentDirectoryControlPoint.GetTransferProgress(uuid, m_transferId, m_transferStatus, progress, total) ||
+      ShouldCancel(progress, total))
       return false;
 
     if (m_speed == nullptr)
-      m_speed = new CTransferSpeed<>(m_total, m_progress);
+      m_speed = std::make_shared<CTransferSpeed<>>(total, progress);
     else
-      m_speed->Transferred(m_progress - lastProgress);
+      m_speed->Transferred(progress - lastProgress);
 
-    lastProgress = m_progress;
+    lastProgress = progress;
 
     Sleep(GetTransferProgressIntervalMs);
   }
 
-  return m_status == ohUPnPTransferStatus::Completed;
+  return m_transferStatus == ohUPnPTransferStatus::Completed;
+}
+
+CManageableJob* COhUPnPExportTransferJob::Clone(ManageableJobStatus status) const
+{
+  return new COhUPnPExportTransferJob(*this, status);
 }

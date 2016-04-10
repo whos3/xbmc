@@ -18,26 +18,27 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
+#include <memory>
 #include <string>
 
 #include "FileItem.h"
 #include "network/upnp/openHome/ohUPnPDevice.h"
 #include "network/upnp/openHome/transfer/ohUPnPTransferStatus.h"
-#include "utils/ProgressJob.h"
+#include "utils/ManageableJob.h"
 #include "utils/TransferSpeed.h"
 
 class IOhUPnPTransferCallbacks;
 
-class COhUPnPTransferJob : public CProgressJob
+class COhUPnPTransferJob : public CManageableJob
 {
+public:
+
 public:
   COhUPnPTransferJob(const COhUPnPTransferJob& other);
   virtual ~COhUPnPTransferJob();
 
-  inline uint32_t GetId() const { return m_id; }
-  inline uint64_t GetProgress() const { return m_progress; }
-  inline uint64_t GetTotal() const { return m_total; }
-  inline ohUPnPTransferStatus GetStatus() const { return m_status; }
+  inline uint32_t GetTransferId() const { return m_transferId; }
+  inline ohUPnPTransferStatus GetTransferStatus() const { return m_transferStatus; }
   inline IOhUPnPTransferCallbacks* GetCallback() const { return m_callback; }
 
   double GetTransferSpeed() const;
@@ -45,17 +46,19 @@ public:
 
   virtual bool IsValid() const = 0;
 
-  // specializations of CProgressJob
+  // specializations of CManageableJob
   virtual const char *GetType() const override { return "UPnPTransferJob"; };
   virtual bool operator==(const CJob* job) const override;
+  virtual bool UpdateFileItem(CFileItem* fileItem) const override;
 
 protected:
   COhUPnPTransferJob(const COhUPnPDevice& device, const std::string& sourceUri,
     const CFileItem& item, IOhUPnPTransferCallbacks* callback);
   COhUPnPTransferJob(uint32_t id, const COhUPnPDevice& device, const std::string& sourceUri,
     const CFileItem& item, IOhUPnPTransferCallbacks* callback);
+  COhUPnPTransferJob(const COhUPnPTransferJob& other, ManageableJobStatus status);
 
-  // specializations of CProgressJob
+  // specializations of CManageableJob
   virtual bool ShouldCancel(uint64_t progress, uint64_t total) const override;
 
   // implementations of CJob
@@ -63,17 +66,14 @@ protected:
 
   virtual bool Transfer() = 0;
 
-  uint32_t m_id;
+  uint32_t m_transferId;
   COhUPnPDevice m_device;
   std::string m_sourceUri;
 
   CFileItem m_item;
-  std::string m_label;
 
-  mutable uint64_t m_progress;
-  mutable uint64_t m_total;
-  mutable CTransferSpeed<>* m_speed;
-  mutable ohUPnPTransferStatus m_status;
+  mutable std::shared_ptr<CTransferSpeed<>> m_speed;
+  mutable ohUPnPTransferStatus m_transferStatus;
 
   IOhUPnPTransferCallbacks* m_callback;
 
@@ -88,11 +88,17 @@ public:
   COhUPnPImportTransferJob(const COhUPnPTransferJob& other);
   virtual ~COhUPnPImportTransferJob() = default;
 
+  // implementation of COhUPnPTransferJob
   virtual bool IsValid() const override;
 
 protected:
+  COhUPnPImportTransferJob(const COhUPnPImportTransferJob& other, ManageableJobStatus status);
+
   // implementation of COhUPnPTransferJob
   virtual bool Transfer() override;
+
+  // specializatin of CManageableJob
+  virtual CManageableJob* Clone(ManageableJobStatus status) const override;
 
 private:
   std::string m_destinationDirectory;
@@ -106,9 +112,15 @@ public:
   COhUPnPExportTransferJob(const COhUPnPTransferJob& other);
   virtual ~COhUPnPExportTransferJob() = default;
 
+  // implementation of COhUPnPTransferJob
   virtual bool IsValid() const override { return true; }
 
 protected:
+  COhUPnPExportTransferJob(const COhUPnPExportTransferJob& other, ManageableJobStatus status);
+
   // implementation of COhUPnPTransferJob
   virtual bool Transfer() override;
+
+  // specializatin of CManageableJob
+  virtual CManageableJob* Clone(ManageableJobStatus status) const override;
 };

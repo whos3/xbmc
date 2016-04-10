@@ -26,7 +26,7 @@
 #include "utils/log.h"
 
 COhUPnPTransferManager::COhUPnPTransferManager()
-  : CJobQueue(false, 2, CJob::PRIORITY_LOW) // TODO: 1 instead of 2
+  : CManageableJobQueue(false, 2, CJob::PRIORITY_LOW) // TODO: 1 instead of 2
 { }
 
 COhUPnPTransferManager::~COhUPnPTransferManager()
@@ -51,7 +51,7 @@ bool COhUPnPTransferManager::Import(const COhUPnPDevice& sourceDevice, const std
     return false;
   }
   
-  transferId = transfer->GetId();
+  transferId = transfer->GetTransferId();
   m_importTransfers.insert(TransferMap::value_type(transferId, transfer));
 
   return true;
@@ -100,7 +100,7 @@ bool COhUPnPTransferManager::GetTransferProgress(uint32_t transferId, ohUPnPTran
     }
   }
 
-  status = transfer->second->GetStatus();
+  status = transfer->second->GetTransferStatus();
   progress = transfer->second->GetProgress();
   total = transfer->second->GetTotal();
 
@@ -114,7 +114,7 @@ bool COhUPnPTransferManager::StopTransfer(uint32_t transferId)
   if (transfer == m_importTransfers.cend())
     return false;
 
-  CancelJob(transfer->second);
+  CancelJob(transfer->second->GetIdentifier());
   return true;
 }
 
@@ -127,7 +127,7 @@ void COhUPnPTransferManager::StopImportTransfers()
   }
 
   for (const auto& transfer : transfers)
-    CancelJob(transfer.second);
+    CancelJob(transfer.second->GetIdentifier());
 }
 
 void COhUPnPTransferManager::StopExportTransfers()
@@ -139,7 +139,7 @@ void COhUPnPTransferManager::StopExportTransfers()
   }
 
   for (const auto& transfer : transfers)
-    CancelJob(transfer.second);
+    CancelJob(transfer.second->GetIdentifier());
 }
 
 void COhUPnPTransferManager::StopAllTransfers()
@@ -153,7 +153,7 @@ void COhUPnPTransferManager::OnJobComplete(unsigned int jobID, bool success, CJo
   if (transferJob == nullptr)
     return;
 
-  const auto& transferId = transferJob->GetId();
+  const auto& transferId = transferJob->GetTransferId();
   auto callback = transferJob->GetCallback();
   if (callback != nullptr)
   {
@@ -188,5 +188,5 @@ void COhUPnPTransferManager::OnJobComplete(unsigned int jobID, bool success, CJo
     m_finishedTransfers.insert(TransferMap::value_type(transferId, finishedTransfer));
   }
 
-  CJobQueue::OnJobComplete(jobID, success, job);
+  CManageableJobQueue::OnJobComplete(jobID, success, job);
 }

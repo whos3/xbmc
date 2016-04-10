@@ -24,11 +24,11 @@
 #include "network/upnp/openHome/ohUPnPDevice.h"
 #include "network/upnp/openHome/transfer/ohUPnPTransferJob.h"
 #include "threads/CriticalSection.h"
-#include "utils/JobManager.h"
+#include "utils/ManageableJob.h"
 
 class IOhUPnPTransferCallbacks;
 
-class COhUPnPTransferManager : protected CJobQueue
+class COhUPnPTransferManager : public CManageableJobQueue
 {
 public:
   COhUPnPTransferManager();
