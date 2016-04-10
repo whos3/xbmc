@@ -71,7 +71,8 @@ public:
   bool IsRendererRunning() const;
 
   // implementation of ISettingCallback
-  void OnSettingChanged(const CSetting *setting) override;
+  void OnSettingChanged(const CSetting* setting) override;
+  void OnSettingAction(const CSetting* setting) override;
 
   // TODO
 

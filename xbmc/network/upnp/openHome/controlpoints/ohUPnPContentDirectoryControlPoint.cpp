@@ -26,6 +26,7 @@
 #include "FileItem.h"
 #include "URL.h"
 #include "media/MediaType.h"
+#include "network/upnp/openHome/ohUPnP.h"
 #include "network/upnp/openHome/ohUPnPContext.h"
 #include "network/upnp/openHome/ohUPnPResourceManager.h"
 #include "network/upnp/openHome/didllite/DidlLiteDocument.h"
@@ -342,7 +343,7 @@ bool COhUPnPContentDirectoryControlPoint::CreateObject(const std::string& uuid, 
     return false;
   }
 
-  OhUPnPRootDeviceContext serializationContext = { service.device, service.profile };
+  OhUPnPRootDeviceContext serializationContext = { service.device, service.profile, COhUPnP::GetInstance().GetResourceUriPrefix() };
 
   // fill the available properties from the item
   upnpItem->FromFileItem(item, serializationContext);

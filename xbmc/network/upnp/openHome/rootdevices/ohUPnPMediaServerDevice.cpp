@@ -1016,7 +1016,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::ImportResource(OpenHome::Net::I
     return;
   }
 
-  if (destinationURI.empty() || m_createdObjects.find(destinationURI) == m_createdObjects.end())
+  if (destinationURI.empty())
   {
     CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::ImportResource: unknown destination URI");
     invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_DESTINATION_RESOURCE, "No such destination resource");
@@ -1056,6 +1056,9 @@ void COhUPnPMediaServerDevice::ContentDirectory::ImportResource(OpenHome::Net::I
       invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_DESTINATION_RESOURCE, "No such destination resource"); // TODO
       return;
     }
+
+    // remember the active transfer
+    m_createdObjectTransfers.insert({ transferID, destinationURI });
   }
 
   // append the new transfer ID to the list of active transfer IDs
@@ -1175,10 +1178,26 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetFreeFormQueryCapabilities(Op
 
 void COhUPnPMediaServerDevice::ContentDirectory::OnTransferCompleted(uint32_t transferId)
 {
-  // TODO
+  RemoveTransfer(transferId);
 }
 
 void COhUPnPMediaServerDevice::ContentDirectory::OnTransferFailed(uint32_t transferId)
 {
-  // TODO
+  RemoveTransfer(transferId);
+}
+
+void COhUPnPMediaServerDevice::ContentDirectory::RemoveTransfer(uint32_t transferId)
+{
+  CSingleLock lock(m_criticalCreatedObjects);
+  const auto& transfer = m_createdObjectTransfers.find(transferId);
+  if (transfer == m_createdObjectTransfers.cend())
+    return;
+
+  const auto& createdObject = m_createdObjects.find(transfer->second);
+  m_createdObjectTransfers.erase(transfer);
+
+  if (createdObject == m_createdObjects.cend())
+    return;
+
+  m_createdObjects.erase(createdObject);
 }

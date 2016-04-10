@@ -25,6 +25,8 @@
 #include <OpenHome/Net/Cpp/CpDeviceUpnp.h>
 
 #include "ohUPnP.h"
+#include "dialogs/GUIDialogJobManager.h"
+#include "guilib/GUIWindowManager.h"
 #include "network/upnp/UPnPSettings.h"
 #include "network/upnp/openHome/ohUPnPDefinitions.h"
 #include "network/upnp/openHome/controlpoints/ohUPnPContentDirectoryControlPoint.h"
@@ -342,7 +344,7 @@ bool COhUPnP::IsRendererRunning() const
   return false;
 }
 
-void COhUPnP::OnSettingChanged(const CSetting *setting)
+void COhUPnP::OnSettingChanged(const CSetting* setting)
 {
   if (setting == nullptr)
     return;
@@ -376,6 +378,22 @@ void COhUPnP::OnSettingChanged(const CSetting *setting)
       logLevel = OpenHome::Debug::kAll;
 
     OpenHome::Debug::SetLevel(logLevel);
+  }
+}
+
+void COhUPnP::OnSettingAction(const CSetting* setting)
+{
+  if (setting == nullptr)
+    return;
+
+  const std::string& settingId = setting->GetId();
+  if (settingId == CSettings::SETTING_SERVICES_UPNPTRANSFERMANAGE)
+  {
+    auto* dialog = static_cast<CGUIDialogJobManager*>(g_windowManager.GetWindow(WINDOW_DIALOG_JOB_MANAGER));
+    dialog->SetHeading(CVariant{ "UPnP Transfers" }); // TODO: localization
+    dialog->ShowEndedJobs(true);
+    dialog->SetManageableJobQueue(&m_transferManager);
+    dialog->Open();
   }
 }
 

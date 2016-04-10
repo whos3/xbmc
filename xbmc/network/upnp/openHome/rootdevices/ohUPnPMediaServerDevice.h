@@ -89,10 +89,13 @@ private:
     virtual void OnTransferCompleted(uint32_t transferId) override;
     virtual void OnTransferFailed(uint32_t transferId) override;
 
+    void RemoveTransfer(uint32_t transferID);
+
   private:
     COhUPnPMediaServerDevice& m_mediaServer;
 
     std::map<std::string, std::shared_ptr<CUPnPItem>> m_createdObjects;
+    std::map<uint32_t, std::string> m_createdObjectTransfers;
     uint64_t m_createdObjectID;
     CCriticalSection m_criticalCreatedObjects;
   };
