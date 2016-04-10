@@ -7409,7 +7409,10 @@ msgctxt "#15017"
 msgid "Stop"
 msgstr ""
 
-#empty string with id 15018
+#: addons/skin.confluence/720p/DialogJobManager.xml
+msgctxt "#15018"
+msgid "Stop All"
+msgstr ""
 
 msgctxt "#15019"
 msgid "Add"
@@ -7561,7 +7564,12 @@ msgctxt "#15052"
 msgid "Password"
 msgstr ""
 
-#empty strings from id 15053 to 15056
+#: addons/skin.confluence/720p/DialogJobManager.xml
+msgctxt "#15053"
+msgid "Clear"
+msgstr ""
+
+#empty strings from id 15054 to 15056
 
 #. Chain select button name
 #: addons/skin.confluence/720p/DialogAudioDSPManager.xml
