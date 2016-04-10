@@ -6745,6 +6745,9 @@
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\container\album\UPnPVideoAlbumContainer.h">
       <Filter>network\upnp\openHome\didllite\objects\container\album</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\TransferSpeedFormatter.h">
+      <Filter>utils</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\xbmc\utils\ByteFormatter.h">
       <Filter>utils</Filter>
     </ClInclude>

@@ -1348,6 +1348,7 @@
     <ClInclude Include="..\..\xbmc\utils\StringValidation.h" />
     <ClInclude Include="..\..\xbmc\utils\Temperature.h" />
     <ClInclude Include="..\..\xbmc\utils\TransferSpeed.h" />
+    <ClInclude Include="..\..\xbmc\utils\TransferSpeedFormatter.h" />
     <ClInclude Include="..\..\xbmc\utils\Utf8Utils.h" />
     <ClInclude Include="..\..\xbmc\utils\uXstrings.h" />
     <ClInclude Include="..\..\xbmc\utils\Vector.h" />
