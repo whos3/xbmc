@@ -299,20 +299,20 @@ bool COhUPnPTransferJob::UpdateFileItem(CFileItem* fileItem) const
   }
 
   // set an icon if available
-  if (!m_item.GetIconImage().empty())
-  {
-    if (m_item.GetIconImage() != fileItem->GetIconImage())
-    {
-      fileItem->SetIconImage(m_item.GetIconImage());
-      changed = true;
-    }
-  }
-  else if (m_item.HasArt("thumb"))
+  if (m_item.HasArt("thumb"))
   {
     const std::string thumbArt = m_item.GetArt("thumb");
     if (thumbArt != fileItem->GetArt("thumb"))
     {
       fileItem->SetIconImage(thumbArt);
+      changed = true;
+    }
+  }
+  else if (!m_item.GetIconImage().empty())
+  {
+    if (m_item.GetIconImage() != fileItem->GetIconImage())
+    {
+      fileItem->SetIconImage(m_item.GetIconImage());
       changed = true;
     }
   }
@@ -548,8 +548,8 @@ bool COhUPnPExportTransferJob::Transfer()
   while (m_transferStatus == ohUPnPTransferStatus::InProgress)
   {
     if (!contentDirectoryControlPoint.GetTransferProgress(uuid, m_transferId, m_transferStatus, progress, total) ||
-      ShouldCancel(progress, total))
-      return false;
+        ShouldCancel(progress, total))
+      break;
 
     if (m_speed == nullptr)
       m_speed = std::make_shared<CTransferSpeed<>>(total, progress);
@@ -559,6 +559,14 @@ bool COhUPnPExportTransferJob::Transfer()
     lastProgress = progress;
 
     Sleep(GetTransferProgressIntervalMs);
+  }
+
+  // tell the MediaServer to stop importing
+  if (m_transferStatus == ohUPnPTransferStatus::Stopped)
+  {
+    CLog::Log(LOGINFO, "COhUPnPExportTransferJob: stopping transfer of \"%s\"...", GetLabel().c_str());
+    if (!COhUPnP::GetInstance().GetContentDirectoryClient().StopTransferResource(uuid, m_transferId))
+      CLog::Log(LOGERROR, "COhUPnPExportTransferJob: failed to stop transfer of \"%s\"", GetLabel().c_str());
   }
 
   return m_transferStatus == ohUPnPTransferStatus::Completed;
