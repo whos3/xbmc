@@ -3034,6 +3034,9 @@
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\container\album\UPnPVideoAlbumContainer.cpp">
       <Filter>network\upnp\openHome\didllite\objects\container\album</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\ByteFormatter.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\media\MediaType.cpp">
@@ -6741,6 +6744,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\container\album\UPnPVideoAlbumContainer.h">
       <Filter>network\upnp\openHome\didllite\objects\container\album</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\ByteFormatter.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
