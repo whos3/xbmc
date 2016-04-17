@@ -53,6 +53,12 @@ public:
   bool GetTransferProgress(const std::string& uuid, uint32_t transferId, ohUPnPTransferStatus& status, uint64_t& length, uint64_t& total) const;
 
 protected:
+  // specialization of IOhUPnPControlPoint
+  void OnServiceAdded(const UPnPControlPointService &service) override;
+  void OnServiceRemoved(const UPnPControlPointService &service) override;
+
+  void updateUPnPPath();
+
   bool browseSync(const UPnPControlPointService& service, const std::string& objectId, bool metadata, std::string& result, uint32_t& resultCount, uint32_t& resultTotal,
                   uint32_t start, uint32_t count, const std::string& filter, const std::string& sorting) const;
 

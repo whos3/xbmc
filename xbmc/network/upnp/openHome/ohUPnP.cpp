@@ -29,7 +29,10 @@
 #include "guilib/GUIWindowManager.h"
 #include "network/upnp/UPnPSettings.h"
 #include "network/upnp/openHome/ohUPnPDefinitions.h"
+#include "network/upnp/openHome/controlpoints/ohUPnPAVTransportControlPoint.h"
+#include "network/upnp/openHome/controlpoints/ohUPnPConnectionManagerControlPoint.h"
 #include "network/upnp/openHome/controlpoints/ohUPnPContentDirectoryControlPoint.h"
+#include "network/upnp/openHome/controlpoints/ohUPnPRenderingControlControlPoint.h"
 #include "network/upnp/openHome/didllite/objects/container/UPnPBookmarkFolderContainer.h"
 #include "network/upnp/openHome/didllite/objects/container/UPnPContainer.h"
 #include "network/upnp/openHome/didllite/objects/container/UPnPPlaylistContainer.h"
@@ -57,12 +60,14 @@
 #include "network/upnp/openHome/didllite/objects/item/video/UPnPVideoBroadcastItem.h"
 #include "network/upnp/openHome/didllite/objects/item/video/UPnPVideoItem.h"
 #include "network/upnp/openHome/profile/ohUPnPDeviceProfilesManager.h"
-#include "network/upnp/openHome/rootdevices/ohUPnPMediaServerDevice.h"
+#include "network/upnp/openHome/rootdevices/mediarenderer/ohUPnPMediaRendererDevice.h"
+#include "network/upnp/openHome/rootdevices/mediaserver/ohUPnPMediaServerDevice.h"
 #include "network/upnp/openHome/utils/ohUtils.h"
 #include "profiles/ProfilesManager.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
 #include "settings/lib/Setting.h"
+#include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"
 #include "utils/SystemInfo.h"
@@ -104,11 +109,16 @@ static bool GetIpAndSubnetAddress(TIpAddress& ipAddress, TIpAddress& subnetAddre
 
 COhUPnP::COhUPnP()
   : m_initialised(false),
+    m_controlPointStackStarted(false),
     m_ipAddress(0),
     m_subnetAddress(0),
     m_ohEnvironment(nullptr),
     m_contentDirectoryClient(nullptr),
-    m_mediaServer(nullptr)
+    m_connectionManagerController(nullptr),
+    m_renderingController(nullptr),
+    m_playbackController(nullptr),
+    m_mediaServerDevice(nullptr),
+    m_mediaRendererDevice(nullptr)
 { }
 
 COhUPnP::~COhUPnP()
@@ -124,6 +134,7 @@ COhUPnP& COhUPnP::GetInstance()
 
 bool COhUPnP::Initialize()
 {
+  CSingleLock lock(m_criticalInitialised);
   if (m_initialised)
     return true;
 
@@ -196,21 +207,66 @@ bool COhUPnP::Initialize()
     return false;
   }
 
+  // determine the renderer and server UUID
+  std::string rendererUuid = CUPnPSettings::GetInstance().GetRendererUUID();
+  std::string serverUuid = CUPnPSettings::GetInstance().GetServerUUID();
+
+  bool saveSettings = false;
+  // create a renderer UUID if it doesn't exist yet
+  if (rendererUuid.empty())
+  {
+    rendererUuid = StringUtils::CreateUUID();
+    CUPnPSettings::GetInstance().SetRendererUUID(serverUuid);
+    saveSettings = true;
+  }
+
+  // create a server UUID if it doesn't exist yet
+  if (serverUuid.empty())
+  {
+    serverUuid = StringUtils::CreateUUID();
+    CUPnPSettings::GetInstance().SetServerUUID(serverUuid);
+    saveSettings = true;
+  }
+
+  if (saveSettings)
+    CUPnPSettings::GetInstance().Save(GetUPnPSettingsFile());
+
+  {
+    CSingleLock lock(m_criticalMediaRendererDevice);
+    m_mediaRendererDevice = std::make_unique<COhUPnPMediaRendererDevice>(rendererUuid, m_fileItemElementFactory, m_transferManager, m_resourceManager);
+  }
+  {
+    CSingleLock lock(m_criticalMediaServerDevice);
+    m_mediaServerDevice = std::make_unique<COhUPnPMediaServerDevice>(serverUuid, m_fileItemElementFactory, m_transferManager, m_resourceManager);
+  }
+
   m_initialised = true;
   return true;
 }
 
 void COhUPnP::Uninitialize()
 {
+  CSingleLock lock(m_criticalInitialised);
   if (!m_initialised)
     return;
 
-  StopRenderer();
   StopContentDirectoryClient();
+  StopRenderingController();
+  StopPlaybackController();
+  StopConnectionManagerController();
+
+  StopMediaRenderer();
   StopMediaServer();
   StopResourceManager(true);
 
-  m_mediaServer.reset();
+  {
+    CSingleLock lock(m_criticalMediaRendererDevice);
+    m_mediaRendererDevice.reset();
+  }
+  {
+    CSingleLock lock(m_criticalMediaServerDevice);
+    m_mediaServerDevice.reset();
+  }
 
   m_ipAddress = 0;
   m_subnetAddress = 0;
@@ -240,6 +296,7 @@ bool COhUPnP::HasUPnPTransfers(const std::string &condition, const std::string &
 
 bool COhUPnP::StartMediaServer()
 {
+  CSingleLock lock(m_criticalInitialised);
   if (!m_initialised)
     return false;
 
@@ -248,27 +305,10 @@ bool COhUPnP::StartMediaServer()
 
   StartResourceManager();
 
-  if (m_mediaServer == nullptr)
-  {
-    CLog::Log(LOGINFO, "COhUPnP: starting device stack...");
-    OpenHome::Net::UpnpLibrary::StartDv();
+  m_mediaServerDevice->SetSupportImporting(CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFER) &&
+                                           CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT));
 
-    std::string uuid = CUPnPSettings::GetInstance().GetServerUUID();
-
-    // create a UUID if it doesn't exist yet
-    if (uuid.empty())
-    {
-      uuid = StringUtils::CreateUUID();
-      CUPnPSettings::GetInstance().SetServerUUID(uuid);
-      CUPnPSettings::GetInstance().Save(GetUPnPSettingsFile());
-    }
-
-    m_mediaServer = std::make_unique<COhUPnPMediaServerDevice>(uuid, m_fileItemElementFactory, m_transferManager, m_resourceManager);
-  }
-
-  CLog::Log(LOGINFO, "COhUPnP: starting MediaServer...");
-  m_mediaServer->Start(CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFER) &&
-                       CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT));
+  StartMediaServerDevice(true);
 
   return true;
 }
@@ -281,33 +321,31 @@ void COhUPnP::StopMediaServer()
   // stop all import transfers
   m_transferManager.StopImportTransfers();
 
-  CLog::Log(LOGINFO, "COhUPnP: stopping media server...");
-  m_mediaServer->Stop();
+  StopMediaServerDevice();
 
   StopResourceManager();
 }
 
 bool COhUPnP::IsMediaServerRunning() const
 {
-  if (m_mediaServer == nullptr)
-    return false;
-
-  return m_mediaServer->IsRunning();
+  return m_mediaServerDevice != nullptr && m_mediaServerDevice->IsRunning();
 }
 
 bool COhUPnP::StartContentDirectoryClient()
 {
+  CSingleLock lockInitialised(m_criticalInitialised);
   if (!m_initialised)
     return false;
 
+  CSingleLock lock(m_criticalContentDirectoryClient);
   if (IsContentDirectoryClientRunning())
     return true;
 
   StartResourceManager();
 
-  CLog::Log(LOGINFO, "COhUPnP: starting control point stack on subnet %s...", COhUtils::TIpAddressToString(m_subnetAddress).c_str());
-  OpenHome::Net::UpnpLibrary::StartCp(m_subnetAddress);
+  StartControlPointStack();
 
+  CLog::Log(LOGINFO, "COhUPnP: starting ContentDirectory control point...");
   m_contentDirectoryClient = new COhUPnPContentDirectoryControlPoint(m_fileItemElementFactory, m_resourceManager);
 
   return true;
@@ -315,13 +353,14 @@ bool COhUPnP::StartContentDirectoryClient()
 
 void COhUPnP::StopContentDirectoryClient()
 {
+  CSingleLock lock(m_criticalContentDirectoryClient);
   if (!IsContentDirectoryClientRunning())
     return;
 
   // stop all import transfers
   m_transferManager.StopExportTransfers();
 
-  CLog::Log(LOGINFO, "COhUPnP: stopping control point stack...");
+  CLog::Log(LOGINFO, "COhUPnP: stopping ContentDirectory control point...");
   delete m_contentDirectoryClient;
   m_contentDirectoryClient = nullptr;
 
@@ -333,23 +372,188 @@ bool COhUPnP::IsContentDirectoryClientRunning() const
   return m_contentDirectoryClient != nullptr;
 }
 
-bool COhUPnP::StartRenderer()
+bool COhUPnP::StartConnectionManagerController()
 {
-  // TODO
+  CSingleLock lockInitialised(m_criticalInitialised);
+  if (!m_initialised)
+    return false;
 
-  return false;
+  CSingleLock lock(m_criticalConnectionManagerController);
+  if (IsConnectionManagerControllerRunning())
+    return true;
+
+  StartControlPointStack();
+
+  CLog::Log(LOGINFO, "COhUPnP: starting ConnectionManager control point...");
+  m_connectionManagerController = new COhUPnPConnectionManagerControlPointManager();
+
+  return true;
 }
 
-void COhUPnP::StopRenderer()
+void COhUPnP::StopConnectionManagerController()
 {
-  // TODO
+  CSingleLock lock(m_criticalConnectionManagerController);
+  if (!IsConnectionManagerControllerRunning())
+    return;
+
+  CLog::Log(LOGINFO, "COhUPnP: stopping ConnectionManager control point...");
+  delete m_connectionManagerController;
+  m_connectionManagerController = nullptr;
 }
 
-bool COhUPnP::IsRendererRunning() const
+bool COhUPnP::IsConnectionManagerControllerRunning() const
 {
-  // TODO
+  return m_connectionManagerController != nullptr;
+}
 
-  return false;
+std::shared_ptr<COhUPnPConnectionManagerControlPoint> COhUPnP::CreateConnectionManagerController(const std::string& uuid, IOhUPnPConnectionManagerControlPointAsync* callback) const
+{
+  CSingleLock lock(m_criticalConnectionManagerController);
+  if (!IsConnectionManagerControllerRunning())
+    return nullptr;
+
+  return m_connectionManagerController->CreateControlPoint(uuid, callback);
+}
+
+void COhUPnP::DestroyConnectionManagerController(std::shared_ptr<COhUPnPConnectionManagerControlPoint> connectionManagerController) const
+{
+  CSingleLock lock(m_criticalConnectionManagerController);
+  if (!IsConnectionManagerControllerRunning())
+    return;
+
+  m_connectionManagerController->DestroyControlPoint(connectionManagerController);
+}
+
+bool COhUPnP::StartRenderingController()
+{
+  CSingleLock lockInitialised(m_criticalInitialised);
+  if (!m_initialised)
+    return false;
+
+  CSingleLock lock(m_criticalRenderingController);
+  if (IsRenderingControllerRunning())
+    return true;
+
+  StartControlPointStack();
+
+  CLog::Log(LOGINFO, "COhUPnP: starting RenderingControl control point...");
+  m_renderingController = new COhUPnPRenderingControlControlPointManager(UPNP_DEVICE_TYPE_MEDIARENDERER);
+
+  return true;
+}
+
+void COhUPnP::StopRenderingController()
+{
+  CSingleLock lock(m_criticalRenderingController);
+  if (!IsRenderingControllerRunning())
+    return;
+
+  CLog::Log(LOGINFO, "COhUPnP: stopping RenderingControl control point...");
+  delete m_renderingController;
+  m_renderingController = nullptr;
+}
+
+bool COhUPnP::IsRenderingControllerRunning() const
+{
+  return m_renderingController != nullptr;
+}
+
+std::shared_ptr<COhUPnPRenderingControlControlPoint> COhUPnP::CreateRenderingController(const std::string& uuid, IOhUPnPRenderingControlControlPointAsync* callback) const
+{
+  CSingleLock lock(m_criticalRenderingController);
+  if (!IsRenderingControllerRunning())
+    return nullptr;
+
+  return m_renderingController->CreateControlPoint(uuid, callback);
+}
+
+void COhUPnP::DestroyRenderingController(std::shared_ptr<COhUPnPRenderingControlControlPoint> renderingController) const
+{
+  CSingleLock lock(m_criticalRenderingController);
+  if (!IsRenderingControllerRunning())
+    return;
+
+  m_renderingController->DestroyControlPoint(renderingController);
+}
+
+bool COhUPnP::StartPlaybackController()
+{
+  CSingleLock lockInitialised(m_criticalInitialised);
+  if (!m_initialised)
+    return false;
+
+  CSingleLock lock(m_criticalPlaybackController);
+  if (IsPlaybackControllerRunning())
+    return true;
+
+  StartControlPointStack();
+
+  CLog::Log(LOGINFO, "COhUPnP: starting MediaRenderer AVTransport control point...");
+  m_playbackController = new COhUPnPAVTransportControlPointManager(UPNP_DEVICE_TYPE_MEDIARENDERER);
+
+  return true;
+}
+
+void COhUPnP::StopPlaybackController()
+{
+  CSingleLock lock(m_criticalPlaybackController);
+  if (!IsPlaybackControllerRunning())
+    return;
+
+  CLog::Log(LOGINFO, "COhUPnP: stopping MediaRenderer AVTransport control point...");
+  delete m_playbackController;
+  m_playbackController = nullptr;
+}
+
+bool COhUPnP::IsPlaybackControllerRunning() const
+{
+  return m_playbackController != nullptr;
+}
+
+std::shared_ptr<COhUPnPAVTransportControlPoint> COhUPnP::CreatePlaybackController(const std::string& uuid, IOhUPnPAVTransportControlPointAsync* callback) const
+{
+  CSingleLock lock(m_criticalPlaybackController);
+  if (!IsPlaybackControllerRunning())
+    return nullptr;
+
+  return m_playbackController->CreateControlPoint(uuid, callback);
+}
+
+void COhUPnP::DestroyPlaybackController(std::shared_ptr<COhUPnPAVTransportControlPoint> playbackController) const
+{
+  CSingleLock lock(m_criticalPlaybackController);
+  if (!IsPlaybackControllerRunning())
+    return;
+
+  m_playbackController->DestroyControlPoint(playbackController);
+}
+
+bool COhUPnP::StartMediaRenderer()
+{
+  CSingleLock lock(m_criticalInitialised);
+  if (!m_initialised)
+    return false;
+
+  if (IsMediaRendererRunning())
+    return true;
+
+  StartMediaRendererDevice(true);
+
+  return true;
+}
+
+void COhUPnP::StopMediaRenderer()
+{
+  if (!IsMediaRendererRunning())
+    return;
+
+  StopMediaRendererDevice();
+}
+
+bool COhUPnP::IsMediaRendererRunning() const
+{
+  CSingleLock lock(m_criticalMediaRendererDevice);
+  return m_mediaRendererDevice != nullptr && m_mediaRendererDevice->IsRunning();
 }
 
 void COhUPnP::OnSettingChanged(const CSetting* setting)
@@ -373,10 +577,13 @@ void COhUPnP::OnSettingChanged(const CSetting* setting)
   else if (settingId == CSettings::SETTING_SERVICES_UPNPTRANSFER ||
            settingId == CSettings::SETTING_SERVICES_UPNPTRANSFERIMPORT)
   {
-    // we need to restart the MediaServer
-    CLog::Log(LOGINFO, "COhUPnP: restarting MediaServer to consider changed transfer settings...");
-    StopMediaServer();
-    StartMediaServer();
+    if (IsMediaServerRunning())
+    {
+      // we need to restart the MediaServer
+      CLog::Log(LOGINFO, "COhUPnP: restarting MediaServer to consider changed transfer settings...");
+      StopMediaServer();
+      StartMediaServer();
+    }
   }
   else if (settingId == CSettings::SETTING_DEBUG_EXTRALOGGING ||
            settingId == CSettings::SETTING_DEBUG_SETEXTRALOGLEVEL)
@@ -429,6 +636,17 @@ void COhUPnP::SettingOptionsUPnPInterfacesFiller(const CSetting *setting, std::v
   OpenHome::Net::UpnpLibrary::DestroySubnetList(subnets);
 }
 
+void COhUPnP::StartControlPointStack()
+{
+  if (m_controlPointStackStarted)
+    return;
+
+  CLog::Log(LOGINFO, "COhUPnP: starting control point stack on subnet %s...", COhUtils::TIpAddressToString(m_subnetAddress).c_str());
+  OpenHome::Net::UpnpLibrary::StartCp(m_subnetAddress);
+
+  m_controlPointStackStarted = true;
+}
+
 void COhUPnP::StartResourceManager()
 {
   if (m_resourceManager.IsRunning())
@@ -457,6 +675,54 @@ void COhUPnP::StopResourceManager(bool force /* = false */)
     return;
 
   m_resourceManager.Stop();
+}
+
+void COhUPnP::StartMediaServerDevice(bool forceRestart /* = false */)
+{
+  CSingleLock lock(m_criticalMediaServerDevice);
+  if (m_mediaServerDevice == nullptr)
+    return;
+
+  if (!forceRestart && m_mediaServerDevice->IsRunning())
+    return;
+
+  if (forceRestart && m_mediaServerDevice->IsRunning())
+    StopMediaServerDevice();
+
+  m_mediaServerDevice->Start(m_ipAddress);
+}
+
+void COhUPnP::StopMediaServerDevice()
+{
+  CSingleLock lock(m_criticalMediaServerDevice);
+  if (m_mediaServerDevice == nullptr)
+    return;
+
+  m_mediaServerDevice->Stop();
+}
+
+void COhUPnP::StartMediaRendererDevice(bool forceRestart /* = false */)
+{
+  CSingleLock lock(m_criticalMediaRendererDevice);
+  if (m_mediaRendererDevice == nullptr)
+    return;
+
+  if (!forceRestart && m_mediaRendererDevice->IsRunning())
+    return;
+
+  if (forceRestart && m_mediaRendererDevice->IsRunning())
+    StopMediaRendererDevice();
+
+  m_mediaRendererDevice->Start(m_ipAddress);
+}
+
+void COhUPnP::StopMediaRendererDevice()
+{
+  CSingleLock lock(m_criticalMediaRendererDevice);
+  if (m_mediaRendererDevice == nullptr)
+    return;
+
+  m_mediaRendererDevice->Stop();
 }
 
 void COhUPnP::ohNetLogOutput(const char* msg)

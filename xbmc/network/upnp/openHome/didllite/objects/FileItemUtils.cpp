@@ -24,11 +24,13 @@
 
 #include "FileItemUtils.h"
 #include "FileItem.h"
+#include "network/upnp/openHome/ohUPnP.h"
 #include "network/upnp/openHome/ohUPnPContext.h"
+#include "network/upnp/openHome/ohUPnPDefinitions.h"
 #include "network/upnp/openHome/didllite/DidlLiteDocument.h"
-#include "network/upnp/openHome/didllite/objects/UPnPObject.h"
 #include "network/upnp/openHome/didllite/objects/FileItemElementFactory.h"
 #include "network/upnp/openHome/didllite/objects/IFileItemElement.h"
+#include "network/upnp/openHome/didllite/objects/UPnPObject.h"
 #include "network/upnp/openHome/didllite/objects/classmappers/UPnPClassMapping.h"
 #include "utils/log.h"
 
@@ -75,35 +77,143 @@ bool FileItemUtils::DocumentToFileItemList(const CDidlLiteDocument& document, CF
 bool FileItemUtils::FileItemListToDocument(const CFileItemList& items, CDidlLiteDocument& document, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, const std::string& parent /* = "" */)
 {
   for (int index = 0; index < items.Size(); ++index)
+    SerializeFileItem(*items.Get(index).get(), document, elementFactory, context, parent);
+
+  return true;
+}
+
+bool FileItemUtils::ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, CUPnPObject*& upnpObj)
+{
+  return ConvertFileItem(item, elementFactory, device, profile, COhUPnP::GetInstance().GetResourceUriPrefix(), upnpObj);
+}
+
+bool FileItemUtils::ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const std::string& resourceUriPrefix, CUPnPObject*& upnpObj)
+{
+  OhUPnPRootDeviceContext context(device, profile, resourceUriPrefix);
+
+  return ConvertFileItem(item, elementFactory, context, upnpObj);
+}
+
+bool FileItemUtils::ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, CUPnPObject*& upnpObj)
+{
+  return ConvertFileItem(item, elementFactory, context, "", upnpObj);
+}
+
+bool FileItemUtils::SerializeObject(CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, std::string& result)
+{
+  return SerializeObject(upnpObj, elementFactory, device, profile, COhUPnP::GetInstance().GetResourceUriPrefix(), result);
+}
+
+bool FileItemUtils::SerializeObject(CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const std::string& resourceUriPrefix, std::string& result)
+{
+  if (upnpObj == nullptr)
+    return false;
+
+  OhUPnPRootDeviceContext context(device, profile, resourceUriPrefix);
+
+  return SerializeObject(upnpObj, elementFactory, context, result);
+}
+
+bool FileItemUtils::SerializeObject(CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, std::string& result)
+{
+  if (upnpObj == nullptr)
+    return false;
+
+  CDidlLiteDocument doc(elementFactory);
+  doc.AddNamespace(UPNP_DIDL_LITE_NAMESPACE_URI);
+  doc.AddNamespace(UPNP_DIDL_DC_NAMESPACE, UPNP_DIDL_DC_NAMESPACE_URI);
+  doc.AddNamespace(UPNP_DIDL_UPNP_NAMESPACE, UPNP_DIDL_UPNP_NAMESPACE_URI);
+
+  doc.AddElement(upnpObj);
+
+  return doc.Serialize(result, context);
+}
+
+bool FileItemUtils::DeserializeFileItem(const std::string& document, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, CFileItem& item)
+{
+  OhUPnPControlPointContext context(device, profile);
+
+  return DeserializeFileItem(document, elementFactory, context, item);
+}
+
+bool FileItemUtils::DeserializeFileItem(const std::string& document, const CFileItemElementFactory& elementFactory, const OhUPnPControlPointContext& context, CFileItem& item)
+{
+  if (document.empty())
+    return false;
+
+  CDidlLiteDocument doc(elementFactory);
+  if (!doc.Deserialize(document, context))
+    return false;
+
+  CFileItemList items;
+  if (!DocumentToFileItemList(doc, items, context) || items.Size() != 1)
+    return false;
+
+  item = *items.Get(0).get();
+  return true;
+}
+
+bool FileItemUtils::SerializeFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, std::string& result)
+{
+  return SerializeFileItem(item, elementFactory, device, profile, COhUPnP::GetInstance().GetResourceUriPrefix(), result);
+}
+
+bool FileItemUtils::SerializeFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const std::string& resourceUriPrefix, std::string& result)
+{
+  OhUPnPRootDeviceContext context(device, profile, resourceUriPrefix);
+
+  return SerializeFileItem(item, elementFactory, context, result);
+}
+
+bool FileItemUtils::SerializeFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, std::string& result)
+{
+  CUPnPObject* upnpObj = nullptr;
+  if (!ConvertFileItem(item, elementFactory, context, upnpObj))
+    return false;
+
+  return SerializeObject(upnpObj, elementFactory, context, result);
+}
+
+bool FileItemUtils::ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, const std::string& parent, CUPnPObject*& upnpObj)
+{
+  IFileItemElement* element = elementFactory.GetElement(item);
+  if (element == nullptr)
   {
-    const CFileItem& item = *items.Get(index).get();
-
-    IFileItemElement* element = elementFactory.GetElement(item);
-    if (element == nullptr)
-    {
-      CLog::Log(LOGWARNING, "FileItemUtils: failed to find element for item \"%s\" (%s)",
-        item.GetLabel().c_str(), item.GetPath().c_str());
-      continue;
-    }
-
-    if (!element->FromFileItem(item, context))
-    {
-      CLog::Log(LOGWARNING, "FileItemUtils: failed to serialize item \"%s\" (%s) into element <%s:%s>",
-        item.GetLabel().c_str(), item.GetPath().c_str(),
-        element->GetElementNamespace().c_str(), element->GetElementName().c_str());
-      continue;
-    }
-
-    // overwrite the parent ID if provided
-    if (!parent.empty())
-    {
-      CUPnPObject* upnpObject = dynamic_cast<CUPnPObject*>(element);
-      if (upnpObject != nullptr)
-        upnpObject->SetParentId(parent);
-    }
-
-    document.AddElement(element);
+    CLog::Log(LOGWARNING, "FileItemUtils: failed to find element for item \"%s\" (%s)",
+      item.GetLabel().c_str(), item.GetPath().c_str());
+    return false;
   }
+
+  upnpObj = dynamic_cast<CUPnPObject*>(element);
+  if (upnpObj == nullptr)
+  {
+    CLog::Log(LOGWARNING, "FileItemUtils: item \"%s\" (%s) of type %s is not a UPnP item",
+      item.GetLabel().c_str(), item.GetPath().c_str(), element->GetType().c_str());
+    return false;
+  }
+
+  if (!element->FromFileItem(item, context))
+  {
+    CLog::Log(LOGWARNING, "FileItemUtils: failed to serialize item \"%s\" (%s) into element <%s:%s>",
+      item.GetLabel().c_str(), item.GetPath().c_str(),
+      element->GetElementNamespace().c_str(), element->GetElementName().c_str());
+    return false;
+  }
+
+  // overwrite the parent ID if provided
+  if (!parent.empty())
+    upnpObj->SetParentId(parent);
+
+  return true;
+}
+
+bool FileItemUtils::SerializeFileItem(const CFileItem& item, CDidlLiteDocument& document, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, const std::string& parent)
+{
+  CUPnPObject* upnpObj = nullptr;
+  if (!ConvertFileItem(item, elementFactory, context, parent, upnpObj))
+    return false;
+
+  document.AddElement(upnpObj);
 
   return true;
 }

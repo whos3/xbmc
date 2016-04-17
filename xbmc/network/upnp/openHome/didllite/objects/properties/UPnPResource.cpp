@@ -29,6 +29,7 @@ static const std::string ProtocolInfoSeparator = ":";
 static const std::string ProtocolInfoDlnaOrgPrefix = "DLNA.ORG_";
 static const std::string ProtocolInfoExtrasAssigner = "=";
 static const std::string ProtocolInfoExtrasSeparator = ";";
+static const std::string ProtocolInfoWildcard = "*";
 
 const std::string CUPnPResource::CProtocolInfo::DLNA::ProfileKey = ProtocolInfoDlnaOrgPrefix + "PN";
 const std::string CUPnPResource::CProtocolInfo::DLNA::OperationKey = ProtocolInfoDlnaOrgPrefix + "OP";
@@ -64,7 +65,7 @@ bool CUPnPResource::CProtocolInfo::DLNA::IsValid() const
 std::string CUPnPResource::CProtocolInfo::DLNA::Get() const
 {
   if (!IsValid())
-    return "*";
+    return ProtocolInfoWildcard;
 
   std::string extras;
   if (!m_profile.empty())
@@ -87,7 +88,7 @@ std::string CUPnPResource::CProtocolInfo::DLNA::Get() const
 
 bool CUPnPResource::CProtocolInfo::DLNA::Set(const std::string& protocolInfoExtras)
 {
-  if (protocolInfoExtras == "*")
+  if (protocolInfoExtras == ProtocolInfoWildcard)
   {
     m_profile.clear();
     m_operation = Operation::None;
@@ -168,12 +169,12 @@ std::string CUPnPResource::CProtocolInfo::Get() const
   if (!m_mask.empty())
     protocolInfo += m_mask;
   else
-    protocolInfo += "*";
+    protocolInfo += ProtocolInfoWildcard;
   protocolInfo += ProtocolInfoSeparator;
   if (!m_contentType.empty())
     protocolInfo += m_contentType;
   else
-    protocolInfo += "*";
+    protocolInfo += ProtocolInfoWildcard;
   protocolInfo += ProtocolInfoSeparator + m_extras.Get();
 
   return protocolInfo;
@@ -508,24 +509,38 @@ std::string CUPnPResource::GetDurationFromSeconds(double duration)
   return strDuration;
 }
 
+CUPnPResourceFinder::CUPnPResourceFinder(const std::string& protocol)
+  : CUPnPResourceFinder(protocol, ProtocolInfoWildcard)
+{ }
+
 CUPnPResourceFinder::CUPnPResourceFinder(const std::string& protocol, const std::string& contentType)
-  : m_protocol(protocol),
-    m_contentType(contentType)
+  : CUPnPResourceFinder(protocol, contentType, ProtocolInfoWildcard)
+{ }
+
+CUPnPResourceFinder::CUPnPResourceFinder(const std::string& protocol, const std::string& contentType, const std::string& mask)
+  : m_protocol(protocol)
+  , m_contentType(contentType)
+  , m_mask(mask)
 { }
 
 CUPnPResourceFinder CUPnPResourceFinder::ByProtocol(const std::string& protocol)
 {
-  return CUPnPResourceFinder(protocol, "");
+  return CUPnPResourceFinder(protocol);
 }
 
 CUPnPResourceFinder CUPnPResourceFinder::ByContentType(const std::string& contentType)
 {
-  return CUPnPResourceFinder("", contentType);
+  return CUPnPResourceFinder(ProtocolInfoWildcard, contentType);
 }
 
 CUPnPResourceFinder CUPnPResourceFinder::ByProtocolAndContentType(const std::string& protocol, const std::string& contentType)
 {
   return CUPnPResourceFinder(protocol, contentType);
+}
+
+CUPnPResourceFinder CUPnPResourceFinder::ByProtocolInfo(const CUPnPResource::CProtocolInfo& protocolInfo)
+{
+  return CUPnPResourceFinder(protocolInfo.GetProtocol(), protocolInfo.GetContentType(), protocolInfo.GetMask());
 }
 
 bool CUPnPResourceFinder::operator()(const CUPnPResource* resource)
@@ -534,9 +549,11 @@ bool CUPnPResourceFinder::operator()(const CUPnPResource* resource)
     return false;
 
   const CUPnPResource::CProtocolInfo& protocolInfo = resource->GetProtocolInfo();
-  if (!m_protocol.empty() && !StringUtils::EqualsNoCase(protocolInfo.GetProtocol(), m_protocol))
+  if (m_protocol != ProtocolInfoWildcard && protocolInfo.GetProtocol() != ProtocolInfoWildcard && !StringUtils::EqualsNoCase(protocolInfo.GetProtocol(), m_protocol))
     return false;
-  if (!m_contentType.empty() && !StringUtils::StartsWithNoCase(protocolInfo.GetContentType(), m_contentType))
+  if (m_contentType != ProtocolInfoWildcard && protocolInfo.GetContentType() != ProtocolInfoWildcard && !StringUtils::StartsWithNoCase(protocolInfo.GetContentType(), m_contentType))
+    return false;
+  if (m_mask != ProtocolInfoWildcard && protocolInfo.GetMask() != ProtocolInfoWildcard && !StringUtils::StartsWithNoCase(protocolInfo.GetMask(), m_mask))
     return false;
 
   return true;

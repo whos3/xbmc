@@ -40,7 +40,7 @@ static const std::string ArtistRolePerformer = "Performer";
 static const std::string ArtistRoleAlbumArtist = "AlbumArtist";
 static const std::string ArtistRoleProducer = "Producer";
 
-static void FillResource(const CFileItem& item, CUPnPResource* resource, const std::string& protocol = "")
+static void FillResource(const CFileItem& item, const OhUPnPRootDeviceContext& context, CUPnPResource* resource, const std::string& protocol = "")
 {
   if (resource == nullptr)
     return;
@@ -62,7 +62,7 @@ static void FillResource(const CFileItem& item, CUPnPResource* resource, const s
     protocolInfo.SetProtocol("http-get");
 
   // set the MIME type
-  protocolInfo.SetContentType(CMime::GetMimeType(URIUtils::GetExtension(musicDetails.GetURL())));
+  protocolInfo.SetContentType(context.profile.GetMimeType(URIUtils::GetExtension(musicDetails.GetURL())));
 
   // set extra information
   protocolInfo.GetExtras().SetOperation(static_cast<CUPnPResource::CProtocolInfo::DLNA::Operation>(
@@ -226,14 +226,14 @@ bool CUPnPAudioItem::FromFileItem(const CFileItem& item, const OhUPnPRootDeviceC
 
   // add the item as a resource through the resource manager
   CUPnPResource* resource = new CUPnPResource(COhUPnPResourceManager::GetFullResourceUri(context.resourceUriPrefix, musicInfo.GetURL()));
-  FillResource(detailedItem, resource);
+  FillResource(detailedItem, context, resource);
   AddResource(resource);
 
   // if the item is on a remote server also add the direct URL
   if (URIUtils::IsRemote(musicInfo.GetURL()))
   {
     CUPnPResource* directResource = new CUPnPResource(musicInfo.GetURL());
-    FillResource(detailedItem, directResource, "xbmc-get");
+    FillResource(detailedItem, context, directResource, "xbmc-get");
     AddResource(directResource);
   }
 

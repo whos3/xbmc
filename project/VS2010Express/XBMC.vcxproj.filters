@@ -442,6 +442,12 @@
     <Filter Include="network\upnp\openHome\didllite\objects\item\audio">
       <UniqueIdentifier>{c5a4eabd-3bdb-425b-bb0a-47110e42efbf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="network\upnp\openHome\rootdevices\mediaserver">
+      <UniqueIdentifier>{aa52a9c5-8a92-4c9c-ae30-cfd8ffc41ab2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="network\upnp\openHome\rootdevices\mediarenderer">
+      <UniqueIdentifier>{7a3d9cdf-d2ed-4d7e-897e-f880b6b1d6ce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -2968,9 +2974,6 @@
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\ohUPnPDevice.cpp">
       <Filter>network\upnp\openHome</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\ohUPnPMediaServerDevice.cpp">
-      <Filter>network\upnp\openHome\rootdevices</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\ohUPnPRootDevice.cpp">
       <Filter>network\upnp\openHome\rootdevices</Filter>
     </ClCompile>
@@ -3063,6 +3066,39 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPMusicTrackItem.cpp">
       <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediaserver\ohUPnPContentDirectoryService.cpp">
+      <Filter>network\upnp\openHome\rootdevices\mediaserver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediaserver\ohUPnPMediaServerDevice.cpp">
+      <Filter>network\upnp\openHome\rootdevices\mediaserver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererDevice.cpp">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererConnectionManagerService.cpp">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediaserver\ohUPnPMediaServerConnectionManagerService.cpp">
+      <Filter>network\upnp\openHome\rootdevices\mediaserver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPRenderingControlControlPoint.cpp">
+      <Filter>network\upnp\openHome\controlpoints</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransport.cpp">
+      <Filter>network\upnp\openHome\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\ohUPnPPlayer.cpp">
+      <Filter>network\upnp\openHome</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPAVTransportControlPoint.cpp">
+      <Filter>network\upnp\openHome\controlpoints</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPRenderingControl.cpp">
+      <Filter>network\upnp\openHome\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPConnectionManagerControlPoint.cpp">
+      <Filter>network\upnp\openHome\controlpoints</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -6697,9 +6733,6 @@
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\ohUPnPService.h">
       <Filter>network\upnp\openHome</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\ohUPnPMediaServerDevice.h">
-      <Filter>network\upnp\openHome\rootdevices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\ohUPnPRootDevice.h">
       <Filter>network\upnp\openHome\rootdevices</Filter>
     </ClInclude>
@@ -6801,6 +6834,42 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\didllite\objects\item\audio\UPnPMusicTrackItem.h">
       <Filter>network\upnp\openHome\didllite\objects\item\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediaserver\ohUPnPContentDirectoryService.h">
+      <Filter>network\upnp\openHome\rootdevices\mediaserver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediaserver\ohUPnPMediaServerDevice.h">
+      <Filter>network\upnp\openHome\rootdevices\mediaserver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererDevice.h">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererConnectionManagerService.h">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediaserver\ohUPnPMediaServerConnectionManagerService.h">
+      <Filter>network\upnp\openHome\rootdevices\mediaserver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPRenderingControlControlPoint.h">
+      <Filter>network\upnp\openHome\controlpoints</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPEnum.h">
+      <Filter>network\upnp\openHome\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransport.h">
+      <Filter>network\upnp\openHome\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\ohUPnPPlayer.h">
+      <Filter>network\upnp\openHome</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPAVTransportControlPoint.h">
+      <Filter>network\upnp\openHome\controlpoints</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPRenderingControl.h">
+      <Filter>network\upnp\openHome\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPConnectionManagerControlPoint.h">
+      <Filter>network\upnp\openHome\controlpoints</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

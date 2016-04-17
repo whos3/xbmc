@@ -54,6 +54,18 @@ private:
 
   uint16_t m_port;
 
+  // special implementation of IMimeTypeGetter to be able to adjust the MIME
+  // type based on the UPnP device making the request
+  class CMimeTypeGetter : public CDefaultMimeTypeGetter
+  {
+  public:
+    CMimeTypeGetter() = default;
+    virtual ~CMimeTypeGetter() = default;
+
+    // specialization of CDefaultMimeTypeGetter
+    virtual std::string GetMimeTypeFromExtension(const std::string& extension, const HTTPRequest &request) const override;
+  };
+
   CWebServer m_webServer;
   CHTTPVfsHandler m_httpVfsHandler;
 };

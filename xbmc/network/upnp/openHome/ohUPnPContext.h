@@ -33,6 +33,16 @@ struct OhUPnPControlPointContext
 {
   const COhUPnPDevice device;
   const COhUPnPDeviceProfile profile;
+
+  OhUPnPControlPointContext(const COhUPnPDevice& device)
+    : device(device)
+    , profile()
+  { }
+
+  OhUPnPControlPointContext(const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile)
+    : device(device)
+    , profile(profile)
+  { }
 };
 
 struct OhUPnPRootDeviceContext
@@ -57,9 +67,9 @@ struct OhUPnPRootDeviceContext
   { }
 
   OhUPnPRootDeviceContext(const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const std::string& resourceUriPrefix, const CDidlLitePropertyList& filters)
-    : device(device),
-      profile(profile),
-      resourceUriPrefix(resourceUriPrefix),
-      filters(filters)
+    : device(device)
+    , profile(profile)
+    , resourceUriPrefix(resourceUriPrefix)
+    , filters(filters)
   { }
 };

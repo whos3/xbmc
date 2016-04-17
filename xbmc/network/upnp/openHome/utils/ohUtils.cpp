@@ -25,3 +25,36 @@ std::string COhUtils::TIpAddressToString(TIpAddress address)
 {
   return StringUtils::Format("%d.%d.%d.%d", (address & 0xFF), ((address >> 8) & 0xFF), ((address >> 16) & 0xFF), ((address >> 24) & 0xFF));
 }
+
+int64_t COhUtils::GetDurationInSeconds(const std::string& duration)
+{
+  if (StringUtils::IsNaturalNumber(duration))
+    return strtol(duration.c_str(), NULL, 0);
+
+  int64_t durationSeconds = -1;
+
+  std::string tmpDuration = duration;
+
+  // try to parse the "[0-9]{2}:[0-9]{2}:[0-9]" time format defined in the UPnP specification
+  CDateTimeSpan time;
+  if (time.SetFromTimeString(tmpDuration))
+    durationSeconds = time.GetSecondsTotal();
+
+  return durationSeconds;
+}
+
+std::string COhUtils::GetDurationFromSeconds(int64_t duration)
+{
+  std::string strDuration;
+  if (duration < 0)
+    return "";
+
+  CDateTimeSpan time(0, 0, 0, static_cast<int>(duration));
+
+  return StringUtils::Format("%02d:%02d:%02d", time.GetHours(), time.GetMinutes(), time.GetSeconds());
+}
+
+std::vector<std::string> COhUtils::SplitCSV(const std::string& csvList)
+{
+  return StringUtils::Split(csvList, ",");
+}

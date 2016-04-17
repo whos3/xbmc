@@ -22,30 +22,141 @@
 #include "ohUPnPRootDevice.h"
 #include "network/upnp/openHome/ohUPnPContext.h"
 #include "network/upnp/openHome/ohUPnPDefinitions.h"
+#include "network/upnp/openHome/ohUPnPResourceManager.h"
+#include "network/upnp/openHome/didllite/objects/FileItemElementFactory.h"
+#include "network/upnp/openHome/transfer/ohUPnPTransferManager.h"
+#include "network/upnp/openHome/utils/ohUtils.h"
+#include "settings/Settings.h"
+#include "utils/log.h"
 #include "utils/StringUtils.h"
+#include "utils/SystemInfo.h"
 #include "utils/XBMCTinyXml.h"
 
 static const size_t MaximumAttributeValueLength = 256;
 
-COhUPnPRootDevice::COhUPnPRootDevice(const std::string& udn, OpenHome::Net::IResourceManagerStd& resourceManager)
+bool COhUPnPRootDevice::m_deviceStackStarted = false;
+
+COhUPnPRootDevice::COhUPnPRootDevice(const std::string& uuid,
+  const std::string& deviceDomain, const std::string& deviceType, uint8_t deviceVersion,
+  const CFileItemElementFactory& fileItemElementFactory,
+  COhUPnPTransferManager& transferManager,
+  COhUPnPResourceManager& resourceManager)
   : COhUPnPDevice(),
-    m_device(udn, resourceManager)
+    IOhUPnPService(deviceDomain, deviceType, deviceVersion),
+    m_device(nullptr),
+    m_elementFactory(fileItemElementFactory),
+    m_transferManager(transferManager),
+    m_resourceManager(resourceManager),
+    m_lastIpAddress(0)
 {
-  m_uuid = udn;
+  m_uuid = uuid;
   SetValid(!m_uuid.empty());
 }
 
 COhUPnPRootDevice::~COhUPnPRootDevice()
-{ }
-
-void COhUPnPRootDevice::Enable()
 {
-  m_device.SetEnabled();
+  Stop();
 }
 
-void COhUPnPRootDevice::Disable(OpenHome::Functor completedCallback)
+bool COhUPnPRootDevice::Start(TIpAddress ipAddress)
 {
-  m_device.SetDisabled(completedCallback);
+  if (IsRunning())
+  {
+    // if the IP address is the same there's nothing to do
+    if (ipAddress == m_lastIpAddress)
+      return true;
+
+    // otherwise we need to stop the device
+    Stop();
+  }
+
+  m_lastIpAddress = ipAddress;
+
+  if (!m_deviceStackStarted)
+  {
+    CLog::Log(LOGINFO, "COhUPnPRootDevice: starting device stack...");
+    OpenHome::Net::UpnpLibrary::StartDv();
+
+    m_deviceStackStarted = true;
+  }
+
+  CLog::Log(LOGINFO, "COhUPnPRootDevice: starting MediaServer device...");
+
+  // setup device
+  m_device = std::make_shared<OpenHome::Net::DvDeviceStdStandard>(m_uuid, m_resourceManager);
+  SetDomain(m_domain);
+  SetDeviceType(m_serviceName);
+  SetDeviceTypeVersion(m_serviceVersion);
+  SetFriendlyName(CSysInfo::GetDeviceName());
+  SetModelName(CSysInfo::GetAppName());
+  SetModelNumber(CSysInfo::GetVersion());
+  SetModelUrl("http://kodi.tv/");
+  SetManufacturer("XBMC Foundation");
+  SetManufacturerUrl("http://kodi.tv/");
+  if (CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_WEBSERVER))
+    SetPresentationUrl(StringUtils::Format("http://%s:%d", COhUtils::TIpAddressToString(m_lastIpAddress).c_str(), CSettings::GetInstance().GetInt(CSettings::SETTING_SERVICES_WEBSERVERPORT)));
+  SetIcons({
+    CUPnPIcon(m_resourceManager.AddSmallResource(*this, "special://xbmc/media/icon256x256.png", "icon256x256.png"), "image/png", 256, 256, 8),
+    CUPnPIcon(m_resourceManager.AddSmallResource(*this, "special://xbmc/media/icon120x120.png", "icon120x120.png"), "image/png", 120, 120, 8),
+    CUPnPIcon(m_resourceManager.AddSmallResource(*this, "special://xbmc/media/icon48x48.png", "icon48x48.png"), "image/png", 48, 48, 8),
+    CUPnPIcon(m_resourceManager.AddSmallResource(*this, "special://xbmc/media/icon32x32.png", "icon32x32.png"), "image/png", 32, 32, 8),
+    CUPnPIcon(m_resourceManager.AddSmallResource(*this, "special://xbmc/media/icon16x16.png", "icon16x16.png"), "image/png", 16, 16, 8)
+  });
+
+  // allow additional configuration of the device
+  SetupDevice(GetDevice());
+
+  // start all services
+  if (!StartServices())
+  {
+    CLog::Log(LOGERROR, "COhUPnPRootDevice: failed to start services");
+    m_device.reset();
+
+    return false;
+  }
+
+  // enable the device
+  m_device->SetEnabled();
+
+  return true;
+}
+
+bool COhUPnPRootDevice::IsRunning() const
+{
+  return m_device != nullptr;
+}
+
+void COhUPnPRootDevice::Stop()
+{
+  if (!IsRunning())
+    return;
+
+  CLog::Log(LOGINFO, "COhUPnPRootDevice: stopping MediaServer device...");
+
+  // disable the device
+  m_device->SetDisabled(OpenHome::MakeFunctor(*this, &COhUPnPRootDevice::OnDeviceDisabled));
+
+  // wait for the device to be disabled
+  if (!m_deviceDisabledEvent.Wait())
+    CLog::Log(LOGWARNING, "COhUPnPRootDevice: device didn't stop in time");
+
+  // stop all services
+  if (!StopServices())
+    CLog::Log(LOGERROR, "COhUPnPRootDevice: failed to stop services");
+
+  // and finally destroy the device
+  m_device.reset();
+}
+
+void COhUPnPRootDevice::Restart()
+{
+  Stop();
+  Start(m_lastIpAddress);
+}
+
+void COhUPnPRootDevice::OnDeviceDisabled()
+{
+  m_deviceDisabledEvent.Set();
 }
 
 void COhUPnPRootDevice::SetDomain(const std::string& domain)
@@ -181,10 +292,10 @@ void COhUPnPRootDevice::SetIcons(const std::vector<CUPnPIcon>& icons)
 
 bool COhUPnPRootDevice::SetAttribute(const std::string& name, const std::string& value)
 {
-  if (IsEnabled())
+  if (m_device == nullptr || m_device->Enabled())
     return false;
 
-  m_device.SetAttribute(name.c_str(), value.c_str());
+  m_device->SetAttribute(name.c_str(), value.c_str());
   return true;
 }
 

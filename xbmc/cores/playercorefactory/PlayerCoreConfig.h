@@ -26,7 +26,7 @@
 #include "cores/paplayer/PAPlayer.h"
 #include "cores/ExternalPlayer/ExternalPlayer.h"
 #ifdef HAS_UPNP
-#include "network/upnp/UPnPPlayer.h"
+#include "network/upnp/openHome/ohUPnPPlayer.h"
 #endif
 #include "utils/log.h"
 
@@ -101,7 +101,7 @@ public:
 #if defined(HAS_UPNP)
     else if (m_type.compare("remote") == 0)
     {
-      pPlayer = new UPNP::CUPnPPlayer(callback, m_id.c_str());
+      pPlayer = new COhUPnPPlayer(callback, m_id);
     }
 #endif
     else

@@ -24,7 +24,10 @@
 #include "ohUPnPResourceManager.h"
 #include "URL.h"
 #include "filesystem/File.h"
+#include "network/httprequesthandler/HTTPRequestHandlerUtils.h"
 #include "network/upnp/openHome/ohUPnPDevice.h"
+#include "network/upnp/openHome/profile/ohUPnPDeviceProfilesManager.h"
+#include "network/upnp/openHome/rootdevices/ohUPnPClientDevice.h"
 #include "network/upnp/openHome/utils/ohUtils.h"
 #include "utils/log.h"
 #include "utils/md5.h"
@@ -50,6 +53,7 @@ static std::string BuildResourceUrl(const COhUPnPDevice& device, const std::stri
 
 COhUPnPResourceManager::COhUPnPResourceManager()
   : m_port(0)
+  , m_httpVfsHandler(std::make_shared<const CMimeTypeGetter>())
 {
   m_webServer.RegisterRequestHandler(&m_httpVfsHandler);
 }
@@ -209,4 +213,19 @@ void COhUPnPResourceManager::WriteResource(const std::string& uriTail, TIpAddres
 
   // finalize the output
   resourceWriter.WriteResourceEnd();
+}
+
+std::string COhUPnPResourceManager::CMimeTypeGetter::GetMimeTypeFromExtension(const std::string& extension, const HTTPRequest &request) const
+{
+  std::string userAgent = HTTPRequestHandlerUtils::GetRequestHeaderValue(request.connection, MHD_HEADER_KIND, MHD_HTTP_HEADER_USER_AGENT);
+  if (!userAgent.empty())
+  {
+    COhUPnPClientDevice device(userAgent);
+
+    COhUPnPDeviceProfile profile;
+    if (COhUPnPDeviceProfilesManager::GetInstance().FindProfile(device, profile))
+      return profile.GetMimeType(extension);
+  }
+
+  return CDefaultMimeTypeGetter::GetMimeTypeFromExtension(extension, request);
 }

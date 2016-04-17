@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-#include "ohUPnPMediaServerDevice.h"
+#include "ohUPnPContentDirectoryService.h"
 #include "URL.h"
 #include "filesystem/Directory.h"
 #include "guilib/WindowIDs.h"
@@ -164,14 +164,6 @@ static bool LoadFileItem(OpenHome::Net::IDvInvocationStd& invocation, CFileItemP
     else if (StringUtils::StartsWithNoCase(child_id, "special://profile/playlists/video/")) parent = "special://videoplaylists/";
     else parent = "sources://video/"; // this can only match video sources
   }
-
-  if (item->IsVideoDb())
-      thumb_loader = NPT_Reference<CThumbLoader>(new CVideoThumbLoader());
-  else if (item->IsMusicDb())
-    thumb_loader = NPT_Reference<CThumbLoader>(new CMusicThumbLoader());
-
-  if (!thumb_loader.IsNull())
-    thumb_loader->OnLoaderStart();
   */
 
   // TODO: this needs to be done somewhere else
@@ -193,7 +185,7 @@ static bool LoadFileItem(OpenHome::Net::IDvInvocationStd& invocation, CFileItemP
         CVideoDatabase db;
         if (!db.Open())
         {
-          CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: failed to open video database to get details for \"%s\"", path.c_str());
+          CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: failed to open video database to get details for \"%s\"", path.c_str());
           invocation.ReportError(UPNP_ERROR_ACTION_FAILED, "Failed to access database");
           return false;
         }
@@ -225,7 +217,7 @@ static bool LoadFileItem(OpenHome::Net::IDvInvocationStd& invocation, CFileItemP
     }
   }
   else if (StringUtils::StartsWith(path, "musicdb://") ||
-    StringUtils::StartsWith(path, "library://music/"))
+           StringUtils::StartsWith(path, "library://music/"))
   {
     if (path == "musicdb://" || path == "library://music/")
     {
@@ -242,7 +234,7 @@ static bool LoadFileItem(OpenHome::Net::IDvInvocationStd& invocation, CFileItemP
         CMusicDatabase db;
         if (!db.Open())
         {
-          CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: failed to open video database to get details for \"%s\"", path.c_str());
+          CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: failed to open video database to get details for \"%s\"", path.c_str());
           invocation.ReportError(UPNP_ERROR_ACTION_FAILED, "Failed to access database");
           return false;
         }
@@ -284,7 +276,7 @@ static bool LoadFileItem(OpenHome::Net::IDvInvocationStd& invocation, CFileItemP
     std::string parentPath = URIUtils::GetParentPath(path);
     if (parentPath.empty())
     {
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice: unknown object \"%s\" requested", path.c_str());
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: unknown object \"%s\" requested", path.c_str());
       invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_OBJECT, "Object doesn't exist");
       return false;
     }
@@ -292,7 +284,7 @@ static bool LoadFileItem(OpenHome::Net::IDvInvocationStd& invocation, CFileItemP
     CFileItemList allItems;
     if (!XFILE::CDirectory::GetDirectory(parentPath, allItems) || !allItems.Contains(path))
     {
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice: unknown object \"%s\" requested", path.c_str());
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: unknown object \"%s\" requested", path.c_str());
       invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_OBJECT, "Object doesn't exist");
       return false;
     }
@@ -303,90 +295,49 @@ static bool LoadFileItem(OpenHome::Net::IDvInvocationStd& invocation, CFileItemP
   return true;
 }
 
-COhUPnPMediaServerDevice::COhUPnPMediaServerDevice(const std::string& uuid,
+COhUPnPContentDirectoryService::COhUPnPContentDirectoryService(COhUPnPRootDevice& device,
   const CFileItemElementFactory& fileItemElementFactory,
   COhUPnPTransferManager& transferManager,
   COhUPnPResourceManager& resourceManager)
-  : IOhUPnPService(UPNP_DOMAIN_NAME, UPNP_SERVICE_TYPE_MEDIASERVER, 3),
+  : IOhUPnPService(UPNP_DOMAIN_NAME, UPNP_SERVICE_TYPE_CONTENTDIRECTORY, 3),
+    m_device(device),
+    m_contentDirectory(nullptr),
     m_transferManager(transferManager),
     m_resourceManager(resourceManager),
-    m_uuid(uuid),
-    m_device(nullptr),
-    m_contentDirectory(nullptr),
     m_elementFactory(fileItemElementFactory)
 { }
 
-COhUPnPMediaServerDevice::~COhUPnPMediaServerDevice()
+COhUPnPContentDirectoryService::~COhUPnPContentDirectoryService()
 {
   Stop();
 }
 
-void COhUPnPMediaServerDevice::Start(bool supportImporting)
+void COhUPnPContentDirectoryService::Start(bool supportImporting)
 {
   if (m_contentDirectory != nullptr)
     return;
 
-  // setup device
-  m_device = std::make_unique<COhUPnPRootDevice>(m_uuid, m_resourceManager);
-  m_device->SetDomain(m_domain);
-  m_device->SetDeviceType(m_serviceName);
-  m_device->SetDeviceTypeVersion(m_serviceVersion);
-  m_device->SetFriendlyName(CSysInfo::GetDeviceName());
-  m_device->SetModelName(CSysInfo::GetAppName());
-  m_device->SetModelNumber(CSysInfo::GetVersion());
-  m_device->SetModelDescription(StringUtils::Format("%s - Media Server", CSysInfo::GetAppName().c_str()));
-  m_device->SetModelUrl("http://kodi.tv/");
-  m_device->SetManufacturer("XBMC Foundation");
-  m_device->SetManufacturerUrl("http://kodi.tv/");
-  if (CSettings::GetInstance().GetBool(CSettings::SETTING_SERVICES_WEBSERVER))
-    m_device->SetPresentationUrl(StringUtils::Format("http://%s:%d", COhUtils::TIpAddressToString(COhUPnP::GetInstance().GetIpAddress()).c_str(), CSettings::GetInstance().GetInt(CSettings::SETTING_SERVICES_WEBSERVERPORT)));
-  m_device->SetIcons({
-    CUPnPIcon(m_resourceManager.AddSmallResource(*m_device, "special://xbmc/media/icon256x256.png", "icon256x256.png"), "image/png", 256, 256, 8),
-    CUPnPIcon(m_resourceManager.AddSmallResource(*m_device, "special://xbmc/media/icon120x120.png", "icon120x120.png"), "image/png", 120, 120, 8),
-    CUPnPIcon(m_resourceManager.AddSmallResource(*m_device, "special://xbmc/media/icon48x48.png", "icon48x48.png"), "image/png", 48, 48, 8),
-    CUPnPIcon(m_resourceManager.AddSmallResource(*m_device, "special://xbmc/media/icon32x32.png", "icon32x32.png"), "image/png", 32, 32, 8),
-    CUPnPIcon(m_resourceManager.AddSmallResource(*m_device, "special://xbmc/media/icon16x16.png", "icon16x16.png"), "image/png", 16, 16, 8)
-  });
-
   // create a ContentDirectory service
-  m_contentDirectory.reset(new ContentDirectory(*this, m_device->GetDevice(), supportImporting));
-
-  // enable the device
-  m_device->Enable();
+  m_contentDirectory.reset(new ContentDirectory(*this, *m_device.GetDevice(), supportImporting));
 }
 
-void COhUPnPMediaServerDevice::Stop()
+void COhUPnPContentDirectoryService::Stop()
 {
   if (!IsRunning())
     return;
 
-  // first disable the device
-  m_device->Disable(OpenHome::MakeFunctor(*this, &COhUPnPMediaServerDevice::OnDeviceDisabled));
-
-  // wait for the device to be disabled
-  if (!m_deviceDisabledEvent.WaitMSec(DeviceDisableTimeoutMs))
-    CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: device didn't stop in time");
-
   // then destroy the ContentDirectory service
   m_contentDirectory.reset();
-
-  // and finally destroy the device
-  m_device.reset();
 }
 
-bool COhUPnPMediaServerDevice::IsRunning() const
+bool COhUPnPContentDirectoryService::IsRunning() const
 {
   return m_contentDirectory != nullptr;
 }
 
-void COhUPnPMediaServerDevice::OnDeviceDisabled()
-{
-  m_deviceDisabledEvent.Set();
-}
-
-COhUPnPMediaServerDevice::ContentDirectory::ContentDirectory(COhUPnPMediaServerDevice& mediaServer, OpenHome::Net::DvDeviceStd& device, bool supportImporting)
+COhUPnPContentDirectoryService::ContentDirectory::ContentDirectory(COhUPnPContentDirectoryService& service, OpenHome::Net::DvDeviceStd& device, bool supportImporting)
   : OpenHome::Net::DvProviderUpnpOrgContentDirectory3Cpp(device),
-    m_mediaServer(mediaServer),
+    m_service(service),
     m_createdObjectID(0)
 {
   if (supportImporting)
@@ -399,7 +350,6 @@ COhUPnPMediaServerDevice::ContentDirectory::ContentDirectory(COhUPnPMediaServerD
   // enable the actions we support
   EnableActionGetSearchCapabilities();
   EnableActionGetSortCapabilities();
-  // TODO: EnableActionGetFeatureList();
   // TODO (causes a crash on startup): EnableActionGetSystemUpdateID();
   EnableActionGetServiceResetToken();
   EnableActionBrowse();
@@ -417,10 +367,10 @@ COhUPnPMediaServerDevice::ContentDirectory::ContentDirectory(COhUPnPMediaServerD
   }
 }
 
-COhUPnPMediaServerDevice::ContentDirectory::~ContentDirectory()
+COhUPnPContentDirectoryService::ContentDirectory::~ContentDirectory()
 { }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetSearchCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& searchCaps)
+void COhUPnPContentDirectoryService::ContentDirectory::GetSearchCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& searchCaps)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- GetSearchCapabilities()");
@@ -431,7 +381,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetSearchCapabilities(OpenHome:
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice: GetSearchCapabilities() from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetSearchCapabilities() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
   searchCaps = "upnp:class";
@@ -440,7 +390,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetSearchCapabilities(OpenHome:
     CLog::Log(LOGDEBUG, "[ohNet] --> GetSearchCapabilities(): searchCaps = %s", searchCaps.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetSortCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& sortCaps)
+void COhUPnPContentDirectoryService::ContentDirectory::GetSortCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& sortCaps)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- GetSortCapabilities()");
@@ -451,7 +401,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetSortCapabilities(OpenHome::N
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice: GetSortCapabilities() from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetSortCapabilities() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
   std::vector<std::string> sortProperties;
@@ -464,17 +414,49 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetSortCapabilities(OpenHome::N
     CLog::Log(LOGDEBUG, "[ohNet] --> GetSortCapabilities(): sortCaps = %s", sortCaps.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetSortExtensionCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& sortExtensionCaps)
+void COhUPnPContentDirectoryService::ContentDirectory::GetSortExtensionCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& sortExtensionCaps)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: GetSortExtensionCapabilities is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- GetSortExtensionCapabilities()");
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetSortExtensionCapabilities() from %s (version %u; user-agent: %s)",
+    COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: GetSortExtensionCapabilities is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> GetSortExtensionCapabilities(): sortExtensionCaps = %s", sortExtensionCaps.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetFeatureList(OpenHome::Net::IDvInvocationStd& invocation, std::string& featureList)
+void COhUPnPContentDirectoryService::ContentDirectory::GetFeatureList(OpenHome::Net::IDvInvocationStd& invocation, std::string& featureList)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: GetFeatureList is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- GetFeatureList()");
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetFeatureList() from %s (version %u; user-agent: %s)",
+    COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: GetFeatureList is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> GetFeatureList(): featureList = %s", featureList.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetSystemUpdateID(OpenHome::Net::IDvInvocationStd& invocation, uint32_t& id)
+void COhUPnPContentDirectoryService::ContentDirectory::GetSystemUpdateID(OpenHome::Net::IDvInvocationStd& invocation, uint32_t& id)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- GetSystemUpdateID()");
@@ -485,7 +467,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetSystemUpdateID(OpenHome::Net
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice: GetSystemUpdateID() from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetSystemUpdateID() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
   // TODO
@@ -495,7 +477,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetSystemUpdateID(OpenHome::Net
     CLog::Log(LOGDEBUG, "[ohNet] --> GetSystemUpdateID(): system update ID = %u", id);
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetServiceResetToken(OpenHome::Net::IDvInvocationStd& invocation, std::string& resetToken)
+void COhUPnPContentDirectoryService::ContentDirectory::GetServiceResetToken(OpenHome::Net::IDvInvocationStd& invocation, std::string& resetToken)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- GetServiceResetToken()");
@@ -506,7 +488,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetServiceResetToken(OpenHome::
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice: GetServiceResetToken() from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetServiceResetToken() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
   // TODO
@@ -516,7 +498,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetServiceResetToken(OpenHome::
     CLog::Log(LOGDEBUG, "[ohNet] --> GetServiceResetToken(): reset token = %s", resetToken.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID, const std::string& browseFlag,
+void COhUPnPContentDirectoryService::ContentDirectory::Browse(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID, const std::string& browseFlag,
   const std::string& filter, uint32_t startingIndex, uint32_t requestedCount, const std::string& sortCriteria,
   std::string& result, uint32_t& numberReturned, uint32_t& totalMatches, uint32_t& aUpdateID)
 {
@@ -535,7 +517,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse(%s, %s, %s, %u, %u, %s) from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse(%s, %s, %s, %u, %u, %s) from %s (version %u; user-agent: %s)",
     objectID.c_str(), browseFlag.c_str(), filter.c_str(), startingIndex, requestedCount, sortCriteria.c_str(),
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
@@ -547,15 +529,15 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
   // get a (matching) profile
   COhUPnPDeviceProfile profile;
   if (!COhUPnPDeviceProfilesManager::GetInstance().FindProfile(clientDevice, profile))
-    CLog::Log(LOGINFO, "COhUPnPMediaServerDevice::Browse: client doesn't match any profiles");
+    CLog::Log(LOGINFO, "COhUPnPContentDirectoryService::Browse: client doesn't match any profiles");
   else
-    CLog::Log(LOGINFO, "COhUPnPMediaServerDevice::Browse: client matches profile %s", profile.GetName().c_str());
+    CLog::Log(LOGINFO, "COhUPnPContentDirectoryService::Browse: client matches profile %s", profile.GetName().c_str());
 
   // parse the sort criteria
   SortDescription sort;
   if (!ParseSortCriteria(sortCriteria, sort))
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: invalid sort criteria \"%s\"", sortCriteria.c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: invalid sort criteria \"%s\"", sortCriteria.c_str());
     invocation.ReportError(UPNP_ERROR_CD_BAD_SORT_CRITERIA, "Unsupported or invalid sort criteria");
     return;
   }
@@ -563,7 +545,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
   // map special objectID's
   std::string path = objectID;
   if (profile.GetMappedPath(objectID, path))
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: mapped requested object ID \"%s\" to path \"%s\"", objectID.c_str(), path.c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: mapped requested object ID \"%s\" to path \"%s\"", objectID.c_str(), path.c_str());
 
   if (path.empty() || path == "0")
     path = UPnPPathRoot;
@@ -571,7 +553,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
   // make sure access to the path/item is allowed
   if (!CFileUtils::RemoteAccessAllowed(path))
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: access to \"%s\" denied", path.c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: access to \"%s\" denied", path.c_str());
     invocation.ReportError(UPNP_ERROR_CD_SOURCE_RESOURCE_ACCESS_DENIED, "Access denied");
     return;
   }
@@ -624,7 +606,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
           + g_advancedSettings.m_discStubExtensions;
         if (!XFILE::CDirectory::GetDirectory(path, items, supported))
         {
-          CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: unknown container \"%s\" requested", path.c_str());
+          CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: unknown container \"%s\" requested", path.c_str());
           invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_CONTAINER, "Container doesn't exist");
           return;
         }
@@ -644,7 +626,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
          (items.CacheToDiscIfSlow() && getDirectoryPerformance.GetDurationInSeconds() > 1.0))
         items.Save();
 
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: [Performance] get directory: %fs", getDirectoryPerformance.GetDurationInSeconds());
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: [Performance] get directory: %fs", getDirectoryPerformance.GetDurationInSeconds());
     }
 
     // sanitize the input parameters
@@ -668,7 +650,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
       }
 
       limitResultsPerformance.Stop();
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: [Performance] limit results: %fs", limitResultsPerformance.GetDurationInSeconds());
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: [Performance] limit results: %fs", limitResultsPerformance.GetDurationInSeconds());
     }
   }
   else if (browseFlag == BrowseFlagMetadata)
@@ -677,7 +659,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
     if (path == UPnPPathRoot)
     {
       item.reset(new CFileItem(path, true));
-      item->SetLabel(m_mediaServer.m_device->GetFriendlyName());
+      item->SetLabel(m_service.m_device.GetFriendlyName());
       item->SetLabelPreformated(true);
 
       parent = "-1";
@@ -692,7 +674,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
 
     if (item == nullptr)
     {
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: unknown object \"%s\" requested", path.c_str());
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: unknown object \"%s\" requested", path.c_str());
       invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_OBJECT, "Object doesn't exist");
       return;
     }
@@ -702,13 +684,13 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
   }
   else
   {
-    CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice::Browse: called with unknown BrowseFlag \"%s\"", browseFlag.c_str());
+    CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService::Browse: called with unknown BrowseFlag \"%s\"", browseFlag.c_str());
     invocation.ReportError(UPNP_ERROR_INVALID_ARGS, "Unknown BrowseFlag");
     return;
   }
 
   // prepare the DIDL-Lite document
-  CDidlLiteDocument doc(m_mediaServer.m_elementFactory);
+  CDidlLiteDocument doc(m_service.m_elementFactory);
   doc.AddNamespace(UPNP_DIDL_LITE_NAMESPACE_URI);
   doc.AddNamespace(UPNP_DIDL_DC_NAMESPACE, UPNP_DIDL_DC_NAMESPACE_URI);
   doc.AddNamespace(UPNP_DIDL_UPNP_NAMESPACE, UPNP_DIDL_UPNP_NAMESPACE_URI);
@@ -724,7 +706,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
   }
 
   // set the currently valid resource URI prefix
-  const std::string resourceUriPrefix = COhUPnPResourceManager::GetResourceUriPrefix(ipAddress, m_mediaServer.m_resourceManager.GetPort());
+  const std::string resourceUriPrefix = COhUPnPResourceManager::GetResourceUriPrefix(ipAddress, m_service.m_resourceManager.GetPort());
 
   // get a context
   OhUPnPRootDeviceContext context = { clientDevice, profile, resourceUriPrefix, CDidlLitePropertyList(filter) };
@@ -733,15 +715,15 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
     CPerformanceMeasurement<> fileItemsConversionPerformance;
 
     // turn the items into a DIDL-Lite document
-    if (!FileItemUtils::FileItemListToDocument(items, doc, m_mediaServer.m_elementFactory, context, parent))
+    if (!FileItemUtils::FileItemListToDocument(items, doc, m_service.m_elementFactory, context, parent))
     {
-      CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice::Browse: failed to convert CFileItemList into DIDL-Lite document for \"%s\"", path.c_str());
+      CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService::Browse: failed to convert CFileItemList into DIDL-Lite document for \"%s\"", path.c_str());
       invocation.ReportError(UPNP_ERROR_ACTION_FAILED, "Failed to convert items");
       return;
     }
 
     fileItemsConversionPerformance.Stop();
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: [Performance] CFileItemList to CDidlLiteDocument: %fs", fileItemsConversionPerformance.GetDurationInSeconds());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: [Performance] CFileItemList to CDidlLiteDocument: %fs", fileItemsConversionPerformance.GetDurationInSeconds());
   }
 
   {
@@ -752,13 +734,13 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
     {
       result.clear();
 
-      CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice::Browse: failed to serialize DIDL-Lite document for \"%s\"", path.c_str());
+      CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService::Browse: failed to serialize DIDL-Lite document for \"%s\"", path.c_str());
       invocation.ReportError(UPNP_ERROR_ACTION_FAILED, "Failed to serialize DIDL-Lite elements");
       return;
     }
 
     serializationPerformance.Stop();
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::Browse: [Performance] CDidlLiteDocument serialization: %fs", serializationPerformance.GetDurationInSeconds());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::Browse: [Performance] CDidlLiteDocument serialization: %fs", serializationPerformance.GetDurationInSeconds());
   }
 
   // set the output parameters
@@ -776,14 +758,38 @@ void COhUPnPMediaServerDevice::ContentDirectory::Browse(OpenHome::Net::IDvInvoca
   }
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::Search(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, const std::string& searchCriteria,
+void COhUPnPContentDirectoryService::ContentDirectory::Search(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, const std::string& searchCriteria,
   const std::string& filter, uint32_t startingIndex, uint32_t requestedCount, const std::string& sortCriteria,
-  std::string& result, uint32_t& numberReturned, uint32_t& totalMatches, uint32_t& aUpdateID)
+  std::string& result, uint32_t& numberReturned, uint32_t& totalMatches, uint32_t& updateID)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: Search is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- Search(%s, %s, %s, %u, %u, %s)",
+    containerID.c_str(), searchCriteria.c_str(), filter.c_str(), startingIndex, requestedCount, sortCriteria);
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: Search(%s, %s, %s, %u, %u, %s) from %s (version %u; user-agent: %s)",
+    containerID.c_str(), searchCriteria.c_str(), filter.c_str(), startingIndex, requestedCount, sortCriteria,
+    COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: Search is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+  {
+    CLog::Log(LOGDEBUG, "[ohNet] --> Search(%s, %s, %s, %u, %u, %s): count = %u; total = %u; update ID = %u",
+      containerID.c_str(), searchCriteria.c_str(), filter.c_str(), startingIndex, requestedCount, sortCriteria,
+      numberReturned, totalMatches, updateID);
+    CLog::Log(LOGDEBUG, "[ohNet] --> Search(%s, %s, %s, %u, %u, %s): result =\n%s",
+      containerID.c_str(), searchCriteria.c_str(), filter.c_str(), startingIndex, requestedCount, sortCriteria, result.c_str());
+  }
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, const std::string& elements,
+void COhUPnPContentDirectoryService::ContentDirectory::CreateObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, const std::string& elements,
   std::string& objectID, std::string& result)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
@@ -795,7 +801,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject(%s) from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject(%s) from %s (version %u; user-agent: %s)",
     containerID.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
   objectID.clear();
@@ -803,14 +809,14 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
 
   if (containerID.empty())
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: unknown container ID");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: unknown container ID");
     invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_CONTAINER, "No such container");
     return;
   }
 
   if (elements.empty())
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: empty elements");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: empty elements");
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
   }
@@ -818,14 +824,14 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   // get a (matching) profile
   COhUPnPDeviceProfile profile;
   if (!COhUPnPDeviceProfilesManager::GetInstance().FindProfile(clientDevice, profile))
-    CLog::Log(LOGINFO, "COhUPnPMediaServerDevice::CreateObject: client doesn't match any profiles");
+    CLog::Log(LOGINFO, "COhUPnPContentDirectoryService::CreateObject: client doesn't match any profiles");
   else
-    CLog::Log(LOGINFO, "COhUPnPMediaServerDevice::CreateObject: client matches profile %s", profile.GetName().c_str());
+    CLog::Log(LOGINFO, "COhUPnPContentDirectoryService::CreateObject: client matches profile %s", profile.GetName().c_str());
 
   // map special objectID's
   std::string path = containerID;
   if (profile.GetMappedPath(containerID, path))
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: mapped requested container ID \"%s\" to path \"%s\"", containerID.c_str(), path.c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: mapped requested container ID \"%s\" to path \"%s\"", containerID.c_str(), path.c_str());
 
   if (path.empty() || path == "0")
     path = UPnPPathRoot;
@@ -833,7 +839,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   // make sure access to the path/item is allowed
   if (!CFileUtils::RemoteAccessAllowed(path))
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: access to \"%s\" denied", path.c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: access to \"%s\" denied", path.c_str());
     invocation.ReportError(UPNP_ERROR_CD_SOURCE_RESOURCE_ACCESS_DENIED, "Access denied");
     return;
   }
@@ -841,10 +847,10 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   OhUPnPControlPointContext deserializationContext = { clientDevice, profile };
 
   // parse and deserialize the elements as a DIDL-Lite document
-  CDidlLiteDocument elementsDoc(m_mediaServer.m_elementFactory);
+  CDidlLiteDocument elementsDoc(m_service.m_elementFactory);
   if (!elementsDoc.Deserialize(elements, deserializationContext))
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid elements");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid elements");
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
   }
@@ -852,7 +858,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   const auto& items = elementsDoc.GetElements();
   if (items.size() != 1)
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid number of elements (%u)", static_cast<unsigned int>(items.size()));
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid number of elements (%u)", static_cast<unsigned int>(items.size()));
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
   }
@@ -861,7 +867,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   const CUPnPItem* upnpItem = dynamic_cast<const CUPnPItem*>(item);
   if (upnpItem == nullptr)
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: unknown item <%s>",
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: unknown item <%s>",
       DidlLiteUtils::GetElementName(item->GetElementNamespace(), item->GetElementName()).c_str());
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
@@ -870,7 +876,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   // the @id attribute must be empty
   if (!upnpItem->GetId().empty())
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid <item> with non-empty @id \"%s\"", upnpItem->GetId().c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid <item> with non-empty @id \"%s\"", upnpItem->GetId().c_str());
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
   }
@@ -878,7 +884,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   // the @parentID attribute must match the containerID parameter
   if (upnpItem->GetParentId() != containerID)
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid <item> with mismatching @parentID \"%s\" <> \"%s\"",
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid <item> with mismatching @parentID \"%s\" <> \"%s\"",
       upnpItem->GetParentId().c_str(), containerID.c_str());
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
@@ -887,7 +893,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   // the @restricted attribute must be false
   if (upnpItem->IsRestricted())
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid <item> due to being restricted");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid <item> due to being restricted");
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
   }
@@ -896,7 +902,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   auto resources = upnpItem->GetResources();
   if (resources.size() > 1)
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid <item> due to too many pre-defined <res> properties (%u)",
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid <item> due to too many pre-defined <res> properties (%u)",
       static_cast<unsigned int>(resources.size()));
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
@@ -906,7 +912,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   {
     if (!resource->GetUri().empty())
     {
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid <item> due to not supporting pre-defined <res> properties");
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid <item> due to not supporting pre-defined <res> properties");
       invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
       return;
     }
@@ -916,18 +922,18 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   const auto& mediaType = profile.GetClassMapping().GetMediaType(upnpItem);
   if (mediaType.empty() || CMediaTypes::IsContainer(mediaType))
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: invalid <item> due to unsupported upnp:class \"%s\"", upnpItem->GetClass().GetType().c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: invalid <item> due to unsupported upnp:class \"%s\"", upnpItem->GetClass().GetType().c_str());
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
   }
 
   // create the object ID
-  objectID = StringUtils::Format("upnp://%s/created/%llu", m_mediaServer.m_device->GetUuid().c_str(), m_createdObjectID++);
+  objectID = StringUtils::Format("upnp://%s/created/%llu", m_service.m_device.GetUuid().c_str(), m_createdObjectID++);
 
   // clone the created object/item and assign an object ID
   std::shared_ptr<CUPnPItem> createdItem(upnpItem->Clone());
   createdItem->SetId(objectID);
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::CreateObject: creating %s item \"%s\" with object ID \"%s\"...",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: creating %s item \"%s\" with object ID \"%s\"...",
     mediaType.c_str(), createdItem->GetTitle().c_str(), objectID.c_str());
 
   // add/adjust the <res> property by injecting the @importUri attribute
@@ -949,7 +955,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   OhUPnPRootDeviceContext serializationContext = { clientDevice, profile };
 
   // prepare the DIDL-Lite document for serialization of the created object/item
-  CDidlLiteDocument resultDoc(m_mediaServer.m_elementFactory);
+  CDidlLiteDocument resultDoc(m_service.m_elementFactory);
   resultDoc.AddNamespace(UPNP_DIDL_LITE_NAMESPACE_URI);
   resultDoc.AddNamespace(UPNP_DIDL_DC_NAMESPACE, UPNP_DIDL_DC_NAMESPACE_URI);
   resultDoc.AddNamespace(UPNP_DIDL_UPNP_NAMESPACE, UPNP_DIDL_UPNP_NAMESPACE_URI);
@@ -962,7 +968,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   {
     result.clear();
 
-    CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice::CreateObject: failed to serialize DIDL-Lite document for created object \"%s\"", objectID.c_str());
+    CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService::CreateObject: failed to serialize DIDL-Lite document for created object \"%s\"", objectID.c_str());
     invocation.ReportError(UPNP_ERROR_ACTION_FAILED, "Failed to serialize DIDL-Lite elements");
     return;
   }
@@ -978,22 +984,71 @@ void COhUPnPMediaServerDevice::ContentDirectory::CreateObject(OpenHome::Net::IDv
   }
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::DestroyObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID)
+void COhUPnPContentDirectoryService::ContentDirectory::DestroyObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: DestroyObject is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- DestroyObject(%s)", objectID.c_str());
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: DestroyObject(%s) from %s (version %u; user-agent: %s)",
+    objectID.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: DestroyObject is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> DestroyObject(%s)", objectID.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::UpdateObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID, const std::string& currentTagValue, const std::string& newTagValue)
+void COhUPnPContentDirectoryService::ContentDirectory::UpdateObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID, const std::string& currentTagValue, const std::string& newTagValue)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: UpdateObject is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- UpdateObject(%s, %s, %s)", objectID.c_str(), currentTagValue.c_str(), newTagValue.c_str());
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: UpdateObject(%s, %s, %s) from %s (version %u; user-agent: %s)",
+    objectID.c_str(), currentTagValue.c_str(), newTagValue.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: UpdateObject is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> UpdateObject(%s, %s, %s)",
+    objectID.c_str(), currentTagValue.c_str(), newTagValue.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::MoveObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID, const std::string& newParentID, std::string& newObjectID)
+void COhUPnPContentDirectoryService::ContentDirectory::MoveObject(OpenHome::Net::IDvInvocationStd& invocation, const std::string& objectID, const std::string& newParentID, std::string& newObjectID)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: MoveObject is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- MoveObject(%s, %s)", objectID.c_str(), newParentID.c_str());
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: MoveObject(%s, %s) from %s (version %u; user-agent: %s)",
+    objectID.c_str(), newParentID.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: MoveObject is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> MoveObject(%s, %s): new object ID = %s", objectID.c_str(), newParentID.c_str(), newObjectID.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::ImportResource(OpenHome::Net::IDvInvocationStd& invocation, const std::string& sourceURI, const std::string& destinationURI, uint32_t& transferID)
+void COhUPnPContentDirectoryService::ContentDirectory::ImportResource(OpenHome::Net::IDvInvocationStd& invocation, const std::string& sourceURI, const std::string& destinationURI, uint32_t& transferID)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- ImportResource(%s, %s)", sourceURI.c_str(), destinationURI.c_str());
@@ -1004,21 +1059,21 @@ void COhUPnPMediaServerDevice::ContentDirectory::ImportResource(OpenHome::Net::I
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::ImportResource(%s, %s) from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::ImportResource(%s, %s) from %s (version %u; user-agent: %s)",
     sourceURI.c_str(), destinationURI.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
   transferID = 0;
 
   if (sourceURI.empty())
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::ImportResource: unknown source URI");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::ImportResource: unknown source URI");
     invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_SOURCE_RESOURCE, "No such source resource");
     return;
   }
 
   if (destinationURI.empty())
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::ImportResource: unknown destination URI");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::ImportResource: unknown destination URI");
     invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_DESTINATION_RESOURCE, "No such destination resource");
     return;
   }
@@ -1029,7 +1084,7 @@ void COhUPnPMediaServerDevice::ContentDirectory::ImportResource(OpenHome::Net::I
     const auto& createdObject = m_createdObjects.find(destinationURI);
     if (createdObject == m_createdObjects.end())
     {
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::ImportResource: destination URI hasn't been created");
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::ImportResource: destination URI hasn't been created");
       invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_DESTINATION_RESOURCE, "No such destination resource");
       return;
     }
@@ -1037,22 +1092,22 @@ void COhUPnPMediaServerDevice::ContentDirectory::ImportResource(OpenHome::Net::I
     // get a (matching) profile
     COhUPnPDeviceProfile profile;
     if (!COhUPnPDeviceProfilesManager::GetInstance().FindProfile(clientDevice, profile))
-      CLog::Log(LOGINFO, "COhUPnPMediaServerDevice::CreateObject: client doesn't match any profiles");
+      CLog::Log(LOGINFO, "COhUPnPContentDirectoryService::CreateObject: client doesn't match any profiles");
     else
-      CLog::Log(LOGINFO, "COhUPnPMediaServerDevice::CreateObject: client matches profile %s", profile.GetName().c_str());
+      CLog::Log(LOGINFO, "COhUPnPContentDirectoryService::CreateObject: client matches profile %s", profile.GetName().c_str());
 
     // create a transfer for the object/item to be imported
     CFileItem item;
     if (!createdObject->second->ToFileItem(item, { clientDevice, profile }))
     {
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::ImportResource: failed to determine item to be imported");
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::ImportResource: failed to determine item to be imported");
       invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_DESTINATION_RESOURCE, "No such destination resource"); // TODO
       return;
     }
 
-    if (!m_mediaServer.m_transferManager.Import(clientDevice, sourceURI, item, this, transferID))
+    if (!m_service.m_transferManager.Import(clientDevice, sourceURI, item, this, transferID))
     {
-      CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::ImportResource: failed to create transfer");
+      CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::ImportResource: failed to create transfer");
       invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_DESTINATION_RESOURCE, "No such destination resource"); // TODO
       return;
     }
@@ -1076,17 +1131,49 @@ void COhUPnPMediaServerDevice::ContentDirectory::ImportResource(OpenHome::Net::I
     CLog::Log(LOGDEBUG, "[ohNet] --> ImportResource(%s, %s): transfer ID = %u", sourceURI.c_str(), destinationURI.c_str(), transferID);
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::ExportResource(OpenHome::Net::IDvInvocationStd& invocation, const std::string& sourceURI, const std::string& destinationURI, uint32_t& transferID)
+void COhUPnPContentDirectoryService::ContentDirectory::ExportResource(OpenHome::Net::IDvInvocationStd& invocation, const std::string& sourceURI, const std::string& destinationURI, uint32_t& transferID)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: ExportResource is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- ExportResource(%s, %s)", sourceURI.c_str(), destinationURI.c_str());
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: ExportResource(%s, %s) from %s (version %u; user-agent: %s)",
+    sourceURI.c_str(), destinationURI.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: ExportResource is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> ExportResource(%s, %s): transfer ID = %u", sourceURI.c_str(), destinationURI.c_str(), transferID);
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::DeleteResource(OpenHome::Net::IDvInvocationStd& invocation, const std::string& resourceURI)
+void COhUPnPContentDirectoryService::ContentDirectory::DeleteResource(OpenHome::Net::IDvInvocationStd& invocation, const std::string& resourceURI)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: DeleteResource is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- DeleteResource(%s)", resourceURI.c_str());
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: DeleteResource(%s) from %s (version %u; user-agent: %s)",
+    resourceURI.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: DeleteResource is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> DeleteResource(%s)", resourceURI.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::StopTransferResource(OpenHome::Net::IDvInvocationStd& invocation, uint32_t transferID)
+void COhUPnPContentDirectoryService::ContentDirectory::StopTransferResource(OpenHome::Net::IDvInvocationStd& invocation, uint32_t transferID)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- StopTransferResource(%u)", transferID);
@@ -1097,18 +1184,18 @@ void COhUPnPMediaServerDevice::ContentDirectory::StopTransferResource(OpenHome::
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::StopTransferResource(%u) from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::StopTransferResource(%u) from %s (version %u; user-agent: %s)",
     transferID, COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
-  if (!m_mediaServer.m_transferManager.StopTransfer(transferID))
+  if (!m_service.m_transferManager.StopTransfer(transferID))
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::StopTransferResource: unable to stop unknown transfer");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::StopTransferResource: unable to stop unknown transfer");
     invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_FILE_TRANSFER, "No such file transfer");
     return;
   }
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetTransferProgress(OpenHome::Net::IDvInvocationStd& invocation, uint32_t transferID, std::string& transferStatus, std::string& transferLength, std::string& transferTotal)
+void COhUPnPContentDirectoryService::ContentDirectory::GetTransferProgress(OpenHome::Net::IDvInvocationStd& invocation, uint32_t transferID, std::string& transferStatus, std::string& transferLength, std::string& transferTotal)
 {
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- GetTransferProgress(%u)", transferID);
@@ -1119,14 +1206,14 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetTransferProgress(OpenHome::N
   uint32_t port;
   invocation.GetClientEndpoint(ip, port);
 
-  CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::GetTransferProgress(%u) from %s (version %u; user-agent: %s)",
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::GetTransferProgress(%u) from %s (version %u; user-agent: %s)",
     transferID, COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
   ohUPnPTransferStatus status;
   uint64_t progress, total;
-  if (!m_mediaServer.m_transferManager.GetTransferProgress(transferID, status, progress, total))
+  if (!m_service.m_transferManager.GetTransferProgress(transferID, status, progress, total))
   {
-    CLog::Log(LOGDEBUG, "COhUPnPMediaServerDevice::GetTransferProgress: unable to monitor unknown transfer");
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::GetTransferProgress: unable to monitor unknown transfer");
     invocation.ReportError(UPNP_ERROR_CD_NO_SUCH_FILE_TRANSFER, "No such file transfer");
     return;
   }
@@ -1161,32 +1248,85 @@ void COhUPnPMediaServerDevice::ContentDirectory::GetTransferProgress(OpenHome::N
   }
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::CreateReference(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, const std::string& objectID, std::string& newID)
+void COhUPnPContentDirectoryService::ContentDirectory::CreateReference(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, const std::string& objectID, std::string& newID)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: CreateReference is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- CreateReference(%s, %s)", containerID.c_str(), objectID.c_str());
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: CreateReference(%s, %s) from %s (version %u; user-agent: %s)",
+    containerID.c_str(), objectID.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: CreateReference is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> CreateReference(%s, %s): new ID = %u", containerID.c_str(), objectID.c_str(), newID.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::FreeFormQuery(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, uint32_t CDSView, const std::string& queryRequest, std::string& qQueryResult, uint32_t& updateID)
+void COhUPnPContentDirectoryService::ContentDirectory::FreeFormQuery(OpenHome::Net::IDvInvocationStd& invocation, const std::string& containerID, uint32_t CDSView, const std::string& queryRequest, std::string& queryResult, uint32_t& updateID)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: FreeFormQuery is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- FreeFormQuery(%s, %u, %s)", containerID.c_str(), CDSView, queryRequest.c_str());
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: FreeFormQuery(%s, %u, %s) from %s (version %u; user-agent: %s)",
+    containerID.c_str(), CDSView, queryRequest.c_str(), COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: FreeFormQuery is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+  {
+    CLog::Log(LOGDEBUG, "[ohNet] --> FreeFormQuery(%s, %u, %s): update ID = %u",
+      containerID.c_str(), CDSView, queryRequest.c_str(), updateID);
+    CLog::Log(LOGDEBUG, "[ohNet] --> FreeFormQuery(%s, %u, %s): result =\n%s",
+      containerID.c_str(), CDSView, queryRequest.c_str(), queryResult.c_str());
+  }
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::GetFreeFormQueryCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& FFQCapabilities)
+void COhUPnPContentDirectoryService::ContentDirectory::GetFreeFormQueryCapabilities(OpenHome::Net::IDvInvocationStd& invocation, std::string& ffqCapabilities)
 {
-  CLog::Log(LOGWARNING, "COhUPnPMediaServerDevice: GetFreeFormQueryCapabilities is unsupported");
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] <-- GetFreeFormQueryCapabilities()");
+
+  COhUPnPClientDevice clientDevice(invocation);
+
+  TIpAddress ip;
+  uint32_t port;
+  invocation.GetClientEndpoint(ip, port);
+
+  CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetFreeFormQueryCapabilities() from %s (version %u; user-agent: %s)",
+    COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
+
+  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: GetFreeFormQueryCapabilities is unsupported");
+  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+
+  if (g_advancedSettings.CanLogComponent(LOGUPNP))
+    CLog::Log(LOGDEBUG, "[ohNet] --> GetFreeFormQueryCapabilities(): free form query capabilities = %s", ffqCapabilities.c_str());
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::OnTransferCompleted(uint32_t transferId)
+void COhUPnPContentDirectoryService::ContentDirectory::OnTransferCompleted(uint32_t transferId)
 {
   RemoveTransfer(transferId);
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::OnTransferFailed(uint32_t transferId)
+void COhUPnPContentDirectoryService::ContentDirectory::OnTransferFailed(uint32_t transferId)
 {
   RemoveTransfer(transferId);
 }
 
-void COhUPnPMediaServerDevice::ContentDirectory::RemoveTransfer(uint32_t transferId)
+void COhUPnPContentDirectoryService::ContentDirectory::RemoveTransfer(uint32_t transferId)
 {
   CSingleLock lock(m_criticalCreatedObjects);
   const auto& transfer = m_createdObjectTransfers.find(transferId);

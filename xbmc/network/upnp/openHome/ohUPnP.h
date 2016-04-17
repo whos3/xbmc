@@ -29,11 +29,22 @@
 #include "network/upnp/openHome/transfer/ohUPnPTransferManager.h"
 #include "network/upnp/openHome/utils/ohEnvironment.h"
 #include "settings/lib/ISettingCallback.h"
+#include "threads/CriticalSection.h"
 
 class COhUPnPContentDirectoryControlPoint;
-class COhUPnPMediaServerDevice;
 class COhUPnPDeviceProfilesManager;
+class COhUPnPMediaRendererDevice;
+class COhUPnPAVTransportControlPoint;
+class COhUPnPAVTransportControlPointManager;
+class COhUPnPConnectionManagerControlPoint;
+class COhUPnPConnectionManagerControlPointManager;
+class COhUPnPMediaServerDevice;
+class COhUPnPRenderingControlControlPoint;
+class COhUPnPRenderingControlControlPointManager;
 class CSetting;
+class IOhUPnPAVTransportControlPointAsync;
+class IOhUPnPConnectionManagerControlPointAsync;
+class IOhUPnPRenderingControlControlPointAsync;
 
 class COhUPnP : public ISettingCallback
 {
@@ -66,9 +77,27 @@ public:
   bool IsContentDirectoryClientRunning() const;
   COhUPnPContentDirectoryControlPoint& GetContentDirectoryClient() { return *m_contentDirectoryClient; }
 
-  bool StartRenderer();
-  void StopRenderer();
-  bool IsRendererRunning() const;
+  bool StartConnectionManagerController();
+  void StopConnectionManagerController();
+  bool IsConnectionManagerControllerRunning() const;
+  std::shared_ptr<COhUPnPConnectionManagerControlPoint> CreateConnectionManagerController(const std::string& uuid, IOhUPnPConnectionManagerControlPointAsync* callback) const;
+  void DestroyConnectionManagerController(std::shared_ptr<COhUPnPConnectionManagerControlPoint> connectionManagerController) const;
+
+  bool StartRenderingController();
+  void StopRenderingController();
+  bool IsRenderingControllerRunning() const;
+  std::shared_ptr<COhUPnPRenderingControlControlPoint> CreateRenderingController(const std::string& uuid, IOhUPnPRenderingControlControlPointAsync* callback) const;
+  void DestroyRenderingController(std::shared_ptr<COhUPnPRenderingControlControlPoint> renderingController) const;
+
+  bool StartPlaybackController();
+  void StopPlaybackController();
+  bool IsPlaybackControllerRunning() const;
+  std::shared_ptr<COhUPnPAVTransportControlPoint> CreatePlaybackController(const std::string& uuid, IOhUPnPAVTransportControlPointAsync* callback) const;
+  void DestroyPlaybackController(std::shared_ptr<COhUPnPAVTransportControlPoint> playbackController) const;
+
+  bool StartMediaRenderer();
+  void StopMediaRenderer();
+  bool IsMediaRendererRunning() const;
 
   // implementation of ISettingCallback
   void OnSettingChanged(const CSetting* setting) override;
@@ -82,13 +111,23 @@ private:
   COhUPnP(const COhUPnP&);
   COhUPnP const& operator=(COhUPnP const&);
 
+  void StartControlPointStack();
+
   void StartResourceManager();
   void StopResourceManager(bool force = false);
+
+  void StartMediaServerDevice(bool forceRestart = false);
+  void StopMediaServerDevice();
+
+  void StartMediaRendererDevice(bool forceRestart = false);
+  void StopMediaRendererDevice();
 
   void ohNetLogOutput(const char* msg);
   void ohNetFatalErrorHandler(const char* msg);
 
+  CCriticalSection m_criticalInitialised;
   bool m_initialised;
+  bool m_controlPointStackStarted;
   uint32_t m_ipAddress;
   uint32_t m_subnetAddress;
   COhEnvironment m_ohEnvironment;
@@ -97,6 +136,21 @@ private:
   COhUPnPResourceManager m_resourceManager;
   COhUPnPTransferManager m_transferManager;
 
+  CCriticalSection m_criticalContentDirectoryClient;
   COhUPnPContentDirectoryControlPoint* m_contentDirectoryClient;
-  std::unique_ptr<COhUPnPMediaServerDevice> m_mediaServer;
+
+  CCriticalSection m_criticalConnectionManagerController;
+  COhUPnPConnectionManagerControlPointManager* m_connectionManagerController;
+
+  CCriticalSection m_criticalRenderingController;
+  COhUPnPRenderingControlControlPointManager* m_renderingController;
+
+  CCriticalSection m_criticalPlaybackController;
+  COhUPnPAVTransportControlPointManager* m_playbackController;
+
+  CCriticalSection m_criticalMediaServerDevice;
+  std::unique_ptr<COhUPnPMediaServerDevice> m_mediaServerDevice;
+
+  CCriticalSection m_criticalMediaRendererDevice;
+  std::unique_ptr<COhUPnPMediaRendererDevice> m_mediaRendererDevice;
 };

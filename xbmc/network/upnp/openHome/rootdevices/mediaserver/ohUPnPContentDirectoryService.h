@@ -31,31 +31,29 @@
 #include "network/upnp/openHome/transfer/ohUPnPTransferCallbacks.h"
 #include "network/upnp/openHome/transfer/ohUPnPTransferManager.h"
 #include "threads/CriticalSection.h"
-#include "threads/Event.h"
 
 class CFileItemElementFactory;
+class COhUPnPRootDevice;
 class CUPnPItem;
 
-class COhUPnPMediaServerDevice : public IOhUPnPService
+class COhUPnPContentDirectoryService : public IOhUPnPService
 {
 public:
-  explicit COhUPnPMediaServerDevice(const std::string& uuid,
+  COhUPnPContentDirectoryService(COhUPnPRootDevice& device,
     const CFileItemElementFactory& fileItemElementFactory,
     COhUPnPTransferManager& transferManager,
     COhUPnPResourceManager& resourceManager);
-  virtual ~COhUPnPMediaServerDevice();
+  virtual ~COhUPnPContentDirectoryService();
 
   void Start(bool supportImporting);
   void Stop();
   bool IsRunning() const;
 
 private:
-  void OnDeviceDisabled();
-
   class ContentDirectory : public IOhUPnPTransferCallbacks, public OpenHome::Net::DvProviderUpnpOrgContentDirectory3Cpp
   {
   public:
-    ContentDirectory(COhUPnPMediaServerDevice& mediaServer, OpenHome::Net::DvDeviceStd& device, bool supportImporting);
+    ContentDirectory(COhUPnPContentDirectoryService& service, OpenHome::Net::DvDeviceStd& device, bool supportImporting);
     virtual ~ContentDirectory();
 
   protected:
@@ -92,7 +90,7 @@ private:
     void RemoveTransfer(uint32_t transferID);
 
   private:
-    COhUPnPMediaServerDevice& m_mediaServer;
+    COhUPnPContentDirectoryService& m_service;
 
     std::map<std::string, std::shared_ptr<CUPnPItem>> m_createdObjects;
     std::map<uint32_t, std::string> m_createdObjectTransfers;
@@ -102,13 +100,10 @@ private:
 
   friend class ContentDirectory;
 
-  COhUPnPTransferManager& m_transferManager;
-  COhUPnPResourceManager& m_resourceManager;
-
-  std::string m_uuid;
-  std::unique_ptr<COhUPnPRootDevice> m_device;
-  CEvent m_deviceDisabledEvent;
+  COhUPnPRootDevice& m_device;
   std::unique_ptr<ContentDirectory> m_contentDirectory;
 
+  COhUPnPTransferManager& m_transferManager;
+  COhUPnPResourceManager& m_resourceManager;
   const CFileItemElementFactory& m_elementFactory;
 };

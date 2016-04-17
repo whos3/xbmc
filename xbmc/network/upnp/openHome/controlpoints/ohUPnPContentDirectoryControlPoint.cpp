@@ -24,7 +24,10 @@
 
 #include "ohUPnPContentDirectoryControlPoint.h"
 #include "FileItem.h"
+#include "GUIUserMessages.h"
 #include "URL.h"
+#include "guilib/GUIMessage.h"
+#include "guilib/GUIWindowManager.h"
 #include "media/MediaType.h"
 #include "network/upnp/openHome/ohUPnP.h"
 #include "network/upnp/openHome/ohUPnPContext.h"
@@ -94,7 +97,7 @@ private:
 };
 
 COhUPnPContentDirectoryControlPoint::COhUPnPContentDirectoryControlPoint(const CFileItemElementFactory& fileItemElementFactory, COhUPnPResourceManager& resourceManager)
-  : IOhUPnPControlPoint<OpenHome::Net::CpProxyUpnpOrgContentDirectory3Cpp>(UPNP_DOMAIN_NAME, UPNP_SERVICE_TYPE_CONTENTDIRECTORY, 1),
+  : IOhUPnPControlPoint<OpenHome::Net::CpProxyUpnpOrgContentDirectory3Cpp>(UPNP_DOMAIN_NAME, UPNP_SERVICE_TYPE_CONTENTDIRECTORY, 4, { 1, 2, 3 }),
     m_localDevice(CSysInfo::GetDeviceName()),
     m_elementFactory(fileItemElementFactory),
     m_resourceManager(resourceManager)
@@ -102,6 +105,20 @@ COhUPnPContentDirectoryControlPoint::COhUPnPContentDirectoryControlPoint(const C
 
 COhUPnPContentDirectoryControlPoint::~COhUPnPContentDirectoryControlPoint()
 { }
+
+void COhUPnPContentDirectoryControlPoint::OnServiceAdded(const UPnPControlPointService &service)
+{
+  updateUPnPPath();
+
+  IOhUPnPControlPoint::OnServiceAdded(service);
+}
+
+void COhUPnPContentDirectoryControlPoint::OnServiceRemoved(const UPnPControlPointService &service)
+{
+  updateUPnPPath();
+
+  IOhUPnPControlPoint::OnServiceRemoved(service);
+}
 
 bool COhUPnPContentDirectoryControlPoint::SupportsSearch(const std::string& uuid)
 {
@@ -327,26 +344,22 @@ bool COhUPnPContentDirectoryControlPoint::CreateObject(const std::string& uuid, 
     return false;
   }
 
-  // serialize the item into DIDL-Lite
-  IFileItemElement* element = m_elementFactory.GetElement(item);
-  if (element == nullptr)
-  {
-    CLog::Log(LOGERROR, "COhUPnPContentDirectoryControlPoint: trying to create object for an unknown item");
-    return false;
-  }
-
-  CUPnPItem* upnpItem = dynamic_cast<CUPnPItem*>(element);
-  if (upnpItem == nullptr)
-  {
-    CLog::Log(LOGERROR, "COhUPnPContentDirectoryControlPoint: trying to create object for an unsupported item");
-    delete element;
-    return false;
-  }
-
   OhUPnPRootDeviceContext serializationContext = { service.device, service.profile, COhUPnP::GetInstance().GetResourceUriPrefix() };
 
-  // fill the available properties from the item
-  upnpItem->FromFileItem(item, serializationContext);
+  CUPnPObject* upnpObj = nullptr;
+  if (!FileItemUtils::ConvertFileItem(item, m_elementFactory, serializationContext, upnpObj))
+  {
+    CLog::Log(LOGERROR, "COhUPnPContentDirectoryControlPoint: trying to create object for an unknown or unsupported item");
+    return false;
+  }
+
+  CUPnPItem* upnpItem = dynamic_cast<CUPnPItem*>(upnpObj);
+  if (upnpItem == nullptr)
+  {
+    CLog::Log(LOGWARNING, "COhUPnPContentDirectoryControlPoint: item \"%s\" (%s) of type %s is not a UPnP item",
+      item.GetLabel().c_str(), item.GetPath().c_str(), upnpObj->GetType().c_str());
+    return false;
+  }
 
   // set the necessary properties of the object/item to be created
   upnpItem->SetId("");
@@ -358,18 +371,9 @@ bool COhUPnPContentDirectoryControlPoint::CreateObject(const std::string& uuid, 
   // TODO: is this necessary?
   upnpItem->SetResources({ });
 
-  // prepare the DIDL-Lite document for serialization of the created object/item
-  CDidlLiteDocument elementsDoc(m_elementFactory);
-  elementsDoc.AddNamespace(UPNP_DIDL_LITE_NAMESPACE_URI);
-  elementsDoc.AddNamespace(UPNP_DIDL_DC_NAMESPACE, UPNP_DIDL_DC_NAMESPACE_URI);
-  elementsDoc.AddNamespace(UPNP_DIDL_UPNP_NAMESPACE, UPNP_DIDL_UPNP_NAMESPACE_URI);
-
-  // add the created object/item
-  elementsDoc.AddElement(upnpItem);
-
   // serialize the created object/item
   std::string elements;
-  if (!elementsDoc.Serialize(elements, serializationContext))
+  if (!FileItemUtils::SerializeObject(upnpItem, m_elementFactory, serializationContext, elements))
   {
     CLog::Log(LOGWARNING, "COhUPnPContentDirectoryControlPoint: failed to serialize DIDL-Lite document for object to be created");
     return false;
@@ -567,6 +571,13 @@ bool COhUPnPContentDirectoryControlPoint::GetTransferProgress(const std::string&
   total = strtoull(strTotal.c_str(), nullptr, 0);
 
   return true;
+}
+
+void COhUPnPContentDirectoryControlPoint::updateUPnPPath()
+{
+  CGUIMessage message(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UPDATE_PATH);
+  message.SetStringParam("upnp://");
+  g_windowManager.SendThreadMessage(message);
 }
 
 bool COhUPnPContentDirectoryControlPoint::browseSync(const UPnPControlPointService& service, const std::string& objectId, bool metadata,

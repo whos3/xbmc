@@ -56,12 +56,12 @@ public:
     // client
     void StartClient();
     void StopClient();
-    bool IsClientStarted(); /* TODO { return (m_MediaBrowser != NULL); }*/
+    bool IsClientStarted();
 
     // controller
     void StartController();
     void StopController();
-    bool IsControllerStarted() { return (m_MediaController != NULL); }
+    bool IsControllerStarted();
 
     // renderer
     bool StartRenderer();
@@ -84,24 +84,17 @@ public:
     static void RegisterUserdata(void* ptr);
     static void UnregisterUserdata(void* ptr);
 private:
-    void CreateControlPoint();
-    void DestroyControlPoint();
-
     // methods
     CUPnPRenderer* CreateRenderer(int port = 0);
-    CUPnPServer*   CreateServer(int port = 0);
 
 public:
-    PLT_SyncMediaBrowser*       m_MediaBrowser;
     PLT_MediaController*        m_MediaController;
 
 private:
     std::string                 m_IP;
     PLT_UPnP*                   m_UPnP;
     NPT_LogHandler*             m_LogHandler;
-    CDeviceHostReferenceHolder* m_ServerHolder;
     CRendererReferenceHolder*   m_RendererHolder;
-    CCtrlPointReferenceHolder*  m_CtrlPointHolder;
 
 
     static CUPnP* upnp;

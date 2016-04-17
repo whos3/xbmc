@@ -29,4 +29,9 @@ class COhUtils
 {
 public:
   static std::string TIpAddressToString(TIpAddress address);
+
+  static int64_t GetDurationInSeconds(const std::string& duration);
+  static std::string GetDurationFromSeconds(int64_t duration);
+
+  static std::vector<std::string> SplitCSV(const std::string& csvList);
 };

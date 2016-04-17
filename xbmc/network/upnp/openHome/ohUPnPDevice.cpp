@@ -63,13 +63,52 @@ std::string COhUPnPDevice::GetIconUrl(const std::string &mimetype) const
   return "";
 }
 
-bool COhUPnPDevice::ParseDeviceType(const std::string &deviceTypeString, std::string &deviceType, uint8_t &version)
+std::set<std::pair<std::string, uint8_t>> COhUPnPDevice::GetServices() const
 {
-  // the deviceType value must be of the form "urn:<domain-name>:device:<deviceType>:<version>"
-  if (!StringUtils::StartsWith(deviceTypeString, "urn:"))
+  return std::set<std::pair<std::string, uint8_t>>(m_services.cbegin(), m_services.cend());
+}
+
+bool COhUPnPDevice::HasService(const std::string& serviceType) const
+{
+  if (serviceType.empty())
     return false;
 
-  std::string tmp = StringUtils::Mid(deviceTypeString, 4);
+  return m_services.find(serviceType) != m_services.cend();
+}
+
+bool COhUPnPDevice::GetServiceVersion(const std::string& serviceType, uint8_t& serviceVersion)
+{
+  if (serviceType.empty())
+    return false;
+
+  const auto& service = m_services.find(serviceType);
+  if (service == m_services.cend())
+    return false;
+
+  serviceVersion = service->second;
+  return true;
+}
+
+bool COhUPnPDevice::ParseDeviceType(const std::string &deviceTypeString, std::string &deviceType, uint8_t &version)
+{
+  return ParseType(deviceTypeString, "device", deviceType, version);
+}
+
+bool COhUPnPDevice::ParseServiceType(const std::string &serviceTypeString, std::string &serviceType, uint8_t &version)
+{
+  return ParseType(serviceTypeString, "service", serviceType, version);
+}
+
+bool COhUPnPDevice::ParseType(const std::string &typeString, const std::string& typeName, std::string &type, uint8_t &version)
+{
+  if (typeName.empty())
+    return false;
+
+  // the deviceType value must be of the form "urn:<domain-name>:device:<deviceType>:<version>"
+  if (!StringUtils::StartsWith(typeString, "urn:"))
+    return false;
+
+  std::string tmp = StringUtils::Mid(typeString, 4);
   size_t pos = tmp.find(':');
   if (pos == std::string::npos)
     return false;
@@ -77,10 +116,10 @@ bool COhUPnPDevice::ParseDeviceType(const std::string &deviceTypeString, std::st
   // we don't care for the domain-name part
   tmp = StringUtils::Mid(tmp, pos + 1);
 
-  // make sure the next part is "device:"
-  if (!StringUtils::StartsWith(tmp, "device:"))
+  // make sure the next part matches the type name
+  if (!StringUtils::StartsWith(tmp, typeName + ":"))
     return false;
-  tmp = StringUtils::Mid(tmp, 7);
+  tmp = StringUtils::Mid(tmp, typeName.size() + 1);
 
   // now split the deviceType and the version
   pos = tmp.find(":");
@@ -88,7 +127,7 @@ bool COhUPnPDevice::ParseDeviceType(const std::string &deviceTypeString, std::st
     return false;
 
   // extract the deviceType
-  deviceType = StringUtils::Left(tmp, pos);
+  type = StringUtils::Left(tmp, pos);
   tmp = StringUtils::Mid(tmp, pos + 1);
 
   char *endptr = NULL;

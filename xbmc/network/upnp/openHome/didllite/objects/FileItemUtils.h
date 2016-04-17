@@ -25,9 +25,13 @@ struct OhUPnPControlPointContext;
 struct OhUPnPRootDeviceContext;
 
 class CDidlLiteDocument;
+class CFileItem;
 class CFileItemElementFactory;
 class CFileItemList;
+class COhUPnPDevice;
+class COhUPnPDeviceProfile;
 class CUPnPClassMapping;
+class CUPnPObject;
 
 class FileItemUtils
 {
@@ -35,7 +39,24 @@ public:
   static bool DocumentToFileItemList(const CDidlLiteDocument& document, CFileItemList& items, const OhUPnPControlPointContext& context);
   static bool FileItemListToDocument(const CFileItemList& items, CDidlLiteDocument& document, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, const std::string& parent = "");
 
+  static bool ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, CUPnPObject*& upnpObj);
+  static bool ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const std::string& resourceUriPrefix, CUPnPObject*& upnpObj);
+  static bool ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, CUPnPObject*& upnpObj);
+
+  static bool SerializeObject(CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, std::string& result);
+  static bool SerializeObject(CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const std::string& resourceUriPrefix, std::string& result);
+  static bool SerializeObject(CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, std::string& result);
+
+  static bool SerializeFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, std::string& result);
+  static bool SerializeFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const std::string& resourceUriPrefix, std::string& result);
+  static bool SerializeFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, std::string& result);
+
+  static bool DeserializeFileItem(const std::string& document, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, CFileItem& item);
+  static bool DeserializeFileItem(const std::string& document, const CFileItemElementFactory& elementFactory, const OhUPnPControlPointContext& context, CFileItem& item);
+
 private:
-  FileItemUtils()
-  { }
+  FileItemUtils() = default;
+
+  static bool ConvertFileItem(const CFileItem& item, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, const std::string& parent, CUPnPObject*& upnpObj);
+  static bool SerializeFileItem(const CFileItem& item, CDidlLiteDocument& document, const CFileItemElementFactory& elementFactory, const OhUPnPRootDeviceContext& context, const std::string& parent);
 };

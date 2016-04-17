@@ -19,24 +19,43 @@
  *
  */
 
+#include <memory>
 #include <string>
 
 #include <OpenHome/Net/Cpp/DvDevice.h>
 
 #include "network/upnp/openHome/ohUPnPDevice.h"
+#include "network/upnp/openHome/ohUPnPService.h"
+#include "threads/Event.h"
 
-class COhUPnPRootDevice : public COhUPnPDevice
+class CFileItemElementFactory;
+class COhUPnPResourceManager;
+class COhUPnPTransferManager;
+
+class COhUPnPRootDevice : public COhUPnPDevice, public IOhUPnPService
 {
 public:
-  explicit COhUPnPRootDevice(const std::string& udn, OpenHome::Net::IResourceManagerStd& resourceManager);
   virtual ~COhUPnPRootDevice();
 
-  const OpenHome::Net::DvDeviceStdStandard& GetDevice() const { return m_device; }
-  OpenHome::Net::DvDeviceStdStandard& GetDevice() { return m_device; }
+  bool Start(TIpAddress ipAddress);
+  bool IsRunning() const;
+  void Stop();
+  void Restart();
 
-  void Enable();
-  void Disable(OpenHome::Functor completedCallback);
-  bool IsEnabled() const { return m_device.Enabled(); }
+  const OpenHome::Net::DvDeviceStdStandard* GetDevice() const { return m_device.get(); }
+  OpenHome::Net::DvDeviceStdStandard* GetDevice() { return m_device.get(); }
+
+protected:
+  COhUPnPRootDevice(const std::string& uuid,
+    const std::string& deviceDomain, const std::string& deviceType, uint8_t deviceVersion,
+    const CFileItemElementFactory& fileItemElementFactory,
+    COhUPnPTransferManager& transferManager,
+    COhUPnPResourceManager& resourceManager);
+
+  virtual void SetupDevice(OpenHome::Net::DvDeviceStdStandard* device) { }
+
+  virtual bool StartServices() = 0;
+  virtual bool StopServices() = 0;
 
   void SetBaseUrl(const std::string& baseUrl) { m_baseUrl = baseUrl; }
   void SetDomain(const std::string& domain);
@@ -55,8 +74,19 @@ public:
   void SetPresentationUrl(const std::string& presentationUrl);
   void SetIcons(const std::vector<CUPnPIcon>& icons);
 
+  const CFileItemElementFactory& m_elementFactory;
+  COhUPnPTransferManager& m_transferManager;
+  COhUPnPResourceManager& m_resourceManager;
+
 private:
+  void OnDeviceDisabled();
+
   bool SetAttribute(const std::string& name, const std::string& value);
 
-  OpenHome::Net::DvDeviceStdStandard m_device;
+  std::shared_ptr<OpenHome::Net::DvDeviceStdStandard> m_device;
+  CEvent m_deviceDisabledEvent;
+
+  static bool m_deviceStackStarted;
+
+  TIpAddress m_lastIpAddress;
 };

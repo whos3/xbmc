@@ -32,6 +32,7 @@ namespace OpenHome
 class COhUPnPClientDevice : public COhUPnPDevice
 {
 public:
+  explicit COhUPnPClientDevice(const std::string& userAgent);
   explicit COhUPnPClientDevice(const OpenHome::Net::IDvInvocationStd& clientInvocation);
   virtual ~COhUPnPClientDevice();
 };

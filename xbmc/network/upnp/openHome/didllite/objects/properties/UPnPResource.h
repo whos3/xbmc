@@ -239,12 +239,16 @@ public:
   static CUPnPResourceFinder ByProtocol(const std::string& protocol);
   static CUPnPResourceFinder ByContentType(const std::string& contentType);
   static CUPnPResourceFinder ByProtocolAndContentType(const std::string& protocol, const std::string& contentType);
+  static CUPnPResourceFinder ByProtocolInfo(const CUPnPResource::CProtocolInfo& protocolInfo);
 
   bool operator()(const CUPnPResource* resource);
 
 private:
+  explicit CUPnPResourceFinder(const std::string& protocol);
   CUPnPResourceFinder(const std::string& protocol, const std::string& contentType);
+  CUPnPResourceFinder(const std::string& protocol, const std::string& contentType, const std::string& mask);
 
   std::string m_protocol;
   std::string m_contentType;
+  std::string m_mask;
 };

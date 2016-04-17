@@ -34,10 +34,12 @@
 #define UPNP_SERVICE_TYPE_AVTRANSPORT         "AVTransport"
 #define UPNP_SERVICE_TYPE_CONNECTIONMANAGER   "ConnectionManager"
 #define UPNP_SERVICE_TYPE_CONTENTDIRECTORY    "ContentDirectory"
-#define UPNP_SERVICE_TYPE_MEDIARENDERER       "MediaRenderer"
-#define UPNP_SERVICE_TYPE_MEDIASERVER         "MediaServer"
 #define UPNP_SERVICE_TYPE_RENDERINGCONTROL    "RenderingControl"
 #define UPNP_SERVICE_TYPE_SCHEDULEDRECORDING  "ScheduledRecording"
+
+#define UPNP_DEVICE_TYPE_IDENTIFIER           "urn:schemas-upnp-org:device:%s:%d"
+#define UPNP_DEVICE_TYPE_MEDIARENDERER        "MediaRenderer"
+#define UPNP_DEVICE_TYPE_MEDIASERVER          "MediaServer"
 
 #define UPNP_DEVICE_ATTRIBUTE_FRIENDLY_NAME   "Upnp.FriendlyName"
 #define UPNP_DEVICE_ATTRIBUTE_LOCATION        "Upnp.Location"

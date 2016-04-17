@@ -41,10 +41,11 @@ static const char* UPnPDeviceElementModelUrl = "modelURL";
 static const char* UPnPDeviceElementSerialNumber = "serialNumber";
 static const char* UPnPDeviceElementUdn = "UDN";
 static const char* UPnPDeviceElementUpc = "UPC";
+static const char* UPnPDeviceElementPresentationUrl = "presentationURL";
 
 static const char* UPnPDeviceElementServiceList = "serviceList";
-static const char* UPnPDeviceElementDeviceList = "deviceList";
-static const char* UPnPDeviceElementPresentationUrl = "presentationURL";
+static const char* UPnPDeviceElementService = "service";
+static const char* UPnPDeviceElementServiceType = "serviceType";
 
 COhUPnPControlPointDevice::COhUPnPControlPointDevice()
   : m_supportsSearch(SupportsMethod::Unknown),
@@ -108,7 +109,7 @@ bool COhUPnPControlPointDevice::Deserialize(const std::string &deviceDescription
     return false;
 
   TiXmlNode *deviceNode = rootElement->FirstChild(UPnPDeviceElementDevice);
-  if (deviceNode == NULL)
+  if (deviceNode == nullptr)
     return false;
 
   if (!XMLUtils::GetString(deviceNode, UPnPDeviceElementDeviceType, m_deviceTypeString) ||
@@ -139,8 +140,27 @@ bool COhUPnPControlPointDevice::Deserialize(const std::string &deviceDescription
   // parse <iconList>
   m_icons.Deserialize(deviceNode->FirstChildElement(m_icons.GetElementName()), { *this });
 
-  // TODO: serviceList
-  // TODO: deviceList
+  // parse <serviceList>
+  const TiXmlNode* serviceListNode = deviceNode->FirstChild(UPnPDeviceElementServiceList);
+  if (serviceListNode != nullptr)
+  {
+    const TiXmlNode* serviceNode = serviceListNode->FirstChild(UPnPDeviceElementService);
+    while (serviceNode != nullptr)
+    {
+      const TiXmlNode* serviceTypeNode = serviceNode->FirstChild(UPnPDeviceElementServiceType);
+      if (serviceTypeNode != nullptr && serviceTypeNode->FirstChild() != nullptr && serviceTypeNode->FirstChild()->Type() == TiXmlNode::TINYXML_TEXT)
+      {
+        const std::string fullServiceType = serviceTypeNode->FirstChild()->ValueStr();
+        std::string serviceType;
+        uint8_t serviceTypeVersion;
+
+        if (ParseServiceType(fullServiceType, serviceType, serviceTypeVersion))
+          m_services.insert({ serviceType, serviceTypeVersion });
+      }
+
+      serviceNode = serviceNode->NextSibling(UPnPDeviceElementService);
+    }
+  }
 
   return true;
 }

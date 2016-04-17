@@ -18,12 +18,14 @@
  *
  */
 
+#include <algorithm>
 #include <functional>
 
 #include "ohUPnPDeviceProfile.h"
 #include "network/upnp/openHome/ohUPnPDevice.h"
 #include "network/upnp/openHome/didllite/objects/classmappers/SimpleUPnPClassMapper.h"
 #include "utils/log.h"
+#include "utils/Mime.h"
 #include "utils/Regexp.h"
 #include "utils/StringUtils.h"
 #include "utils/URIUtils.h"
@@ -34,10 +36,12 @@ static const std::string RootElement = "profile";
 static const std::string RootElementExtendsAttribute = "extends";
 static const std::string NameElement = "name";
 
-static const std::string IdentificationElement = "identification";
-static const std::string IdentificationRuleElement = "rule";
-static const std::string IdentificationRulePropertyAttribute = "property";
-static const std::string IdentificationRuleTypeAttribute = "type";
+static const std::string DeviceIdentificationElement = "identification";
+static const std::string DeviceIdentificationRuleElement = "rule";
+static const std::string DeviceIdentificationRulePropertyAttribute = "property";
+static const std::string DeviceIdentificationRuleTypeAttribute = "type";
+
+static const std::string ProtocolInfoElement = "protocolinfo";
 
 static const std::string MediaServerElement = "mediaserver";
 static const std::string MediaServerTypeMappingElement = "typemapping";
@@ -52,10 +56,21 @@ static const std::string MediaServerPathMappingMapIdAttribute = "id";
 static const std::string MediaServerPathMappingMapToAttribute = "to";
 
 static const std::string ContentDirectoryElement = "contentdirectory";
-static const std::string ContentDirectoryVersion = "version";
+static const std::string ContentDirectoryVersionElement = "version";
 static const uint32_t ContentDirectoryVersionMinimum = 1;
 static const uint32_t ContentDirectoryVersionMaximum = 4;
 
+static const std::string MediaRendererElement = "mediarenderer";
+
+static const std::string MediaProfilesElement = "mediaprofiles";
+static const std::string MediaProfileElement = "mediaprofile";
+static const std::string MediaProfileContainersElement = "containers";
+static const std::string MediaProfileContainerElement = "container";
+static const std::string MediaProfileVideoCodecsElement = "videocodecs";
+static const std::string MediaProfileVideoCodecElement = "videocodec";
+static const std::string MediaProfileAudioCodecsElement = "audiocodecs";
+static const std::string MediaProfileAudioCodecElement = "audiocodec";
+static const std::string MediaProfileMimeTypeElement = "mimetype";
 
 COhUPnPDeviceProfile::COhUPnPDeviceProfile()
   : m_loaded(false),
@@ -116,13 +131,22 @@ bool COhUPnPDeviceProfile::Load(const std::string& profileLocation)
     return false;
   }
 
-  if (!LoadIdentification(root))
+  if (!LoadDeviceIdentification(root))
+    return false;
+
+  if (!LoadGeneral(root))
     return false;
 
   if (!LoadMediaServer(root))
     return false;
 
+  if (!LoadMediaRenderer(root))
+    return false;
+
   if (!LoadContentDirectory(root))
+    return false;
+
+  if (!LoadMediaProfiles(root))
     return false;
 
   // TODO
@@ -159,27 +183,52 @@ bool COhUPnPDeviceProfile::GetMappedPath(const std::string& objectId, std::strin
   return true;
 }
 
-bool COhUPnPDeviceProfile::LoadIdentification(const TiXmlElement* root)
+std::string COhUPnPDeviceProfile::GetMimeType(std::string container) const
 {
-  const TiXmlElement* identification = root->FirstChildElement(IdentificationElement);
+  StringUtils::Trim(container, ".");
+  std::transform(container.begin(), container.end(), container.begin(), ::tolower);
+
+  for (const auto& mediaProfile : m_mediaProfiles)
+  {
+    if (mediaProfile.HasMimeType() && mediaProfile.MatchesContainer(container))
+      return mediaProfile.GetMimeType();
+  }
+
+  // fall back to the general MIME list
+  return CMime::GetMimeType(container);
+}
+
+bool COhUPnPDeviceProfile::LoadDeviceIdentification(const TiXmlElement* root)
+{
+  const TiXmlElement* identification = root->FirstChildElement(DeviceIdentificationElement);
   if (identification != nullptr)
   {
     // load the identification rules
-    const TiXmlNode* identificationRuleNode = identification->FirstChild(IdentificationRuleElement);
+    const TiXmlNode* identificationRuleNode = identification->FirstChild(DeviceIdentificationRuleElement);
     while (identificationRuleNode != nullptr)
     {
-      IdentificationRule rule;
+      DeviceIdentificationRule rule;
       if (!rule.Deserialize(identificationRuleNode))
       {
         CLog::Log(LOGWARNING, "COhUPnPDeviceProfile: invalid <%s><%s> element in profile %s",
-          IdentificationElement.c_str(), IdentificationRuleElement.c_str(), m_name.c_str());
+          DeviceIdentificationElement.c_str(), DeviceIdentificationRuleElement.c_str(), m_name.c_str());
       }
       else
         m_identificationRules.push_back(rule);
 
-      identificationRuleNode = identificationRuleNode->NextSibling(IdentificationRuleElement);
+      identificationRuleNode = identificationRuleNode->NextSibling(DeviceIdentificationRuleElement);
     }
   }
+
+  return true;
+}
+
+bool COhUPnPDeviceProfile::LoadGeneral(const TiXmlElement* root)
+{
+  if (root == nullptr)
+    return false;
+
+  XMLUtils::GetString(root, ProtocolInfoElement.c_str(), m_protocolInfo);
 
   return true;
 }
@@ -273,23 +322,59 @@ bool COhUPnPDeviceProfile::LoadPathMapping(const TiXmlElement* root)
   return true;
 }
 
+bool COhUPnPDeviceProfile::LoadMediaRenderer(const TiXmlElement* root)
+{
+  const TiXmlElement* mediaRenderer = root->FirstChildElement(MediaRendererElement);
+  if (mediaRenderer == nullptr)
+    return true;
+
+  // TODO
+
+  return true;
+}
+
 bool COhUPnPDeviceProfile::LoadContentDirectory(const TiXmlElement* root)
 {
   const TiXmlElement* contentDirectory = root->FirstChildElement(ContentDirectoryElement);
   if (contentDirectory == nullptr)
     return true;
 
-  XMLUtils::GetUInt(contentDirectory, ContentDirectoryVersion.c_str(), m_contentDirectoryVersion, ContentDirectoryVersionMinimum, ContentDirectoryVersionMaximum);
+  XMLUtils::GetUInt(contentDirectory, ContentDirectoryVersionElement.c_str(), m_contentDirectoryVersion, ContentDirectoryVersionMinimum, ContentDirectoryVersionMaximum);
 
   return true;
 }
 
-COhUPnPDeviceProfile::IdentificationRule::IdentificationRule()
+bool COhUPnPDeviceProfile::LoadMediaProfiles(const TiXmlElement* root)
+{
+  const TiXmlElement* mediaProfilesNode = root->FirstChildElement(MediaProfilesElement);
+  if (mediaProfilesNode != nullptr)
+  {
+    // load the identification rules
+    const TiXmlNode* mediaProfileNode = mediaProfilesNode->FirstChild(MediaProfileElement);
+    while (mediaProfileNode != nullptr)
+    {
+      MediaProfile mediaProfile;
+      if (!mediaProfile.Deserialize(mediaProfileNode))
+      {
+        CLog::Log(LOGWARNING, "COhUPnPDeviceProfile: invalid <%s><%s> element in profile %s",
+          MediaProfilesElement.c_str(), MediaProfileElement.c_str(), m_name.c_str());
+      }
+      else
+        m_mediaProfiles.push_back(mediaProfile);
+
+      mediaProfileNode = mediaProfileNode->NextSibling(MediaProfileElement);
+    }
+  }
+
+  return true;
+}
+
+COhUPnPDeviceProfile::DeviceIdentificationRule::DeviceIdentificationRule()
   : m_type(MatchType::Exact),
     m_property(nullptr)
 { }
 
-bool COhUPnPDeviceProfile::IdentificationRule::Deserialize(const TiXmlNode* node)
+bool COhUPnPDeviceProfile::DeviceIdentificationRule::Deserialize(const TiXmlNode* node)
 {
   if (node == nullptr || node->Type() != TiXmlNode::TINYXML_ELEMENT || node->FirstChild() == nullptr)
     return false;
@@ -299,7 +384,7 @@ bool COhUPnPDeviceProfile::IdentificationRule::Deserialize(const TiXmlNode* node
     return false;
 
   const TiXmlElement* element = node->ToElement();
-  const std::string* type = element->Attribute(IdentificationRuleTypeAttribute);
+  const std::string* type = element->Attribute(DeviceIdentificationRuleTypeAttribute);
   if (type == nullptr || *type == "exact")
     m_type = MatchType::Exact;
   else if (*type == "substring")
@@ -309,7 +394,7 @@ bool COhUPnPDeviceProfile::IdentificationRule::Deserialize(const TiXmlNode* node
   else
     return false;
 
-  const std::string* prop = element->Attribute(IdentificationRulePropertyAttribute);
+  const std::string* prop = element->Attribute(DeviceIdentificationRulePropertyAttribute);
   if (prop == nullptr || prop->empty())
     return false;
 
@@ -337,7 +422,7 @@ bool COhUPnPDeviceProfile::IdentificationRule::Deserialize(const TiXmlNode* node
   return true;
 }
 
-bool COhUPnPDeviceProfile::IdentificationRule::Matches(const COhUPnPDevice& device) const
+bool COhUPnPDeviceProfile::DeviceIdentificationRule::Matches(const COhUPnPDevice& device) const
 {
   if (!device.IsValid() || m_value.empty())
     return false;
@@ -369,4 +454,41 @@ bool COhUPnPDeviceProfile::IdentificationRule::Matches(const COhUPnPDevice& devi
   }
 
   return false;
+}
+
+bool COhUPnPDeviceProfile::MediaProfile::Deserialize(const TiXmlNode* node)
+{
+  if (node == nullptr)
+    return false;
+
+  const TiXmlNode* containersNode = node->FirstChild(MediaProfileContainersElement);
+  if (containersNode != nullptr)
+  {
+    std::vector<std::string> containers;
+    if (XMLUtils::GetStringArray(containersNode, MediaProfileContainerElement.c_str(), containers))
+      m_containers.insert(containers.cbegin(), containers.cend());
+  }
+
+  const TiXmlNode* videoCodecsNode = node->FirstChild(MediaProfileVideoCodecsElement);
+  if (videoCodecsNode != nullptr)
+  {
+    std::vector<std::string> videoCodecs;
+    if (XMLUtils::GetStringArray(videoCodecsNode, MediaProfileVideoCodecElement.c_str(), videoCodecs))
+      m_videoCodecs.insert(videoCodecs.cbegin(), videoCodecs.cend());
+  }
+
+  const TiXmlNode* audioCodecsNode = node->FirstChild(MediaProfileAudioCodecsElement);
+  if (audioCodecsNode != nullptr)
+  {
+    std::vector<std::string> audioCodecs;
+    if (XMLUtils::GetStringArray(audioCodecsNode, MediaProfileAudioCodecElement.c_str(), audioCodecs))
+      m_audioCodecs.insert(audioCodecs.cbegin(), audioCodecs.cend());
+  }
+
+  if (m_containers.empty() && m_videoCodecs.empty() && m_audioCodecs.empty())
+    return false;
+
+  XMLUtils::GetString(node, MediaProfileMimeTypeElement.c_str(), m_mimeType);
+
+  return !m_mimeType.empty();
 }

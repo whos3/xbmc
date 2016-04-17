@@ -59,6 +59,10 @@ public:
   std::string GetIconUrl() const;
   std::string GetIconUrl(const std::string &mimetype) const;
 
+  std::set<std::pair<std::string, uint8_t>> GetServices() const;
+  bool HasService(const std::string& serviceType) const;
+  bool GetServiceVersion(const std::string& serviceType, uint8_t& serviceVersion);
+
   const std::string& GetUserAgent() const { return m_userAgent; }
 
 protected:
@@ -67,6 +71,7 @@ protected:
   void SetValid(bool valid) { m_valid = valid; }
 
   static bool ParseDeviceType(const std::string &deviceTypeString, std::string &deviceType, uint8_t &version);
+  static bool ParseServiceType(const std::string &serviceTypeString, std::string &serviceType, uint8_t &version);
 
   std::string m_descriptionUrl;
   std::string m_baseUrl;
@@ -86,11 +91,13 @@ protected:
   std::string m_presentationUrl;
 
   CUPnPIconList m_icons;
-  // TODO: serviceList
-  // TODO: deviceList
+
+  std::map<std::string, uint8_t> m_services;
 
   std::string m_userAgent;
 
 private:
+  static bool ParseType(const std::string &typeString, const std::string& typeName, std::string &type, uint8_t &version);
+
   bool m_valid;
 };

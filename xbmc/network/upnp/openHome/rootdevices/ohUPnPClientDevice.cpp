@@ -22,14 +22,17 @@
 
 #include "ohUPnPClientDevice.h"
 
-COhUPnPClientDevice::COhUPnPClientDevice(const OpenHome::Net::IDvInvocationStd& clientInvocation)
-  : COhUPnPDevice()
+COhUPnPClientDevice::COhUPnPClientDevice(const std::string& userAgent)
 {
-  m_userAgent = clientInvocation.ClientUserAgent();
+  m_userAgent = userAgent;
   // TODO: parse more
 
   SetValid(!m_userAgent.empty());
 }
+
+COhUPnPClientDevice::COhUPnPClientDevice(const OpenHome::Net::IDvInvocationStd& clientInvocation)
+  : COhUPnPClientDevice(clientInvocation.ClientUserAgent())
+{ }
 
 COhUPnPClientDevice::~COhUPnPClientDevice()
 { }

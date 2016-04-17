@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<profile extends="Default">
+  <name>Samsung Smart TV</name>
+  <identification>
+    <rule property="manufacturer">Samsung Electronics</rule>
+    <rule property="user-agent" type="substring">SEC_</rule>
+  </identification>
+  <mediaprofiles>
+    <mediaprofile>
+      <containers>
+        <container>mkv</container>
+      </containers>
+      <mimetype>video/x-mkv</mimetype>
+    </mediaprofile>
+  </mediaprofiles>
+</profile>

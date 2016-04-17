@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <stdint.h>
+#include <set>
 
 #include <OpenHome/Net/Core/OhNet.h>
 #include <OpenHome/Net/Cpp/CpDeviceUpnp.h>
@@ -33,6 +34,7 @@
 #include "threads/CriticalSection.h"
 #include "threads/SingleLock.h"
 #include "utils/log.h"
+#include "utils/StringUtils.h"
 
 template<class TControlPointService>
 class IOhUPnPControlPoint : public IOhUPnPService
@@ -50,8 +52,9 @@ public:
 
     {
       CSingleLock lock(m_devicesSection);
-      delete m_devices;
-      m_devices = nullptr;
+      for (const auto& device : m_devices)
+        delete device;
+      m_devices.clear();
     }
   }
 
@@ -105,26 +108,37 @@ public:
   }
 
 protected:
-  IOhUPnPControlPoint(const std::string &domain, const std::string &serviceName, uint8_t version)
+  IOhUPnPControlPoint(const std::string &domain, const std::string &serviceName, uint8_t version, std::set<uint8_t> additionalVersions = std::set<uint8_t>())
     : IOhUPnPService(domain, serviceName, version),
-      m_devices(nullptr)
+      m_devices()
   {
     CSingleLock lock(m_devicesSection);
-    m_devices = new OpenHome::Net::CpDeviceListCppUpnpServiceType(
-      domain, serviceName, version,
-      OpenHome::Net::MakeFunctorCpDeviceCpp(*this, &IOhUPnPControlPoint::added),
-      OpenHome::Net::MakeFunctorCpDeviceCpp(*this, &IOhUPnPControlPoint::removed));
+
+    additionalVersions.insert(version);
+    for (const auto& additionalVersion : additionalVersions)
+    {
+      m_devices.emplace(new OpenHome::Net::CpDeviceListCppUpnpServiceType(
+        domain, serviceName, additionalVersion,
+        OpenHome::Net::MakeFunctorCpDeviceCpp(*this, &IOhUPnPControlPoint::added),
+        OpenHome::Net::MakeFunctorCpDeviceCpp(*this, &IOhUPnPControlPoint::removed)));
+    }
+
   }
+
+  /*!
+  * \brief Callback for every service that has been discovered to check if it matches for the control point
+  */
+  virtual bool IsMatchingService(const UPnPControlPointService &service) const { return true; }
 
   /*!
    * \brief Callback for every service that has been discovered
    */
-  virtual void onServiceAdded(const UPnPControlPointService &service) { };
+  virtual void OnServiceAdded(const UPnPControlPointService &service) { }
 
   /*!
    * \brief Callback for every previously discovered service that disappeared
    */
-  virtual void onServiceRemoved(const UPnPControlPointService &service) { };
+  virtual void OnServiceRemoved(const UPnPControlPointService &service) { }
 
   bool findService(const std::string& uuid, UPnPControlPointService& service) const
   {
@@ -156,6 +170,10 @@ private:
       return;
     }
 
+    CSingleLock lock(m_servicesSection);
+    if (m_services.find(device.Udn()) != m_services.end())
+      return;
+
     CLog::Log(LOGDEBUG, "%s: service \"%s:%hhu\" detected: %s (%s)", getLogPrefix().c_str(),
       upnpDevice.GetDeviceType().c_str(), upnpDevice.GetDeviceTypeVersion(), upnpDevice.GetFriendlyName().c_str(), device.Udn().c_str());
 
@@ -167,12 +185,20 @@ private:
       CLog::Log(LOGINFO, "%s: service %s (%s) matches profile %s", getLogPrefix().c_str(), upnpDevice.GetFriendlyName().c_str(), device.Udn().c_str(), profile.GetName().c_str());
 
     UPnPControlPointService service = { upnpDevice, profile, new TControlPointService(device) };
+
+    if (!IsMatchingService(service))
     {
-      CSingleLock lock(m_servicesSection);
-      m_services.insert(std::make_pair(device.Udn(), service));
+      CLog::Log(LOGDEBUG, "%s: ignoring service \"%s:%hhu\" from %s (%s)", getLogPrefix().c_str(),
+        upnpDevice.GetDeviceType().c_str(), upnpDevice.GetDeviceTypeVersion(), upnpDevice.GetFriendlyName().c_str(), device.Udn());
+
+      delete service.service;
+      return;
     }
 
-    onServiceAdded(service);
+    m_services.insert(std::make_pair(device.Udn(), service)).second;
+    lock.Leave();
+
+    OnServiceAdded(service);
   }
 
   void removed(OpenHome::Net::CpDeviceCpp& device)
@@ -189,7 +215,7 @@ private:
 
     CLog::Log(LOGDEBUG, "%s: service removed: %s (%s)", getLogPrefix().c_str(), service->second.device.GetFriendlyName().c_str(), device.Udn().c_str());
 
-    onServiceRemoved(service->second);
+    OnServiceRemoved(service->second);
 
     delete service->second.service;
     m_services.erase(service);
@@ -199,5 +225,149 @@ private:
   std::map<std::string, UPnPControlPointService> m_services;
 
   CCriticalSection m_devicesSection;
-  OpenHome::Net::CpDeviceListCppUpnpServiceType *m_devices;
+  std::set<OpenHome::Net::CpDeviceListCppUpnpServiceType*> m_devices;
+};
+
+template<class TControlPointService, class TControlPointManager, class TControlPointInstance, class TControlPointAsync>
+class IOhUPnPControlPointManager : public IOhUPnPControlPoint<TControlPointService>
+{
+private:
+  using ControlPointPtr = std::shared_ptr<TControlPointInstance>;
+public:
+  virtual ~IOhUPnPControlPointManager()
+  {
+    // disable and destroy all control points
+    std::set<ControlPointPtr> controlPoints;
+    {
+      CSingleLock lock(m_criticalControlPoints);
+      controlPoints = m_controlPoints;
+    }
+
+    for (const auto& controlPoint : controlPoints)
+      DestroyControlPoint(controlPoint);
+    controlPoints.clear();
+  }
+
+  virtual ControlPointPtr CreateControlPoint(const std::string& uuid, TControlPointAsync* callback)
+  {
+    UPnPControlPointService service;
+    if (!findService(uuid, service))
+    {
+      CLog::Log(LOGERROR, "IOhUPnPControlPointManager: trying to create a control point for an unknown service with UUID \"%s\"", uuid.c_str());
+      return false;
+    }
+
+    ControlPointPtr controlPoint(new TControlPointInstance(reinterpret_cast<TControlPointManager*>(this), uuid, callback));
+
+    // remember the control point
+    CSingleLock lock(m_criticalControlPoints);
+    m_controlPoints.insert(controlPoint);
+
+    return controlPoint;
+  }
+
+  virtual void DestroyControlPoint(ControlPointPtr controlPoint)
+  {
+    if (controlPoint == nullptr)
+      return;
+
+    // make sure the control point is disabled
+    controlPoint->Disable();
+
+    // remove the control point
+    CSingleLock lock(m_criticalControlPoints);
+    m_controlPoints.erase(controlPoint);
+  }
+
+protected:
+  IOhUPnPControlPointManager(const std::string& deviceType, const std::string &domain, const std::string &serviceName, uint8_t version, std::set<uint8_t> additionalVersions = std::set<uint8_t>())
+    : IOhUPnPControlPoint<TControlPointService>(domain, serviceName, version, additionalVersions)
+    , m_deviceType(deviceType)
+  { }
+
+  // specialization of IOhUPnPControlPoint
+  virtual bool IsMatchingService(const UPnPControlPointService &service) const override
+  {
+    if (m_deviceType.empty())
+      return true;
+
+    // only handle AVTransport services from a matching device
+    return service.device.GetDeviceType() == m_deviceType;
+  }
+
+  virtual void OnServiceAdded(const UPnPControlPointService &service) override
+  {
+    // enable all existing control points matching the detected device
+    CSingleLock lock(m_criticalControlPoints);
+    for (const auto& controlPoint : m_controlPoints)
+    {
+      if (controlPoint->GetUuid() == service.device.GetUuid())
+        controlPoint->Enable(reinterpret_cast<TControlPointManager*>(this));
+    }
+  }
+
+  virtual void OnServiceRemoved(const UPnPControlPointService &service) override
+  {
+    // disable all existing control points matching the removed device
+    CSingleLock lock(m_criticalControlPoints);
+    for (const auto& controlPoint : m_controlPoints)
+    {
+      if (controlPoint->GetUuid() == service.device.GetUuid())
+        controlPoint->Disable();
+    }
+  }
+
+private:
+  const std::string m_deviceType;
+
+  CCriticalSection m_criticalControlPoints;
+  std::set<ControlPointPtr> m_controlPoints;
+};
+
+template<class TControlPointManager, class TControlPointAsync>
+class IOhUPnPControlPointInstance
+{
+public:
+  virtual ~IOhUPnPControlPointInstance()
+  {
+    m_manager = nullptr;
+    m_callback = nullptr;
+  }
+
+  const std::string& GetUuid() const { return m_uuid; }
+
+  const COhUPnPControlPointDevice& GetDevice() const { return m_device; }
+
+  virtual const COhUPnPDeviceProfile& GetProfile() const = 0;
+
+protected:
+  IOhUPnPControlPointInstance(const TControlPointManager* manager, const std::string& uuid, TControlPointAsync* callback)
+    : m_uuid(uuid)
+    , m_manager(manager)
+    , m_callback(callback)
+    , m_device()
+  {
+    if (m_manager == nullptr || !m_manager->GetDevice(m_uuid, m_device))
+      CLog::Log(LOGERROR, "IOhUPnPControlPointInstance: failed to determine device %s", m_uuid.c_str());
+  }
+
+  void Enable(const TControlPointManager* manager)
+  {
+    CSingleLock lock(m_criticalManager);
+    m_manager = manager;
+  }
+
+  void Disable()
+  {
+    CSingleLock lock(m_criticalManager);
+    m_manager = nullptr;
+  }
+
+  const std::string m_uuid;
+  CCriticalSection m_criticalManager;
+  const TControlPointManager* m_manager;
+  TControlPointAsync* m_callback;
+
+private:
+  COhUPnPControlPointDevice m_device;
 };

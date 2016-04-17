@@ -20,6 +20,7 @@
  */
 #include <map>
 #include <string>
+#include <vector>
 
 #include "network/upnp/openHome/ohUPnPDevice.h"
 #include "network/upnp/openHome/didllite/objects/classmappers/UPnPClassMapping.h"
@@ -45,22 +46,31 @@ public:
 
   uint32_t GetContentDirectoryVersion() const { return m_contentDirectoryVersion; }
 
+  const std::string& GetProtocolInfo() const { return m_protocolInfo; }
+
+  // TODO
+
+  std::string GetMimeType(std::string container) const;
+
   // TODO
 
 private:
-  bool LoadIdentification(const TiXmlElement* root);
+  bool LoadDeviceIdentification(const TiXmlElement* root);
+  bool LoadGeneral(const TiXmlElement* root);
   bool LoadMediaServer(const TiXmlElement* root);
   bool LoadTypeMapping(const TiXmlElement* root);
   bool LoadPathMapping(const TiXmlElement* root);
+  bool LoadMediaRenderer(const TiXmlElement* root);
   bool LoadContentDirectory(const TiXmlElement* root);
+  bool LoadMediaProfiles(const TiXmlElement* root);
 
   bool m_loaded;
   std::string m_name;
 
-  class IdentificationRule : public IXmlDeserializable
+  class DeviceIdentificationRule : public IXmlDeserializable
   {
   public:
-    IdentificationRule();
+    DeviceIdentificationRule();
 
     // implementation of IXmlDeserializable
     bool Deserialize(const TiXmlNode* node) override;
@@ -80,7 +90,7 @@ private:
     std::string m_value;
     PropertyGetter m_property;
   };
-  std::vector<IdentificationRule> m_identificationRules;
+  std::vector<DeviceIdentificationRule> m_identificationRules;
 
   CUPnPClassMapping m_classMapping;
 
@@ -88,4 +98,33 @@ private:
   PathMapping m_pathMapping;
 
   uint32_t m_contentDirectoryVersion;
+
+  std::string m_protocolInfo;
+
+  class MediaProfile : public IXmlDeserializable
+  {
+  public:
+    MediaProfile() = default;
+
+    // implementation of IXmlDeserializable
+    bool Deserialize(const TiXmlNode* node) override;
+
+    inline bool HasMimeType() const { return !m_mimeType.empty(); }
+
+    inline bool MatchesContainer(const std::string& container, bool matchEmpty = false) const { return MatchesSet(m_containers, container, matchEmpty); }
+    inline bool MatchesVideoCodec(const std::string& videoCodec, bool matchEmpty = false) const { return MatchesSet(m_videoCodecs, videoCodec, matchEmpty); }
+    inline bool MatchesAudioCodec(const std::string& audioCodec, bool matchEmpty = false) const { return MatchesSet(m_audioCodecs, audioCodec, matchEmpty); }
+
+    // TODO
+
+    const std::string& GetMimeType() const { return m_mimeType; }
+
+  private:
+    inline static bool MatchesSet(const std::set<std::string>& set, const std::string& value, bool matchEmpty) { return (matchEmpty && set.empty()) || set.find(value) != set.cend(); }
+    std::set<std::string> m_containers;
+    std::set<std::string> m_videoCodecs;
+    std::set<std::string> m_audioCodecs;
+    std::string m_mimeType;
+  };
+  std::vector<MediaProfile> m_mediaProfiles;
 };
