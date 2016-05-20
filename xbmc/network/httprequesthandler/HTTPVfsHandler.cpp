@@ -26,8 +26,12 @@
 #include "settings/MediaSourceSettings.h"
 #include "utils/URIUtils.h"
 
-CHTTPVfsHandler::CHTTPVfsHandler(const HTTPRequest &request)
-  : CHTTPFileHandler(request)
+CHTTPVfsHandler::CHTTPVfsHandler(std::shared_ptr<const IMimeTypeGetter> mimeTypeGetter /* = nullptr */)
+  : CHTTPFileHandler(mimeTypeGetter)
+{ }
+
+CHTTPVfsHandler::CHTTPVfsHandler(const HTTPRequest &request, const CHTTPVfsHandler& other)
+  : CHTTPFileHandler(request, other)
 {
   std::string file;
   int responseStatus = MHD_HTTP_BAD_REQUEST;

@@ -25,20 +25,31 @@
 #include "utils/StringUtils.h"
 #include "utils/URIUtils.h"
 
-CHTTPFileHandler::CHTTPFileHandler()
+std::string CDefaultMimeTypeGetter::GetMimeTypeFromExtension(const std::string& extension, const HTTPRequest &request) const
+{
+  return CMime::GetMimeType(extension);
+}
+
+CHTTPFileHandler::CHTTPFileHandler(std::shared_ptr<const IMimeTypeGetter> mimeTypeGetter /* = nullptr */)
   : IHTTPRequestHandler(),
     m_url(),
     m_canHandleRanges(true),
     m_canBeCached(true),
-    m_lastModified()
+    m_lastModified(),
+    m_mimeTypeGetter(mimeTypeGetter != nullptr ? mimeTypeGetter : std::make_shared<const CDefaultMimeTypeGetter>())
 { }
 
-CHTTPFileHandler::CHTTPFileHandler(const HTTPRequest &request)
+CHTTPFileHandler::CHTTPFileHandler(const HTTPRequest &request, std::shared_ptr<const IMimeTypeGetter> mimeTypeGetter /* = nullptr */)
   : IHTTPRequestHandler(request),
     m_url(),
     m_canHandleRanges(true),
     m_canBeCached(true),
-    m_lastModified()
+    m_lastModified(),
+    m_mimeTypeGetter(mimeTypeGetter != nullptr ? mimeTypeGetter : std::make_shared<const CDefaultMimeTypeGetter>())
+{ }
+
+CHTTPFileHandler::CHTTPFileHandler(const HTTPRequest &request, const CHTTPFileHandler& other)
+  : CHTTPFileHandler(request, other.m_mimeTypeGetter)
 { }
 
 int CHTTPFileHandler::HandleRequest()
@@ -76,7 +87,7 @@ void CHTTPFileHandler::SetFile(const std::string& file, int responseStatus)
     // determine the content type
     std::string ext = URIUtils::GetExtension(m_url);
     StringUtils::ToLower(ext);
-    m_response.contentType = CMime::GetMimeType(ext);
+    m_response.contentType = m_mimeTypeGetter->GetMimeTypeFromExtension(ext, m_request);
 
     // determine the last modified date
     XFILE::CFile fileObj;

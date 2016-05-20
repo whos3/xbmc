@@ -1206,6 +1206,7 @@
     <ClInclude Include="..\..\xbmc\interfaces\python\PythonInvoker.h" />
     <ClInclude Include="..\..\xbmc\interfaces\python\pythreadstate.h" />
     <ClInclude Include="..\..\xbmc\network\httprequesthandler\HTTPRequestHandlerUtils.h" />
+    <ClInclude Include="..\..\xbmc\network\httprequesthandler\IMimeTypeGetter.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPAVTransportControlPoint.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPConnectionManagerControlPoint.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPControlPoint.h" />

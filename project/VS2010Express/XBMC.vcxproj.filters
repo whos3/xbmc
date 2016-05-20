@@ -6871,6 +6871,9 @@
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPConnectionManagerControlPoint.h">
       <Filter>network\upnp\openHome\controlpoints</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\httprequesthandler\IMimeTypeGetter.h">
+      <Filter>network\httprequesthandler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">

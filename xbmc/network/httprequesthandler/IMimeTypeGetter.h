@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2011-2013 Team XBMC
+ *      Copyright (C) 2016 Team XBMC
  *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,21 +19,17 @@
  *
  */
 
-#include <string>
-
-#include "network/httprequesthandler/HTTPFileHandler.h"
-
-class CHTTPVfsHandler : public CHTTPFileHandler
+/*
+ * \brief Interface for getting the MIME type for an extension of a file being
+ *        requested with the given request.
+ */
+class IMimeTypeGetter
 {
 public:
-  CHTTPVfsHandler(std::shared_ptr<const IMimeTypeGetter> mimeTypeGetter = nullptr);
-  virtual ~CHTTPVfsHandler() { }
-  
-  virtual IHTTPRequestHandler* Create(const HTTPRequest &request) { return new CHTTPVfsHandler(request, *this); }
-  virtual bool CanHandleRequest(const HTTPRequest &request);
+  virtual ~IMimeTypeGetter() = default;
 
-  virtual int GetPriority() const { return 5; }
+  virtual std::string GetMimeTypeFromExtension(const std::string& extension, const HTTPRequest &request) const = 0;
 
 protected:
-  explicit CHTTPVfsHandler(const HTTPRequest &request, const CHTTPVfsHandler& other);
+  IMimeTypeGetter() = default;
 };

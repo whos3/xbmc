@@ -19,10 +19,22 @@
  *
  */
 
+#include <memory>
 #include <string>
 
 #include "XBDateTime.h"
 #include "network/httprequesthandler/IHTTPRequestHandler.h"
+#include "network/httprequesthandler/IMimeTypeGetter.h"
+
+class CDefaultMimeTypeGetter : public IMimeTypeGetter
+{
+public:
+  CDefaultMimeTypeGetter() = default;
+  virtual ~CDefaultMimeTypeGetter() = default;
+
+  // implementation of IMimeTypeGetter
+  virtual std::string GetMimeTypeFromExtension(const std::string& extension, const HTTPRequest &request) const override;
+};
 
 class CHTTPFileHandler : public IHTTPRequestHandler
 {
@@ -39,8 +51,9 @@ public:
   virtual std::string GetResponseFile() const { return m_url; }
 
 protected:
-  CHTTPFileHandler();
-  explicit CHTTPFileHandler(const HTTPRequest &request);
+  CHTTPFileHandler(std::shared_ptr<const IMimeTypeGetter> mimeTypeGetter = nullptr);
+  CHTTPFileHandler(const HTTPRequest &request, std::shared_ptr<const IMimeTypeGetter> mimeTypeGetter = nullptr);
+  CHTTPFileHandler(const HTTPRequest &request, const CHTTPFileHandler& other);
 
   void SetFile(const std::string& file, int responseStatus);
 
@@ -56,4 +69,5 @@ private:
 
   CDateTime m_lastModified;
 
+  const std::shared_ptr<const IMimeTypeGetter> m_mimeTypeGetter;
 };
