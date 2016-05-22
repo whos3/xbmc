@@ -65,6 +65,8 @@ protected:
   CUPnPObject(const std::string& elementName, const std::string& classType, const std::string& className = "");
   CUPnPObject(const CUPnPObject& obj);
 
+  void SetClass(const std::string& classType, const std::string& className = "");
+  void SetClass(const CUPnPClass& upnpClass);
   const std::string& GetCreator() const { return m_creator; }
   void SetCreator(const std::string& creator);
   const std::string& GetWriteStatus() const { return m_writeStatus; }

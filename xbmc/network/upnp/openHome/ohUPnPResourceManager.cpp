@@ -218,6 +218,8 @@ void COhUPnPResourceManager::WriteResource(const std::string& uriTail, TIpAddres
 std::string COhUPnPResourceManager::CMimeTypeGetter::GetMimeTypeFromExtension(const std::string& extension, const HTTPRequest &request) const
 {
   std::string userAgent = HTTPRequestHandlerUtils::GetRequestHeaderValue(request.connection, MHD_HEADER_KIND, MHD_HTTP_HEADER_USER_AGENT);
+  std::multimap<std::string, std::string> headerValues;
+  HTTPRequestHandlerUtils::GetRequestHeaderValues(request.connection, MHD_HEADER_KIND, headerValues);
   if (!userAgent.empty())
   {
     COhUPnPClientDevice device(userAgent);

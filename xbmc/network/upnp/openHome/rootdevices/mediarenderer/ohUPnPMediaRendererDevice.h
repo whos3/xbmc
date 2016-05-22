@@ -24,7 +24,9 @@
 
 #include "network/upnp/openHome/rootdevices/ohUPnPRootDevice.h"
 
+class COhUPnPMediaRendererAVTransportService;
 class COhUPnPMediaRendererConnectionManagerService;
+class COhUPnPRenderingControlService;
 
 class COhUPnPMediaRendererDevice : public COhUPnPRootDevice
 {
@@ -35,7 +37,7 @@ public:
     COhUPnPResourceManager& resourceManager);
   virtual ~COhUPnPMediaRendererDevice();
 
-  void SetSupportImporting(bool supportImporting);
+  void UpdateState();
 
 protected:
   virtual void SetupDevice(OpenHome::Net::DvDeviceStdStandard* device) override;
@@ -45,7 +47,7 @@ protected:
 
 private:
   // services
+  std::unique_ptr<COhUPnPMediaRendererAVTransportService> m_avTransport;
+  std::unique_ptr<COhUPnPRenderingControlService> m_renderingControl;
   std::unique_ptr<COhUPnPMediaRendererConnectionManagerService> m_connectionManager;
-
-  bool m_supportImporting;
 };

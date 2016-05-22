@@ -129,6 +129,51 @@ bool FileItemUtils::SerializeObject(CUPnPObject* upnpObj, const CFileItemElement
   return doc.Serialize(result, context);
 }
 
+bool FileItemUtils::DeserializeObject(const std::string& document, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, const CUPnPObject*& upnpObj)
+{
+  OhUPnPControlPointContext context(device, profile);
+
+  return DeserializeObject(document, elementFactory, context, upnpObj);
+}
+
+bool FileItemUtils::DeserializeObject(const std::string& document, const CFileItemElementFactory& elementFactory, const OhUPnPControlPointContext& context, const CUPnPObject*& upnpObj)
+{
+  if (document.empty())
+    return false;
+
+  CDidlLiteDocument doc(elementFactory);
+  if (!doc.Deserialize(document, context))
+    return false;
+
+  std::vector<const IDidlLiteElement*> elements = doc.GetElements();
+  if (elements.size() != 1)
+    return false;
+
+  upnpObj = dynamic_cast<const CUPnPObject*>(elements.front());
+  return upnpObj != nullptr;
+}
+
+bool FileItemUtils::ConvertFileItem(const CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, CFileItem& item)
+{
+  if (upnpObj == nullptr)
+    return false;
+
+  OhUPnPControlPointContext context(device, profile);
+
+  return ConvertFileItem(upnpObj, elementFactory, context, item);
+}
+
+bool FileItemUtils::ConvertFileItem(const CUPnPObject* upnpObj, const CFileItemElementFactory& elementFactory, const OhUPnPControlPointContext& context, CFileItem& item)
+{
+  if (upnpObj == nullptr)
+    return false;
+
+  if (!upnpObj->ToFileItem(item, context))
+    return false;
+
+  return true;
+}
+
 bool FileItemUtils::DeserializeFileItem(const std::string& document, const CFileItemElementFactory& elementFactory, const COhUPnPDevice& device, const COhUPnPDeviceProfile& profile, CFileItem& item)
 {
   OhUPnPControlPointContext context(device, profile);

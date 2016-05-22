@@ -46,6 +46,9 @@ public:
 
   uint32_t GetContentDirectoryVersion() const { return m_contentDirectoryVersion; }
 
+  bool ExpectsSimpleVideoItems() const { return m_simpleVideoItems; }
+  bool ExpectsSimpleStorageFolders() const { return m_simpleStorageFolders; }
+
   const std::string& GetProtocolInfo() const { return m_protocolInfo; }
 
   // TODO
@@ -98,6 +101,9 @@ private:
   PathMapping m_pathMapping;
 
   uint32_t m_contentDirectoryVersion;
+
+  bool m_simpleVideoItems;
+  bool m_simpleStorageFolders;
 
   std::string m_protocolInfo;
 

@@ -99,6 +99,8 @@ public:
   void StopMediaRenderer();
   bool IsMediaRendererRunning() const;
 
+  void UpdateState();
+
   // implementation of ISettingCallback
   void OnSettingChanged(const CSetting* setting) override;
   void OnSettingAction(const CSetting* setting) override;

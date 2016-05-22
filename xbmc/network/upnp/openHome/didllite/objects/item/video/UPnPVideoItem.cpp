@@ -35,6 +35,8 @@
 #include "video/VideoInfoTag.h"
 #include "video/VideoThumbLoader.h"
 
+static const std::string VideoItemClassType = "object.item.videoItem";
+
 static void FillResource(const CFileItem& item, const OhUPnPRootDeviceContext& context, CUPnPResource* resource, const std::string& protocol = "")
 {
   if (resource == nullptr)
@@ -87,7 +89,7 @@ static void FillResource(const CFileItem& item, const OhUPnPRootDeviceContext& c
 }
 
 CUPnPVideoItem::CUPnPVideoItem()
-  : CUPnPVideoItem("object.item.videoItem")
+  : CUPnPVideoItem(VideoItemClassType)
 { }
 
 CUPnPVideoItem::CUPnPVideoItem(const std::string& classType, const std::string& className /* = "" */)
@@ -221,6 +223,10 @@ bool CUPnPVideoItem::ToFileItem(CFileItem& item, const OhUPnPControlPointContext
 
 bool CUPnPVideoItem::FromFileItem(const CFileItem& item, const OhUPnPRootDeviceContext& context)
 {
+  // simple video items handling
+  if (context.profile.ExpectsSimpleVideoItems())
+    SetClass(VideoItemClassType);
+
   // create a copy of the item, retrieve additional details and serialize it
   CFileItem detailedItem = item;
 

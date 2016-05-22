@@ -687,10 +687,7 @@ void CUPnP::StopRenderer()
 +---------------------------------------------------------------------*/
 void CUPnP::UpdateState()
 {
-  /* TODO
-  if (!m_RendererHolder->m_Device.IsNull())
-      ((CUPnPRenderer*)m_RendererHolder->m_Device.AsPointer())->UpdateState();
-  */
+  COhUPnP::GetInstance().UpdateState();
 }
 
 void CUPnP::RegisterUserdata(void* ptr)

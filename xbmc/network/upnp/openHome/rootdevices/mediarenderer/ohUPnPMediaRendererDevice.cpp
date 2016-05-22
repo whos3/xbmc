@@ -20,7 +20,9 @@
 
 #include "ohUPnPMediaRendererDevice.h"
 #include "network/upnp/openHome/ohUPnPDefinitions.h"
+#include "network/upnp/openHome/rootdevices/mediarenderer/ohUPnPMediaRendererAVTransportService.h"
 #include "network/upnp/openHome/rootdevices/mediarenderer/ohUPnPMediaRendererConnectionManagerService.h"
+#include "network/upnp/openHome/rootdevices/mediarenderer/ohUPnPRenderingControlService.h"
 #include "utils/StringUtils.h"
 #include "utils/SystemInfo.h"
 
@@ -31,23 +33,19 @@ COhUPnPMediaRendererDevice::COhUPnPMediaRendererDevice(const std::string& uuid,
   COhUPnPTransferManager& transferManager,
   COhUPnPResourceManager& resourceManager)
   : COhUPnPRootDevice(uuid, UPNP_DOMAIN_NAME, UPNP_DEVICE_TYPE_MEDIARENDERER, 3,
-                      fileItemElementFactory, transferManager, resourceManager),
-    m_connectionManager(nullptr),
-    m_supportImporting(false)
+                      fileItemElementFactory, transferManager, resourceManager)
+  , m_avTransport(nullptr)
+  , m_renderingControl(nullptr)
+  , m_connectionManager(nullptr)
 { }
 
 COhUPnPMediaRendererDevice::~COhUPnPMediaRendererDevice()
 { }
 
-void COhUPnPMediaRendererDevice::SetSupportImporting(bool supportImporting)
+void COhUPnPMediaRendererDevice::UpdateState()
 {
-  if (m_supportImporting == supportImporting)
-    return;
-
-  m_supportImporting = supportImporting;
-
-  if (IsRunning())
-    Restart();
+  if (m_avTransport != nullptr)
+    m_avTransport->UpdateState();
 }
 
 void COhUPnPMediaRendererDevice::SetupDevice(OpenHome::Net::DvDeviceStdStandard* device)
@@ -64,16 +62,26 @@ bool COhUPnPMediaRendererDevice::StartServices()
   m_connectionManager = std::make_unique<COhUPnPMediaRendererConnectionManagerService>(*this);
   m_connectionManager->Start();
 
-  // TODO: create and start RenderingControl service
-  // TODO: create and start AVTransport service
+  // create and start RenderingControl service
+  m_renderingControl = std::make_unique<COhUPnPRenderingControlService>(*this);
+  m_renderingControl->Start();
+
+  // create and start AVTransport service
+  m_avTransport = std::make_unique<COhUPnPMediaRendererAVTransportService>(*this, m_elementFactory);
+  m_avTransport->Start();
 
   return true;
 }
 
 bool COhUPnPMediaRendererDevice::StopServices()
 {
-  // TODO: stop the AVTransport service
-  // TODO: stop the RenderingControl service
+  // stop the AVTransport service
+  m_avTransport->Stop();
+  m_avTransport.reset();
+
+  // stop the RenderingControl service
+  m_renderingControl->Stop();
+  m_renderingControl.reset();
 
   // stop the ConnectionManager service
   m_connectionManager->Stop();

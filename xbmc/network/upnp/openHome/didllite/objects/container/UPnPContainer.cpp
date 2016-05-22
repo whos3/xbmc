@@ -20,6 +20,7 @@
 
 #include "UPnPContainer.h"
 #include "FileItem.h"
+#include "network/upnp/openHome/ohUPnPContext.h"
 #include "network/upnp/openHome/ohUPnPDefinitions.h"
 
 CUPnPContainer::CUPnPClassDefinition::CUPnPClassDefinition(const std::string& classType /* = "" */ , const std::string& className /* = "" */ , bool includeDerived /* = false */)
@@ -102,6 +103,10 @@ bool CUPnPContainer::FromFileItem(const CFileItem& item, const OhUPnPRootDeviceC
 {
   if (!CUPnPObject::FromFileItem(item, context))
     return false;
+
+  // simple video items handling
+  if (context.profile.ExpectsSimpleStorageFolders())
+    SetClass("object.container.storageFolder");
 
   // TODO
 

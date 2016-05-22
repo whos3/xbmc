@@ -3100,6 +3100,12 @@
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\controlpoints\ohUPnPConnectionManagerControlPoint.cpp">
       <Filter>network\upnp\openHome\controlpoints</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPRenderingControlService.cpp">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererAVTransportService.cpp">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\media\MediaType.cpp">
@@ -6873,6 +6879,12 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\network\httprequesthandler\IMimeTypeGetter.h">
       <Filter>network\httprequesthandler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPRenderingControlService.h">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererAVTransportService.h">
+      <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

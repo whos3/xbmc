@@ -54,6 +54,11 @@ public:
     return !(*this == value);
   }
 
+  void operator=(TEnum value)
+  {
+    Set(value);
+  }
+
   virtual void Set(TEnum value)
   {
     const auto& it = std::find_if(m_definition.cbegin(), m_definition.cend(),

@@ -619,22 +619,7 @@ bool COhUPnPPlayer::FileItemToDidlLite(const CFileItem& item, std::string& resou
       if (!m_connectionManagerController->GetProtocolInfoSync(sourceInfo, sinkInfo))
         CLog::Log(LOGWARNING, "COhUPnPPlayer::FileItemToDidlLite(%s): failed to get protocol info", item.GetPath().c_str());
       else
-      {
-        auto sinkInfosStr = COhUtils::SplitCSV(sinkInfo);
-        std::vector<CUPnPResource::CProtocolInfo> sinkInfos;
-        for (const auto& info : sinkInfosStr)
-          sinkInfos.emplace_back(info);
-
-        for (const auto& info : sinkInfos)
-        {
-          const auto& resource = std::find_if(resources.cbegin(), resources.cend(), CUPnPResourceFinder::ByProtocolInfo(info));
-          if (resource != resources.cend())
-          {
-            resourcePath = (*resource)->GetUri();
-            break;
-          }
-        }
-      }
+        resourcePath = COhAVTransportUtils::FindBestResource(resources, sinkInfo);
     }
   }
 

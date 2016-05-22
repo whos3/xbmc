@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<profile extends="Default">
+  <name>Xbox 360</name>
+  <identification>
+    <rule property="modelname">Xbox 360</rule>
+    <rule property="user-agent" type="substring">Xbox</rule>
+  </identification>
+  <contentdirectory>
+    <simplevideoitems>true</simplevideoitems>
+    <simplecstoragefolders>true</simplecstoragefolders>
+  </contentdirectory>
+</profile>

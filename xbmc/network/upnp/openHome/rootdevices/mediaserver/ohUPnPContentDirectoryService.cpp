@@ -340,17 +340,21 @@ COhUPnPContentDirectoryService::ContentDirectory::ContentDirectory(COhUPnPConten
     m_service(service),
     m_createdObjectID(0)
 {
+  // enable the properties we support
   if (supportImporting)
   {
-    // enable the properties we support
     EnablePropertyTransferIDs();
     SetPropertyTransferIDs("");
   }
 
+  EnablePropertySystemUpdateID();
+  SetPropertySystemUpdateID(0);
+
   // enable the actions we support
   EnableActionGetSearchCapabilities();
   EnableActionGetSortCapabilities();
-  // TODO (causes a crash on startup): EnableActionGetSystemUpdateID();
+  EnableActionGetFeatureList();
+  EnableActionGetSystemUpdateID();
   EnableActionGetServiceResetToken();
   EnableActionBrowse();
   // TODO: EnableActionSearch();
@@ -384,7 +388,7 @@ void COhUPnPContentDirectoryService::ContentDirectory::GetSearchCapabilities(Ope
   CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetSearchCapabilities() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
-  searchCaps = "upnp:class";
+  searchCaps = ""; // TODO: "@id,@parentID,upnp:class";
 
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] --> GetSearchCapabilities(): searchCaps = %s", searchCaps.c_str());
@@ -437,6 +441,14 @@ void COhUPnPContentDirectoryService::ContentDirectory::GetSortExtensionCapabilit
 
 void COhUPnPContentDirectoryService::ContentDirectory::GetFeatureList(OpenHome::Net::IDvInvocationStd& invocation, std::string& featureList)
 {
+  static CXBMCTinyXML doc;
+  static TiXmlPrinter printer;
+  if (doc.RootElement() == nullptr)
+  {
+    doc.InsertEndChild(TiXmlElement("Features"));
+    doc.Accept(&printer);
+  }
+
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] <-- GetFeatureList()");
 
@@ -449,8 +461,7 @@ void COhUPnPContentDirectoryService::ContentDirectory::GetFeatureList(OpenHome::
   CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetFeatureList() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
-  CLog::Log(LOGWARNING, "COhUPnPContentDirectoryService: GetFeatureList is unsupported");
-  invocation.ReportError(UPNP_ERROR_ACTION_NOT_IMPLEMENTED, "Action not implemented");
+  featureList = printer.Str();
 
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] --> GetFeatureList(): featureList = %s", featureList.c_str());
@@ -470,8 +481,7 @@ void COhUPnPContentDirectoryService::ContentDirectory::GetSystemUpdateID(OpenHom
   CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetSystemUpdateID() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
-  // TODO
-  id = 0;
+  GetPropertySystemUpdateID(id);
 
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] --> GetSystemUpdateID(): system update ID = %u", id);
@@ -491,7 +501,6 @@ void COhUPnPContentDirectoryService::ContentDirectory::GetServiceResetToken(Open
   CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService: GetServiceResetToken() from %s (version %u; user-agent: %s)",
     COhUtils::TIpAddressToString(ip).c_str(), invocation.Version(), clientDevice.GetUserAgent().c_str());
 
-  // TODO
   resetToken = "0";
 
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
@@ -524,7 +533,7 @@ void COhUPnPContentDirectoryService::ContentDirectory::Browse(OpenHome::Net::IDv
   result.clear();
   numberReturned = 0;
   totalMatches = 0;
-  aUpdateID = 0; // TODO
+  GetPropertySystemUpdateID(aUpdateID);
 
   // get a (matching) profile
   COhUPnPDeviceProfile profile;

@@ -556,6 +556,14 @@ bool COhUPnP::IsMediaRendererRunning() const
   return m_mediaRendererDevice != nullptr && m_mediaRendererDevice->IsRunning();
 }
 
+void COhUPnP::UpdateState()
+{
+  if (!IsMediaRendererRunning())
+    return;
+
+  m_mediaRendererDevice->UpdateState();
+}
+
 void COhUPnP::OnSettingChanged(const CSetting* setting)
 {
   if (setting == nullptr)

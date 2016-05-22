@@ -21,6 +21,8 @@
 #include "ohUtils.h"
 #include "utils/StringUtils.h"
 
+static const std::string CSVSeparator = ",";
+
 std::string COhUtils::TIpAddressToString(TIpAddress address)
 {
   return StringUtils::Format("%d.%d.%d.%d", (address & 0xFF), ((address >> 8) & 0xFF), ((address >> 16) & 0xFF), ((address >> 24) & 0xFF));
@@ -54,7 +56,12 @@ std::string COhUtils::GetDurationFromSeconds(int64_t duration)
   return StringUtils::Format("%02d:%02d:%02d", time.GetHours(), time.GetMinutes(), time.GetSeconds());
 }
 
+std::string COhUtils::ToCSV(const std::vector<std::string>& list)
+{
+  return StringUtils::Join(list, CSVSeparator);
+}
+
 std::vector<std::string> COhUtils::SplitCSV(const std::string& csvList)
 {
-  return StringUtils::Split(csvList, ",");
+  return StringUtils::Split(csvList, CSVSeparator);
 }

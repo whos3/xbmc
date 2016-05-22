@@ -19,6 +19,35 @@
  */
 
 #include "ohUPnPAVTransport.h"
+#include "network/upnp/openHome/didllite/objects/properties/UPnPResource.h"
+#include "network/upnp/openHome/utils/OhUtils.h"
+
+std::string COhAVTransportUtils::FindBestResource(const std::vector<const CUPnPResource*>& resources, const std::string& protocolInfo)
+{
+  if (resources.empty())
+    return "";
+
+  // default to the first resource
+  std::string resourcePath = resources.front()->GetUri();
+
+  if (protocolInfo.empty())
+    return resourcePath;
+
+  // try to find the best matching resource using the given protocol information
+  auto protocolInfoStrs = COhUtils::SplitCSV(protocolInfo);
+  std::vector<CUPnPResource::CProtocolInfo> protocolInfos;
+  for (const auto& info : protocolInfoStrs)
+    protocolInfos.emplace_back(info);
+
+  for (const auto& info : protocolInfos)
+  {
+    const auto& resource = std::find_if(resources.cbegin(), resources.cend(), CUPnPResourceFinder::ByProtocolInfo(info));
+    if (resource != resources.cend())
+      return (*resource)->GetUri();
+  }
+
+  return resourcePath;
+}
 
 const OhUPnPEnumValueDefinitions<OhUPnPAVTransportSeekUnit> COhUPnPAVTransportSeekUnit::OhUPnPAVTransportSeekUnitDefinition = {
   { OhUPnPAVTransportSeekUnit::Unknown, "" },
@@ -128,4 +157,10 @@ const OhUPnPEnumValueDefinitions<OhUPnPAVTransportWriteStatus> COhUPnPAVTranspor
   { OhUPnPAVTransportWriteStatus::Writable, "WRITABLE" },
   { OhUPnPAVTransportWriteStatus::Protected, "PROTECTED" },
   { OhUPnPAVTransportWriteStatus::NotWritable, "NOT_WRITABLE" },
+};
+
+const OhUPnPEnumValueDefinitions<OhUPnPAVTransportMediaCategory> COhUPnPAVTransportMediaCategory::OhUPnPAVTransportMediaCategoryDefinition = {
+  { OhUPnPAVTransportMediaCategory::NoMedia, "NO_MEDIA" },
+  { OhUPnPAVTransportMediaCategory::TrackAware, "TRACK_AWARE" },
+  { OhUPnPAVTransportMediaCategory::TrackUnaware, "TRACK_UNAWARE" }
 };

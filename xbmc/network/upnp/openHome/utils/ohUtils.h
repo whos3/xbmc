@@ -33,5 +33,6 @@ public:
   static int64_t GetDurationInSeconds(const std::string& duration);
   static std::string GetDurationFromSeconds(int64_t duration);
 
+  static std::string ToCSV(const std::vector<std::string>& list);
   static std::vector<std::string> SplitCSV(const std::string& csvList);
 };

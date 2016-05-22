@@ -19,7 +19,18 @@
  *
  */
 
+#include <string>
+#include <vector>
+
 #include "network/upnp/openHome/utils/ohUPnPEnum.h"
+
+class CUPnPResource;
+
+class COhAVTransportUtils
+{
+public:
+  static std::string FindBestResource(const std::vector<const CUPnPResource*>& resources, const std::string& protocolInfo);
+};
 
 enum class OhUPnPAVTransportSeekUnit
 {
@@ -290,3 +301,30 @@ public:
 private:
   static const OhUPnPEnumValueDefinitions<OhUPnPAVTransportWriteStatus> OhUPnPAVTransportWriteStatusDefinition;
 };
+
+enum class OhUPnPAVTransportMediaCategory
+{
+  NoMedia,
+  TrackAware,
+  TrackUnaware
+};
+
+class COhUPnPAVTransportMediaCategory : public COhUPnPEnum<OhUPnPAVTransportMediaCategory, OhUPnPAVTransportMediaCategory::NoMedia>
+{
+public:
+  COhUPnPAVTransportMediaCategory()
+    : COhUPnPEnum(OhUPnPAVTransportMediaCategoryDefinition)
+  { }
+
+  COhUPnPAVTransportMediaCategory(OhUPnPAVTransportMediaCategory value)
+    : COhUPnPEnum(OhUPnPAVTransportMediaCategoryDefinition, value)
+  { }
+
+  explicit COhUPnPAVTransportMediaCategory(const std::string& value)
+    : COhUPnPEnum(OhUPnPAVTransportMediaCategoryDefinition, value)
+  { }
+
+private:
+  static const OhUPnPEnumValueDefinitions<OhUPnPAVTransportMediaCategory> OhUPnPAVTransportMediaCategoryDefinition;
+};
+

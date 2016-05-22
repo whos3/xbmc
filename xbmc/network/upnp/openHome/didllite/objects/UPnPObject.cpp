@@ -241,6 +241,17 @@ void CUPnPObject::SetTitle(const std::string& title)
   setPropertyValidity(UPNP_DIDL_DC_NAMESPACE, "title", !m_title.empty());
 }
 
+void CUPnPObject::SetClass(const std::string& classType, const std::string& className /* = "" */)
+{
+  m_class.SetType(classType);
+  m_class.SetName(className);
+}
+
+void CUPnPObject::SetClass(const CUPnPClass& upnpClass)
+{
+  m_class = upnpClass;
+}
+
 void CUPnPObject::SetCreator(const std::string& creator)
 {
   m_creator = creator;

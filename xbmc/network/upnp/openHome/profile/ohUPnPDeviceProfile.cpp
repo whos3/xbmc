@@ -59,6 +59,8 @@ static const std::string ContentDirectoryElement = "contentdirectory";
 static const std::string ContentDirectoryVersionElement = "version";
 static const uint32_t ContentDirectoryVersionMinimum = 1;
 static const uint32_t ContentDirectoryVersionMaximum = 4;
+static const std::string ContentDirectorySimpleVideoItemsElement = "simplevideoitems";
+static const std::string ContentDirectorySimpleStorageFoldersElement = "simplestoragefolders";
 
 static const std::string MediaRendererElement = "mediarenderer";
 
@@ -73,8 +75,10 @@ static const std::string MediaProfileAudioCodecElement = "audiocodec";
 static const std::string MediaProfileMimeTypeElement = "mimetype";
 
 COhUPnPDeviceProfile::COhUPnPDeviceProfile()
-  : m_loaded(false),
-    m_contentDirectoryVersion(1)
+  : m_loaded(false)
+  , m_contentDirectoryVersion(1)
+  , m_simpleVideoItems(false)
+  , m_simpleStorageFolders(false)
 { }
 
 bool COhUPnPDeviceProfile::Load(const std::string& profileLocation)
@@ -241,6 +245,7 @@ bool COhUPnPDeviceProfile::LoadMediaServer(const TiXmlElement* root)
 
   if (!LoadTypeMapping(mediaServer))
     return false;
+
   if (!LoadPathMapping(mediaServer))
     return false;
 
@@ -340,6 +345,8 @@ bool COhUPnPDeviceProfile::LoadContentDirectory(const TiXmlElement* root)
     return true;
 
   XMLUtils::GetUInt(contentDirectory, ContentDirectoryVersionElement.c_str(), m_contentDirectoryVersion, ContentDirectoryVersionMinimum, ContentDirectoryVersionMaximum);
+  XMLUtils::GetBoolean(root, ContentDirectorySimpleVideoItemsElement.c_str(), m_simpleVideoItems);
+  XMLUtils::GetBoolean(root, ContentDirectorySimpleStorageFoldersElement.c_str(), m_simpleStorageFolders);
 
   return true;
 }
