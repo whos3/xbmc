@@ -3836,16 +3836,11 @@ std::string CGUIInfoManager::LocalizeTime(const CDateTime &time, TIME_FORMAT for
 
 std::string CGUIInfoManager::GetDuration(TIME_FORMAT format) const
 {
-  if (g_application.m_pPlayer->IsPlayingAudio() && m_currentFile->HasMusicInfoTag())
-  {
-    const CMusicInfoTag& tag = *m_currentFile->GetMusicInfoTag();
-    if (tag.GetDuration() > 0)
-      return StringUtils::SecondsToTimeString(tag.GetDuration(), format);
-  }
-  unsigned int iTotal = (unsigned int)g_application.GetTotalTime();
-  if (iTotal > 0)
-    return StringUtils::SecondsToTimeString(iTotal, format);
-  return "";
+  int64_t duration = GetPlayDuration();
+  if (duration <= 0)
+    return "";
+
+  return StringUtils::SecondsToTimeString(static_cast<long>(duration / 1000), format);
 }
 
 std::string CGUIInfoManager::GetMusicPartyModeLabel(int item)
@@ -4624,6 +4619,17 @@ int64_t CGUIInfoManager::GetPlayTime() const
     return lPTS;
   }
   return 0;
+}
+
+int64_t CGUIInfoManager::GetPlayDuration() const
+{
+  int64_t duration = 0;
+  if (g_application.m_pPlayer->IsPlayingAudio() && m_currentFile->HasMusicInfoTag())
+    duration = m_currentFile->GetMusicInfoTag()->GetDuration();
+  else
+    duration = (unsigned int)g_application.GetTotalTime();
+
+  return duration * 1000;
 }
 
 std::string CGUIInfoManager::GetCurrentPlayTime(TIME_FORMAT format) const

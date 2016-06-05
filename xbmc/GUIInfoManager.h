@@ -186,6 +186,7 @@ public:
   std::string GetPictureLabel(int item);
 
   int64_t GetPlayTime() const;  // in ms
+  int64_t GetPlayDuration() const; // in ms
   std::string GetCurrentPlayTime(TIME_FORMAT format = TIME_FORMAT_GUESS) const;
   std::string GetCurrentSeekTime(TIME_FORMAT format = TIME_FORMAT_GUESS) const;
   int GetPlayTimeRemaining() const;
