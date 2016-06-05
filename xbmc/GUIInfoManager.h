@@ -308,8 +308,6 @@ protected:
   std::vector<GUIInfo> m_multiInfo;
   std::vector<std::string> m_listitemProperties;
 
-  std::string m_currentMovieDuration;
-
   // Current playing stuff
   CFileItem* m_currentFile;
   std::string m_currentMovieThumb;

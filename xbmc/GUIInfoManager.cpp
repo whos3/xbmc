@@ -3842,8 +3842,6 @@ std::string CGUIInfoManager::GetDuration(TIME_FORMAT format) const
     if (tag.GetDuration() > 0)
       return StringUtils::SecondsToTimeString(tag.GetDuration(), format);
   }
-  if (g_application.m_pPlayer->IsPlayingVideo() && !m_currentMovieDuration.empty())
-    return m_currentMovieDuration;
   unsigned int iTotal = (unsigned int)g_application.GetTotalTime();
   if (iTotal > 0)
     return StringUtils::SecondsToTimeString(iTotal, format);
@@ -4687,7 +4685,6 @@ void CGUIInfoManager::ResetCurrentItem()
 {
   m_currentFile->Reset();
   m_currentMovieThumb = "";
-  m_currentMovieDuration = "";
 }
 
 void CGUIInfoManager::SetCurrentItem(const CFileItemPtr item)
