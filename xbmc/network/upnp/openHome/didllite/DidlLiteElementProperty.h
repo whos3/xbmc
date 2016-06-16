@@ -55,17 +55,23 @@ public:
   CDidlLiteElementProperty& SetOptional(bool optional = true) { m_required = !optional; return *this; }
   CDidlLiteElementProperty& SetRequired(bool required = true) { m_required = required; return *this; }
   CDidlLiteElementProperty& SupportMultipleValues() { m_multipleValues = true; return *this; }
-  CDidlLiteElementProperty& SetGenerator(Generator valueGenerator);
+
+  template<class TGenerator, typename... TArgs>
+  CDidlLiteElementProperty& SetGenerator(TArgs... args)
+  {
+    assert(m_type == Type::Element);
+
+    m_valueGenerator = std::make_shared<TGenerator>(std::forward<TArgs>(args)...);
+    return *this;
+  }
+
   CDidlLiteElementProperty& SetValid(bool valid = true) { m_valid = valid; return *this; }
   CDidlLiteElementProperty& SetInvalid(bool invalid = true) { m_valid = !invalid; return *this; }
   CDidlLiteElementProperty& SetMinimumVersion(uint8_t version = 1) { m_minimumVersion = version; return *this; }
 
   const std::string& GetName() const { return m_name; }
 
-  const void* GetValue() const { return m_value; }
-  void* GetValue() { return m_value; }
   template<typename TType> const TType* GetValue() const { return reinterpret_cast<TType*>(m_value); }
-  template<typename TType> TType* GetValue() { return reinterpret_cast<TType*>(m_value); }
 
   Type GetType() const { return m_type; }
   bool IsElement() const { return m_isElement; }

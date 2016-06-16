@@ -37,7 +37,11 @@ int64_t COhUtils::GetDurationInSeconds(const std::string& duration)
 
   std::string tmpDuration = duration;
 
-  // try to parse the "[0-9]{2}:[0-9]{2}:[0-9]" time format defined in the UPnP specification
+  // handle the case where the hours are defined with a single digit
+  if (tmpDuration.find(':') == 1)
+    tmpDuration = "0" + tmpDuration;
+
+  // try to parse the "[0-9]+:[0-9]{2}:[0-9]{2}" time format defined in the UPnP specification
   CDateTimeSpan time;
   if (time.SetFromTimeString(tmpDuration))
     durationSeconds = time.GetSecondsTotal();

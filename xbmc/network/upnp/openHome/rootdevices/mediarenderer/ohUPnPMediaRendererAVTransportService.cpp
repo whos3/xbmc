@@ -34,11 +34,13 @@
 #include "network/upnp/openHome/profile/ohUPnPDeviceProfilesManager.h"
 #include "network/upnp/openHome/didllite/objects/FileItemUtils.h"
 #include "network/upnp/openHome/rootdevices/ohUPnPClientDevice.h"
+#include "network/upnp/openHome/utils/ohUPnPAVTransportLastChange.h"
 #include "network/upnp/openHome/utils/ohUtils.h"
 #include "pictures/GUIWindowSlideShow.h"
 #include "pictures/PictureInfoTag.h"
 #include "settings/AdvancedSettings.h"
 #include "utils/log.h"
+#include "utils/propertytree/xml/XmlPropertyTreeSerializer.h"
 
 static bool IsSlideshowActive()
 {
@@ -90,21 +92,30 @@ void COhUPnPMediaRendererAVTransportService::UpdateState()
 COhUPnPMediaRendererAVTransportService::AVTransport::AVTransport(COhUPnPMediaRendererAVTransportService& service, OpenHome::Net::DvDeviceStd& device)
   : OpenHome::Net::DvProviderUpnpOrgAVTransport2Cpp(device)
   , m_service(service)
-  , m_transportPlaySpeed(1)
-  , m_numberOfTracks(0)
-  , m_currentTrack(0)
-  , m_currentTrackDuration(0)
-  , m_currentMediaDuration(0)
-  , m_relativeTimePosition(0)
-  , m_absoluteTimePosition(0)
 {
+  // default values
+  m_variables.SetTransportState(OhUPnPAVTransportTransportState::Stopped);
+  m_variables.SetTransportStatus(OhUPnPAVTransportTransportStatus::OK);
+  m_variables.SetTransportPlaySpeed(1.f);
+  m_variables.SetNumberOfTracks(0);
+  m_variables.SetCurrentTrack(0);
+  m_variables.SetCurrentMediaDuration(0);
+  m_variables.SetCurrentTrackDuration(0);
+  m_variables.SetRelativeTimePosition(0);
+  m_variables.SetAbsoluteTimePosition(0);
+  m_variables.SetRelativeCounterPosition(std::numeric_limits<int32_t>::max());
+  m_variables.SetAbsoluteCounterPosition(std::numeric_limits<uint32_t>::max());
+  m_variables.Fix();
+
   // enable properties
-  // TODO: EnablePropertyLastChange();
+  EnablePropertyLastChange();
+  SetPropertyLastChange("");
 
   // enable required actions
   EnableActionSetAVTransportURI();
   EnableActionGetMediaInfo();
   EnableActionGetTransportInfo();
+  EnableActionGetPositionInfo();
   EnableActionGetDeviceCapabilities();
   EnableActionGetTransportSettings();
   EnableActionStop();
@@ -130,51 +141,59 @@ COhUPnPMediaRendererAVTransportService::AVTransport::~AVTransport()
 
 void COhUPnPMediaRendererAVTransportService::AVTransport::UpdateState()
 {
-  CSingleLock lock(m_critical);
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
 
   // don't update state while transitioning
-  if (m_transportState == OhUPnPAVTransportTransportState::Transitioning)
+  if (m_variables.GetTransportState() == OhUPnPAVTransportTransportState::Transitioning)
     return;
 
-  m_transportStatus = OhUPnPAVTransportTransportStatus::OK;
+  m_variables.SetTransportStatus(OhUPnPAVTransportTransportStatus::OK);
 
   if (g_application.m_pPlayer->IsPlaying() || g_application.m_pPlayer->IsPausedPlayback())
   {
-    m_numberOfTracks = 1; // TODO: playlists
-    m_currentTrack = 1; // TODO: playlists
+    m_variables.SetNumberOfTracks(1); // TODO: playlists
+    m_variables.SetCurrentTrack(1); // TODO: playlists
 
-    m_relativeTimePosition = m_absoluteTimePosition = static_cast<uint32_t>(g_infoManager.GetPlayTime() / 1000);
-    m_currentTrackDuration = m_currentMediaDuration = static_cast<uint32_t>(g_infoManager.GetPlayDuration());
+    uint32_t position = static_cast<uint32_t>(g_infoManager.GetPlayTime() / 1000);
+    uint32_t duration = static_cast<uint32_t>(g_infoManager.GetPlayDuration());
+    m_variables.SetRelativeTimePosition(position);
+    m_variables.SetAbsoluteTimePosition(position);
+    m_variables.SetCurrentTrackDuration(duration);
+    m_variables.SetCurrentMediaDuration(duration);
   }
   else if (IsSlideshowActive())
   {
-    m_transportState = OhUPnPAVTransportTransportState::Playing;
-    m_avTransportURI = m_currentTrackURI = g_infoManager.GetPictureLabel(SLIDE_FILE_PATH);
-    m_transportPlaySpeed = 1;
+    m_variables.SetTransportState(OhUPnPAVTransportTransportState::Playing);
+    const std::string path = g_infoManager.GetPictureLabel(SLIDE_FILE_PATH);
+    m_variables.SetAVTransportURI(path);
+    m_variables.SetCurrentTrackURI(path);
+    m_variables.SetTransportPlaySpeed(1);
 
     CGUIWindowSlideShow *slideshow = (CGUIWindowSlideShow *)g_windowManager.GetWindow(WINDOW_SLIDESHOW);
     if (slideshow == nullptr)
     {
-      m_numberOfTracks = slideshow->NumSlides();
-      m_currentTrack = slideshow->CurrentSlide();
+      m_variables.SetNumberOfTracks(slideshow->NumSlides());
+      m_variables.SetCurrentTrack(slideshow->CurrentSlide());
     }
 
-    m_currentTrackMetaData.clear();
-    m_avTransportURIMetaData.clear();
+    m_variables.SetCurrentTrackMetadata("");
+    m_variables.SetAVTransportURIMetadata("");
   }
   else
   {
-    m_transportState = OhUPnPAVTransportTransportState::Stopped;
-    m_transportPlaySpeed = 1;
-    m_numberOfTracks = 0;
-    m_currentTrack = 0;
-    m_relativeTimePosition = 0;
-    m_absoluteTimePosition = 0;
-    m_currentTrackDuration = 0;
-    m_currentMediaDuration = 0;
-    m_nextAVTransportURI.clear();
-    m_nextAVTransportURIMetaData.clear();
+    m_variables.SetTransportState(OhUPnPAVTransportTransportState::Stopped);
+    m_variables.SetTransportPlaySpeed(1);
+    m_variables.SetNumberOfTracks(0);
+    m_variables.SetCurrentTrack(0);
+    m_variables.SetRelativeTimePosition(0);
+    m_variables.SetAbsoluteTimePosition(0);
+    m_variables.SetCurrentTrackDuration(0);
+    m_variables.SetCurrentMediaDuration(0);
+    m_variables.SetNextAVTransportURI("");
+    m_variables.SetNextAVTransportURIMetadata("");
   }
+
+  UpdateLastChange();
 }
 
 void COhUPnPMediaRendererAVTransportService::AVTransport::SetAVTransportURI(OpenHome::Net::IDvInvocationStd& invocation, uint32_t instanceID, const std::string& currentURI,
@@ -209,14 +228,16 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::SetAVTransportURI(Open
   // if the player isn't already playing wait for a call to Play()
   if (!g_application.m_pPlayer->IsPlaying() && !IsSlideshowActive())
   {
-    CSingleLock lock(m_critical);
-    m_transportState = OhUPnPAVTransportTransportState::Stopped;
-    m_transportStatus = OhUPnPAVTransportTransportStatus::OK;
-    m_transportPlaySpeed = 1;
-    m_avTransportURI = currentURI;
-    m_avTransportURIMetaData = currentURIMetaData;
-    m_nextAVTransportURI.clear();
-    m_nextAVTransportURIMetaData.clear();
+    COhUPnPAVTransportLastChangeLock lock(m_variables);
+    m_variables.SetTransportState(OhUPnPAVTransportTransportState::Stopped);
+    m_variables.SetTransportStatus(OhUPnPAVTransportTransportStatus::OK);
+    m_variables.SetTransportPlaySpeed(1);
+    m_variables.SetAVTransportURI(currentURI);
+    m_variables.SetAVTransportURIMetadata(currentURIMetaData);
+    m_variables.SetNextAVTransportURI("");
+    m_variables.SetNextAVTransportURIMetadata("");
+
+    UpdateLastChange();
   }
   else
     Play(currentURI, currentURIMetaData, clientDevice);
@@ -280,8 +301,10 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::SetNextAVTransportURI(
   CGUIMessage msg(GUI_MSG_PLAYLIST_CHANGED, 0, 0);
   g_windowManager.SendThreadMessage(msg);
 
-  m_nextAVTransportURI = nextURI;
-  m_nextAVTransportURIMetaData = nextURIMetaData;
+  m_variables.SetNextAVTransportURI(nextURI);
+  m_variables.SetNextAVTransportURIMetadata(nextURIMetaData);
+
+  UpdateLastChange();
 }
 
 void COhUPnPMediaRendererAVTransportService::AVTransport::GetMediaInfo(OpenHome::Net::IDvInvocationStd& invocation, uint32_t instanceID, uint32_t& nrTracks, std::string& mediaDuration,
@@ -306,16 +329,16 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetMediaInfo(OpenHome:
     return;
   }
 
-  CSingleLock lock(m_critical);
-  nrTracks = m_numberOfTracks;
-  mediaDuration = COhUtils::GetDurationFromSeconds(m_currentMediaDuration);
-  currentURI = m_avTransportURI;
-  currentURIMetaData = m_avTransportURIMetaData;
-  nextURI = m_nextAVTransportURI;
-  nextURIMetaData = m_nextAVTransportURIMetaData;
-  playMedium = m_playbackStorageMedium.GetAsString();
-  recordMedium = m_recordStorageMedium.GetAsString();
-  writeStatus = m_recordMediumWriteStatus.GetAsString();
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
+  nrTracks = m_variables.GetNumberOfTracks();
+  mediaDuration = m_variables.GetCurrentMediaDuration();
+  currentURI = m_variables.GetAVTransportURI();
+  currentURIMetaData = m_variables.GetAVTransportURIMetaData();
+  nextURI = m_variables.GetNextAVTransportURI();
+  nextURIMetaData = m_variables.GetNextAVTransportURIMetaData();
+  playMedium = m_variables.GetPlaybackStorageMedium().GetAsString();
+  recordMedium = m_variables.GetRecordStorageMedium().GetAsString();
+  writeStatus = m_variables.GetRecordMediumWriteStatus().GetAsString();
 
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
   {
@@ -346,10 +369,10 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetTransportInfo(OpenH
     return;
   }
 
-  CSingleLock lock(m_critical);
-  currentTransportState = m_transportState.GetAsString();
-  currentTransportStatus = m_transportStatus.GetAsString();
-  currentSpeed = StringUtils::Format("%d", m_transportPlaySpeed);
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
+  currentTransportState = m_variables.GetTransportState().GetAsString();
+  currentTransportStatus = m_variables.GetTransportStatus().GetAsString();
+  currentSpeed = StringUtils::Format("%.1f", m_variables.GetTransportPlaySpeed());
 
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
   {
@@ -380,13 +403,13 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetPositionInfo(OpenHo
     return;
   }
 
-  CSingleLock lock(m_critical);
-  track = m_currentTrack;
-  trackDuration = COhUtils::GetDurationFromSeconds(m_currentTrackDuration);
-  trackMetaData = m_currentTrackMetaData;
-  trackURI = m_currentTrackURI;
-  relTime = COhUtils::GetDurationFromSeconds(m_relativeTimePosition);
-  absTime = COhUtils::GetDurationFromSeconds(m_absoluteTimePosition);
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
+  track = m_variables.GetCurrentTrack();
+  trackDuration = m_variables.GetCurrentTrackDuration();
+  trackMetaData = m_variables.GetCurrentTrackMetaData();
+  trackURI = m_variables.GetCurrentTrackURI();
+  relTime = m_variables.GetRelativeTimePosition();
+  absTime = m_variables.GetAbsoluteTimePosition();
   relCount = std::numeric_limits<int32_t>::max(); // not supported
   absCount = std::numeric_limits<int32_t>::max(); // not supported
 
@@ -419,19 +442,19 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetDeviceCapabilities(
     return;
   }
 
-  CSingleLock lock(m_critical);
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
   std::vector<std::string> possiblePlaybackStorageMedia;
-  for (const auto& playbackMedium : m_possiblePlaybackStorageMedia)
+  for (const auto& playbackMedium : m_variables.GetPossiblePlaybackStorageMedia())
     possiblePlaybackStorageMedia.push_back(playbackMedium.GetAsString());
   playMedia = COhUtils::ToCSV(possiblePlaybackStorageMedia);
 
   std::vector<std::string> possibleRecordStorageMedia;
-  for (const auto& recordMedium : m_possibleRecordStorageMedia)
+  for (const auto& recordMedium : m_variables.GetPossibleRecordStorageMedia())
     possibleRecordStorageMedia.push_back(recordMedium.GetAsString());
   recMedia = COhUtils::ToCSV(possibleRecordStorageMedia);
 
   std::vector<std::string> possibleRecordQualityModes;
-  for (const auto& recordQualityMode : m_possibleRecordQualityModes)
+  for (const auto& recordQualityMode : m_variables.GetPossibleRecordQualityModes())
     possibleRecordQualityModes.push_back(recordQualityMode.GetAsString());
   recQualityModes = COhUtils::ToCSV(possibleRecordQualityModes);
 
@@ -460,9 +483,9 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetTransportSettings(O
     return;
   }
 
-  CSingleLock lock(m_critical);
-  playMode = m_currentPlayMode.GetAsString();
-  recQualityMode = m_currentRecordQualityMode.GetAsString();
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
+  playMode = m_variables.GetCurrentPlayMode().GetAsString();
+  recQualityMode = m_variables.GetCurrentRecordQualityMode().GetAsString();
 
   if (g_advancedSettings.CanLogComponent(LOGUPNP))
     CLog::Log(LOGDEBUG, "[ohNet] --> GetTransportSettings(%u): play mode = %s; record quality mode = %s", instanceID, playMode.c_str(), recQualityMode.c_str());
@@ -522,7 +545,7 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::Play(OpenHome::Net::ID
   if (g_application.m_pPlayer->IsPausedPlayback())
     KODI::MESSAGING::CApplicationMessenger::GetInstance().SendMsg(TMSG_MEDIA_PAUSE);
   else if (!g_application.m_pPlayer->IsPlaying())
-    Play(m_avTransportURI, m_avTransportURIMetaData, clientDevice);
+    Play(m_variables.GetAVTransportURI(), m_variables.GetAVTransportURIMetaData(), clientDevice);
 }
 
 void COhUPnPMediaRendererAVTransportService::AVTransport::Pause(OpenHome::Net::IDvInvocationStd& invocation, uint32_t instanceID)
@@ -669,7 +692,9 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::SetPlayMode(OpenHome::
     return;
   }
 
-  m_currentPlayMode.SetFromString(newPlayMode);
+  m_variables.SetCurrentPlayMode(COhUPnPAVTransportPlayMode(newPlayMode));
+
+  UpdateLastChange();
 }
 
 void COhUPnPMediaRendererAVTransportService::AVTransport::GetCurrentTransportActions(OpenHome::Net::IDvInvocationStd& invocation, uint32_t instanceID, std::string& actions)
@@ -693,9 +718,9 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetCurrentTransportAct
     return;
   }
 
-  CSingleLock lock(m_critical);
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
   std::vector<std::string> currentTransportActions;
-  for (const auto& transportAction : m_currentTransportActions)
+  for (const auto& transportAction : m_variables.GetCurrentTransportActions())
     currentTransportActions.push_back(transportAction.GetAsString());
   actions = COhUtils::ToCSV(currentTransportActions);
 
@@ -725,7 +750,7 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetStateVariables(Open
     return;
   }
 
-  CSingleLock lock(m_critical);
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
 
   const auto& stateVariables = COhUtils::SplitCSV(stateVariableList);
   std::vector<std::string> stateVariableValues;
@@ -733,92 +758,90 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::GetStateVariables(Open
   {
     std::string value;
     if (stateVariable == "TransportState")
-      value = m_transportState.GetAsString();
+      value = m_variables.GetTransportState().GetAsString();
     else if (stateVariable == "TransportStatus")
-      value = m_transportStatus.GetAsString();
+      value = m_variables.GetTransportStatus().GetAsString();
     else if (stateVariable == "CurrentMediaCategory")
-      value = m_currentMediaCategory.GetAsString();
+      value = m_variables.GetCurrentMediaCategory().GetAsString();
     else if (stateVariable == "PlaybackStorageMedium")
-      value = m_playbackStorageMedium.GetAsString();
+      value = m_variables.GetPlaybackStorageMedium().GetAsString();
     else if (stateVariable == "RecordStorageMedium")
-      value = m_recordStorageMedium.GetAsString();
+      value = m_variables.GetRecordStorageMedium().GetAsString();
     else if (stateVariable == "PossiblePlaybackStorageMedia")
     {
       std::vector<std::string> possiblePlaybackStorageMedia;
-      for (const auto& playbackMedium : m_possiblePlaybackStorageMedia)
+      for (const auto& playbackMedium : m_variables.GetPossiblePlaybackStorageMedia())
         possiblePlaybackStorageMedia.push_back(playbackMedium.GetAsString());
       value = COhUtils::ToCSV(possiblePlaybackStorageMedia);
     }
     else if (stateVariable == "PossibleRecordStorageMedia")
     {
       std::vector<std::string> possibleRecordStorageMedia;
-      for (const auto& recordMedium : m_possibleRecordStorageMedia)
+      for (const auto& recordMedium : m_variables.GetPossibleRecordStorageMedia())
         possibleRecordStorageMedia.push_back(recordMedium.GetAsString());
       value = COhUtils::ToCSV(possibleRecordStorageMedia);
     }
     else if (stateVariable == "CurrentPlayMode")
-      value = m_currentPlayMode.GetAsString();
+      value = m_variables.GetCurrentPlayMode().GetAsString();
     else if (stateVariable == "TransportPlaySpeed")
-      value = StringUtils::Format("%d", m_transportPlaySpeed);
+      value = StringUtils::Format("%.1f", m_variables.GetTransportPlaySpeed());
     else if (stateVariable == "RecordMediumWriteStatus")
-      value = m_recordMediumWriteStatus.GetAsString();
+      value = m_variables.GetRecordMediumWriteStatus().GetAsString();
     else if (stateVariable == "PossibleRecordQualityModes")
     {
       std::vector<std::string> possibleRecordQualityModes;
-      for (const auto& recordQualityMode : m_possibleRecordQualityModes)
+      for (const auto& recordQualityMode : m_variables.GetPossibleRecordQualityModes())
         possibleRecordQualityModes.push_back(recordQualityMode.GetAsString());
       value = COhUtils::ToCSV(possibleRecordQualityModes);
     }
     else if (stateVariable == "CurrentRecordQualityMode")
-      value = m_transportStatus.GetAsString();
+      value = m_variables.GetCurrentRecordQualityMode().GetAsString();
     else if (stateVariable == "NumberOfTracks")
-      value = StringUtils::Format("%u", m_numberOfTracks);
+      value = StringUtils::Format("%u", m_variables.GetNumberOfTracks());
     else if (stateVariable == "CurrentTrack")
-      value = StringUtils::Format("%u", m_currentTrack);
+      value = StringUtils::Format("%u", m_variables.GetCurrentTrack());
     else if (stateVariable == "CurrentTrackDuration")
-      value = COhUtils::GetDurationFromSeconds(m_currentTrackDuration);
+      value = m_variables.GetCurrentTrackDuration();
     else if (stateVariable == "CurrentMediaDuration")
-      value = COhUtils::GetDurationFromSeconds(m_currentMediaDuration);
+      value = m_variables.GetCurrentMediaDuration();
     else if (stateVariable == "CurrentTrackURI")
-      value = m_currentTrackURI;
+      value = m_variables.GetCurrentTrackURI();
     else if (stateVariable == "CurrentTrackMetaData")
     {
-      if (!m_currentTrackMetaData.empty())
-        value = m_currentTrackMetaData;
-      else if (g_application.m_pPlayer->IsPlaying())
+      // don't get the value from the state variable as that value does not respect any device specific profiles 
+      if (g_application.m_pPlayer->IsPlaying())
       {
         if (!GetMetadataFromFileItem(g_application.CurrentFileItem(), clientDevice, value))
           CLog::Log(LOGINFO, "COhUPnPMediaRendererAVTransportService: failed to serialize CurrentTrackMetaData for item \"%s\"", g_application.CurrentFileItem().GetLabel().c_str());
       }
     }
     else if (stateVariable == "AVTransportURI")
-      value = m_avTransportURI;
+      value = m_variables.GetAVTransportURI();
     else if (stateVariable == "AVTransportURIMetaData")
     {
-      if (!m_avTransportURIMetaData.empty())
-        value = m_avTransportURIMetaData;
-      else if (g_application.m_pPlayer->IsPlaying())
+      // don't get the value from the state variable as that value does not respect any device specific profiles
+      if (g_application.m_pPlayer->IsPlaying())
       {
         if (!GetMetadataFromFileItem(g_application.CurrentFileItem(), clientDevice, value))
           CLog::Log(LOGINFO, "COhUPnPMediaRendererAVTransportService: failed to serialize AVTransportURIMetaData for item \"%s\"", g_application.CurrentFileItem().GetLabel().c_str());
       }
     }
     else if (stateVariable == "NextAVTransportURI")
-      value = m_nextAVTransportURI;
+      value = m_variables.GetNextAVTransportURI();
     else if (stateVariable == "NextAVTransportURIMetaData")
-      value = m_nextAVTransportURIMetaData;
+      value = m_variables.GetNextAVTransportURIMetaData();
     else if (stateVariable == "RelativeTimePosition")
-      value = COhUtils::GetDurationFromSeconds(m_relativeTimePosition);
+      value = m_variables.GetRelativeTimePosition();
     else if (stateVariable == "AbsoluteTimePosition")
-      value = COhUtils::GetDurationFromSeconds(m_absoluteTimePosition);
+      value = m_variables.GetAbsoluteTimePosition();
     else if (stateVariable == "RelativeCounterPosition")
-      value = StringUtils::Format("%d", std::numeric_limits<int32_t>::max()); // not supported
+      value = StringUtils::Format("%d", m_variables.GetRelativeCounterPosition()); // not supported
     else if (stateVariable == "AbsoluteCounterPosition")
-      value = StringUtils::Format("%d", std::numeric_limits<int32_t>::max()); // not supported
+      value = StringUtils::Format("%u", m_variables.GetAbsoluteCounterPosition()); // not supported
     else if (stateVariable == "CurrentTransportActions")
     {
       std::vector<std::string> currentTransportActions;
-      for (const auto& transportAction : m_currentTransportActions)
+      for (const auto& transportAction : m_variables.GetCurrentTransportActions())
         currentTransportActions.push_back(transportAction.GetAsString());
       value = COhUtils::ToCSV(currentTransportActions);
     }
@@ -843,41 +866,54 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::Announce(ANNOUNCEMENT:
   if (strcmp(sender, "xbmc") != 0)
     return;
 
-  CSingleLock lock(m_critical);
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
 
   if (flag == ANNOUNCEMENT::Player)
   {
     if (strcmp(message, "OnPlay") == 0)
     {
-      m_avTransportURI = m_currentTrackURI = g_application.CurrentFile();
+      const std::string& path = g_application.CurrentFile();
+      m_variables.SetAVTransportURI(path);
+      m_variables.SetCurrentTrackURI(path);
 
-      // we don't set the metadata properties here but when requested
-      // because their value might depend on the requesting client
+      // beware that the generated metadata does not respect any device specific profiles
+      std::string metadata;
+      if (!GetMetadataFromFileItem(g_application.CurrentFileItem(), COhUPnPClientDevice(""), metadata))
+        CLog::Log(LOGINFO, "COhUPnPMediaRendererAVTransportService: failed to serialize metadata for item \"%s\"", g_application.CurrentFileItem().GetLabel().c_str());
+      else
+      {
+        m_variables.SetAVTransportURIMetadata(metadata);
+        m_variables.SetCurrentTrackMetadata(metadata);
+      }
 
-      m_transportPlaySpeed = static_cast<int32_t>(data["player"]["speed"].asInteger());
-      m_transportState = OhUPnPAVTransportTransportState::Playing;
+      m_variables.SetTransportPlaySpeed(static_cast<float>(data["player"]["speed"].asInteger()));
+      m_variables.SetTransportState(OhUPnPAVTransportTransportState::Playing);
 
       // this could be a transition to next track, so clear next
-      m_nextAVTransportURI.clear();
-      m_nextAVTransportURIMetaData.clear();
+      m_variables.SetNextAVTransportURI("");
+      m_variables.SetNextAVTransportURIMetadata("");
     }
     else if (strcmp(message, "OnPause") == 0)
     {
       // TransportPlaySpeed must never be 0 and defaults to 1
-      m_transportPlaySpeed = 1;
-      m_transportState = OhUPnPAVTransportTransportState::PausedPlayback;
+      m_variables.SetTransportPlaySpeed(1);
+      m_variables.SetTransportState(OhUPnPAVTransportTransportState::PausedPlayback);
     }
     else if (strcmp(message, "OnSpeedChanged") == 0)
-      m_transportPlaySpeed = static_cast<int32_t>(data["player"]["speed"].asInteger());
+      m_variables.SetTransportPlaySpeed(static_cast<float>(data["player"]["speed"].asInteger()));
   }
+
+  UpdateLastChange();
 }
 
 void COhUPnPMediaRendererAVTransportService::AVTransport::Play(const std::string& uri, const std::string& metadata, const COhUPnPClientDevice& device)
 {
   {
-    CSingleLock lock(m_critical);
-    m_transportState = OhUPnPAVTransportTransportState::Transitioning;
-    m_transportStatus = OhUPnPAVTransportTransportStatus::OK;
+    COhUPnPAVTransportLastChangeLock lock(m_variables);
+    m_variables.SetTransportState(OhUPnPAVTransportTransportState::Transitioning);
+    m_variables.SetTransportStatus(OhUPnPAVTransportTransportStatus::OK);
+
+    UpdateLastChange();
   }
 
   CFileItem item;
@@ -894,14 +930,17 @@ void COhUPnPMediaRendererAVTransportService::AVTransport::Play(const std::string
   }
 
   // just return success because the play actions are asynchronous
-  CSingleLock lock(m_critical);
-  m_transportState = OhUPnPAVTransportTransportState::Playing;
-  m_transportStatus = OhUPnPAVTransportTransportStatus::OK;
-  m_avTransportURI = uri;
-  m_avTransportURIMetaData = metadata;
+  COhUPnPAVTransportLastChangeLock lock(m_variables);
+  m_variables.SetTransportState(OhUPnPAVTransportTransportState::Playing);
+  m_variables.SetTransportStatus(OhUPnPAVTransportTransportStatus::OK);
+  m_variables.SetAVTransportURI(uri);
+  m_variables.SetAVTransportURIMetadata(metadata);
+  m_variables.SetCurrentTrackMetadata(metadata);
 
-  m_nextAVTransportURI.clear();
-  m_nextAVTransportURIMetaData.clear();
+  m_variables.SetNextAVTransportURI("");
+  m_variables.SetNextAVTransportURIMetadata("");
+
+  UpdateLastChange();
 }
 
 bool COhUPnPMediaRendererAVTransportService::AVTransport::GetFileItemFromMetadata(const std::string& uri, const std::string& metadata, const COhUPnPClientDevice& device, CFileItem& item) const
@@ -938,4 +977,31 @@ bool COhUPnPMediaRendererAVTransportService::AVTransport::GetMetadataFromFileIte
     CLog::Log(LOGINFO, "COhUPnPMediaRendererAVTransportService: client matches profile %s", profile.GetName().c_str());
 
   return FileItemUtils::SerializeFileItem(item, m_service.m_elementFactory, device, profile, metadata);
+}
+
+void COhUPnPMediaRendererAVTransportService::AVTransport::UpdateLastChange()
+{
+  // nothing to do if no state variable has changed
+  if (!m_variables.HasChanged())
+    return;
+
+  // create a copy
+  COhUPnPAVTransportLastChange* lastChange = new COhUPnPAVTransportLastChange(m_variables);
+  COhUPnPAVTransportLastChangeDocument lastChangeDoc;
+  lastChangeDoc.AddElement(lastChange);
+
+  // serialize the changed variables into an Event XML document
+  CXmlPropertyTreeSerializer lastChangeSerializer;
+  std::string lastChangeXml;
+  if (!lastChangeSerializer.Serialize(lastChangeDoc, lastChangeXml))
+  {
+    CLog::Log(LOGWARNING, "COhUPnPMediaRendererAVTransportService: failed to serialize LastChange event variable");
+    return;
+  }
+
+  // finally set the LastChange property
+  SetPropertyLastChange(lastChangeXml);
+
+  // finally fix the new values of the state variables
+  m_variables.Fix();
 }

@@ -132,5 +132,5 @@ std::vector<const CUPnPIcon*> CUPnPIconList::GetIcons() const
 
 void CUPnPIconList::initializeProperties()
 {
-  addElementProperty("", "icon", &m_icons).SetRequired().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPIcon>());
+  addElementProperty("", "icon", &m_icons).SetRequired().SupportMultipleValues().SetGenerator<CUPnPIcon>();
 }

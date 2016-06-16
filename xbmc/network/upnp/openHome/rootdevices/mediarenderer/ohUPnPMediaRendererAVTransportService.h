@@ -25,7 +25,7 @@
 #include "network/upnp/openHome/ohUPnPService.h"
 #include "network/upnp/openHome/rootdevices/ohUPnPRootDevice.h"
 #include "network/upnp/openHome/utils/ohUPnPAVTransport.h"
-#include "threads/CriticalSection.h"
+#include "network/upnp/openHome/utils/ohUPnPAVTransportLastChange.h"
 
 class CFileItem;
 class COhUPnPClientDevice;
@@ -81,37 +81,11 @@ private:
     bool GetFileItemFromMetadata(const std::string& uri, const std::string& metadata, const COhUPnPClientDevice& device, CFileItem& item) const;
     bool GetMetadataFromFileItem(const CFileItem& item, const COhUPnPClientDevice& device, std::string& metadata) const;
 
+    void UpdateLastChange();
+
     COhUPnPMediaRendererAVTransportService& m_service;
 
-    // state variables
-    COhUPnPAVTransportTransportState m_transportState;
-    COhUPnPAVTransportTransportStatus m_transportStatus;
-    COhUPnPAVTransportMediaCategory m_currentMediaCategory;
-    COhUPnPAVTransportStorageMedium m_playbackStorageMedium;
-    COhUPnPAVTransportStorageMedium m_recordStorageMedium;
-    std::vector<COhUPnPAVTransportStorageMedium> m_possiblePlaybackStorageMedia;
-    std::vector<COhUPnPAVTransportStorageMedium> m_possibleRecordStorageMedia;
-    COhUPnPAVTransportPlayMode m_currentPlayMode;
-    int32_t m_transportPlaySpeed;
-    COhUPnPAVTransportWriteStatus m_recordMediumWriteStatus;
-    COhUPnPAVTransportRecordQualityMode m_currentRecordQualityMode;
-    std::vector<COhUPnPAVTransportRecordQualityMode> m_possibleRecordQualityModes;
-    uint32_t m_numberOfTracks;
-    uint32_t m_currentTrack;
-    uint32_t m_currentTrackDuration;
-    uint32_t m_currentMediaDuration;
-    std::string m_currentTrackURI;
-    std::string m_currentTrackMetaData;
-    std::string m_avTransportURI;
-    std::string m_avTransportURIMetaData;
-    std::string m_nextAVTransportURI;
-    std::string m_nextAVTransportURIMetaData;
-    uint32_t m_relativeTimePosition;
-    uint32_t m_absoluteTimePosition;
-    std::vector<COhUPnPAVTransportTransportAction> m_currentTransportActions;
-    // TODO: LastChange
-
-    CCriticalSection m_critical;
+    COhUPnPAVTransportLastChange m_variables;
   };
 
   friend class AVTransport;

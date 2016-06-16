@@ -448,6 +448,12 @@
     <Filter Include="network\upnp\openHome\rootdevices\mediarenderer">
       <UniqueIdentifier>{7a3d9cdf-d2ed-4d7e-897e-f880b6b1d6ce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils\propertytree">
+      <UniqueIdentifier>{30b0c1b5-6a6b-4bf7-b491-d243dc78d8b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\propertytree\xml">
+      <UniqueIdentifier>{0a5d8245-fc97-40a1-8924-4a3a47df41b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -3105,6 +3111,30 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererAVTransportService.cpp">
       <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\propertytree\IPropertyTreeElement.cpp">
+      <Filter>utils\propertytree</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\propertytree\PropertyTreeElementProperty.cpp">
+      <Filter>utils\propertytree</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\propertytree\PropertyTree.cpp">
+      <Filter>utils\propertytree</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeSerializer.cpp">
+      <Filter>utils\propertytree\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTree.cpp">
+      <Filter>utils\propertytree\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\propertytree\PropertyTreePath.cpp">
+      <Filter>utils\propertytree</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeDeserializer.cpp">
+      <Filter>utils\propertytree\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransportLastChange.cpp">
+      <Filter>network\upnp\openHome\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -6885,6 +6915,33 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\rootdevices\mediarenderer\ohUPnPMediaRendererAVTransportService.h">
       <Filter>network\upnp\openHome\rootdevices\mediarenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\propertytree\IPropertyTreeElement.h">
+      <Filter>utils\propertytree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\propertytree\PropertyTreeElementProperty.h">
+      <Filter>utils\propertytree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\propertytree\PropertyTree.h">
+      <Filter>utils\propertytree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeSerializer.h">
+      <Filter>utils\propertytree\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTree.h">
+      <Filter>utils\propertytree\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\propertytree\PropertyTreePath.h">
+      <Filter>utils\propertytree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeDeserializer.h">
+      <Filter>utils\propertytree\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransportLastChange.h">
+      <Filter>network\upnp\openHome\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPStateVariables.h">
+      <Filter>network\upnp\openHome\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

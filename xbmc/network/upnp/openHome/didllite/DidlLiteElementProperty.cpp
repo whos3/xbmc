@@ -294,14 +294,6 @@ bool CDidlLiteElementProperty::Deserialize(const TiXmlNode* node, const OhUPnPCo
   return deserializeAttribute(node, context);
 }
 
-CDidlLiteElementProperty& CDidlLiteElementProperty::SetGenerator(Generator valueGenerator)
-{
-  assert(m_type == Type::Element);
-
-  m_valueGenerator = valueGenerator;
-  return *this;
-}
-
 bool CDidlLiteElementProperty::serializeElement(TiXmlNode* node, const OhUPnPRootDeviceContext& context) const
 {
   if (m_name.empty())

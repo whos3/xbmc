@@ -725,19 +725,19 @@ void CUPnPObject::initializeProperties()
   addStringProperty(UPNP_DIDL_DC_NAMESPACE, "title", &m_title).SetRequired();
   addStringProperty(UPNP_DIDL_DC_NAMESPACE, "creator", &m_creator).SetOptional();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "writeStatus", &m_writeStatus).SetOptional();
-  addElementProperty("res", &m_res).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPResource>());
+  addElementProperty("res", &m_res).SetOptional().SupportMultipleValues().SetGenerator<CUPnPResource>();
   // TODO: resExt
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "artist", &m_artist).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPArtist>());
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "actor", &m_actor).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPActor>());
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "author", &m_actor).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPAuthor>());
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "artist", &m_artist).SetOptional().SupportMultipleValues().SetGenerator<CUPnPArtist>();
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "actor", &m_actor).SetOptional().SupportMultipleValues().SetGenerator<CUPnPActor>();
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "author", &m_actor).SetOptional().SupportMultipleValues().SetGenerator<CUPnPAuthor>();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "producer", &m_producer).SetOptional().SupportMultipleValues();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "director", &m_director).SetOptional().SupportMultipleValues();
   addStringProperty(UPNP_DIDL_DC_NAMESPACE, "publisher", &m_publisher).SetOptional().SupportMultipleValues();
   addStringProperty(UPNP_DIDL_DC_NAMESPACE, "contributor", &m_contributor).SetOptional().SupportMultipleValues();
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "genre", &m_genre).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPGenre>());
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "genre", &m_genre).SetOptional().SupportMultipleValues().SetGenerator<CUPnPGenre>();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "album", &m_album).SetOptional().SupportMultipleValues();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "playlist", &m_playlist).SetOptional().SupportMultipleValues();
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "albumArtURI", &m_albumArtURI).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPAlbumArt>());
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "albumArtURI", &m_albumArtURI).SetOptional().SupportMultipleValues().SetGenerator<CUPnPAlbumArt>();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "artistDiscographyURI", &m_artistDiscographyURI).SetOptional();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "lyricsURI", &m_lyricsURI).SetOptional();
   addStringProperty(UPNP_DIDL_DC_NAMESPACE, "relation", &m_relation).SetOptional().SupportMultipleValues();
@@ -747,13 +747,13 @@ void CUPnPObject::initializeProperties()
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "icon", &m_icon).SetOptional();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "region", &m_region).SetOptional().SupportMultipleValues();
   addStringProperty(UPNP_DIDL_DC_NAMESPACE, "rights", &m_rights).SetOptional().SupportMultipleValues();
-  addElementProperty(UPNP_DIDL_DC_NAMESPACE, "date", &m_date).SetOptional().SetGenerator(std::make_shared<CUPnPDate>());
+  addElementProperty(UPNP_DIDL_DC_NAMESPACE, "date", &m_date).SetOptional().SetGenerator<CUPnPDate>();
   addStringProperty(UPNP_DIDL_DC_NAMESPACE, "language", &m_language).SetOptional().SupportMultipleValues();
   addIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "playbackCount", &m_playbackCount).SetOptional().SetMinimumVersion(2);
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "lastPlaybackTime", &m_lastPlaybackTime).SetOptional().SetGenerator(std::make_shared<CUPnPDateTime>("lastPlaybackTime")).SetMinimumVersion(2);
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "lastPlaybackTime", &m_lastPlaybackTime).SetOptional().SetGenerator<CUPnPDateTime>("lastPlaybackTime").SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "lastPlaybackPosition", &m_lastPlaybackPosition).SetOptional().SetMinimumVersion(2);
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedStartDateTime", &m_recordedStartDateTime).SetOptional().SetGenerator(std::make_shared<CUPnPDateTime>("recordedStartDateTime")).SetMinimumVersion(2);
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedEndDateTime", &m_recordedEndDateTime).SetOptional().SetGenerator(std::make_shared<CUPnPDateTime>("recordedEndDateTime")).SetMinimumVersion(2);
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedStartDateTime", &m_recordedStartDateTime).SetOptional().SetGenerator<CUPnPDateTime>("recordedStartDateTime").SetMinimumVersion(2);
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedEndDateTime", &m_recordedEndDateTime).SetOptional().SetGenerator<CUPnPDateTime>("recordedEndDateTime").SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedDuration", &m_recordedDuration).SetOptional().SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "recordedDayOfWeek", &m_recordedDayOfWeek).SetOptional().SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "srsRecordScheduleID", &m_srsRecordScheduleID).SetOptional().SetMinimumVersion(2);
@@ -769,12 +769,12 @@ void CUPnPObject::initializeProperties()
   addUnsignedIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "episodeNumber", &m_episodeNumber).SetOptional().SetMinimumVersion(2);
   addUnsignedIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "episodeSeason", &m_episodeSeason).SetOptional().SetMinimumVersion(4);
   // TODO: upnp:programCode, @type
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "rating", &m_rating).SetOptional().SupportMultipleValues().SetGenerator(std::make_shared<CUPnPRating>()).SetMinimumVersion(2);
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "rating", &m_rating).SetOptional().SupportMultipleValues().SetGenerator<CUPnPRating>().SetMinimumVersion(2);
   // TODO: upnp:channelGroupName, @id
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "callSign", &m_callSign).SetOptional().SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "networkAffiliation", &m_networkAffiliation).SetOptional().SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "serviceProvider", &m_serviceProvider).SetOptional().SetMinimumVersion(2);
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "price", &m_price).SetOptional().SetGenerator(std::make_shared<CUPnPPrice>()).SetMinimumVersion(2);
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "price", &m_price).SetOptional().SetGenerator<CUPnPPrice>().SetMinimumVersion(2);
   // TODO: upnp:price, upnp:price@currency
   addBooleanProperty(UPNP_DIDL_UPNP_NAMESPACE, "payPerView", &m_tuned).SetOptional().SetMinimumVersion(2);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "epgProviderName", &m_epgProviderName).SetOptional().SetMinimumVersion(2);
@@ -788,7 +788,7 @@ void CUPnPObject::initializeProperties()
   addIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "channelNr", &m_channelNr).SetOptional();
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "channelName", &m_channelName).SetOptional();
   // TODO: upnp:scheduledStartTime, @usage, @daylightSaving
-  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "scheduledEndTime", &m_scheduledEndTime).SetOptional().SetGenerator(std::make_shared<CUPnPDateTime>("scheduledEndTime")).SetMinimumVersion(3);
+  addElementProperty(UPNP_DIDL_UPNP_NAMESPACE, "scheduledEndTime", &m_scheduledEndTime).SetOptional().SetGenerator<CUPnPDateTime>("scheduledEndTime").SetMinimumVersion(3);
   addStringProperty(UPNP_DIDL_UPNP_NAMESPACE, "scheduledDuration", &m_scheduledDuration).SetOptional().SetMinimumVersion(3);
   addIntegerProperty(UPNP_DIDL_UPNP_NAMESPACE, "signalStrength", &m_signalStrength).SetOptional().SetMinimumVersion(2);
   addBooleanProperty(UPNP_DIDL_UPNP_NAMESPACE, "signalLocked", &m_signalLocked).SetOptional().SetMinimumVersion(2);

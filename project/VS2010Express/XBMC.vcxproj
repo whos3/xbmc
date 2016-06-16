@@ -712,6 +712,7 @@
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\transfer\ohUPnPTransferManager.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\DlnaUtils.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransport.cpp" />
+    <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransportLastChange.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPRenderingControl.cpp" />
     <ClCompile Include="..\..\xbmc\network\upnp\openHome\utils\ohUtils.cpp" />
     <ClCompile Include="..\..\xbmc\platform\posix\main.cpp">
@@ -1260,8 +1261,10 @@
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\DlnaUtils.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohEnvironment.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransport.h" />
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPAVTransportLastChange.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPEnum.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPRenderingControl.h" />
+    <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUPnPStateVariables.h" />
     <ClInclude Include="..\..\xbmc\network\upnp\openHome\utils\ohUtils.h" />
     <ClInclude Include="..\..\xbmc\platform\MessagePrinter.h" />
     <ClInclude Include="..\..\xbmc\media\MediaType.h" />
@@ -1382,6 +1385,13 @@
     <ClInclude Include="..\..\xbmc\utils\params_check_macros.h" />
     <ClInclude Include="..\..\xbmc\utils\PerformanceMeasurement.h" />
     <ClInclude Include="..\..\xbmc\utils\ProgressJob.h" />
+    <ClInclude Include="..\..\xbmc\utils\propertytree\IPropertyTreeElement.h" />
+    <ClInclude Include="..\..\xbmc\utils\propertytree\PropertyTree.h" />
+    <ClInclude Include="..\..\xbmc\utils\propertytree\PropertyTreeElementProperty.h" />
+    <ClInclude Include="..\..\xbmc\utils\propertytree\PropertyTreePath.h" />
+    <ClInclude Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTree.h" />
+    <ClInclude Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeDeserializer.h" />
+    <ClInclude Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeSerializer.h" />
     <ClInclude Include="..\..\xbmc\utils\rfft.h" />
     <ClInclude Include="..\..\xbmc\utils\RssManager.h" />
     <ClInclude Include="..\..\xbmc\utils\ScraperUtils.h" />
@@ -1523,6 +1533,13 @@
     <ClCompile Include="..\..\xbmc\utils\Locale.cpp" />
     <ClCompile Include="..\..\xbmc\utils\ManageableJob.cpp" />
     <ClCompile Include="..\..\xbmc\utils\ProgressJob.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\propertytree\IPropertyTreeElement.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\propertytree\PropertyTree.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\propertytree\PropertyTreeElementProperty.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\propertytree\PropertyTreePath.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTree.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeDeserializer.cpp" />
+    <ClCompile Include="..\..\xbmc\utils\propertytree\xml\XmlPropertyTreeSerializer.cpp" />
     <ClCompile Include="..\..\xbmc\utils\rfft.cpp" />
     <ClCompile Include="..\..\xbmc\utils\RssManager.cpp" />
     <ClCompile Include="..\..\xbmc\utils\ScraperUtils.cpp" />
