@@ -108,7 +108,7 @@ protected:
   virtual void GetGroupedItems(CFileItemList &items) { }
 
   void ClearFileItems();
-  virtual void SortItems(CFileItemList &items);
+  virtual void SortItems(CFileItemList &items, std::shared_ptr<CGUIViewState> guiState);
 
   /*! \brief Check if the given list can be advance filtered or not
    \param items List of items to check

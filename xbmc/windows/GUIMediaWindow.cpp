@@ -557,37 +557,35 @@ void CGUIMediaWindow::ClearFileItems()
 }
 
 // \brief Sorts Fileitems based on the sort method and sort oder provided by guiViewState
-void CGUIMediaWindow::SortItems(CFileItemList &items)
+void CGUIMediaWindow::SortItems(CFileItemList &items, std::shared_ptr<CGUIViewState> guiState)
 {
-  std::unique_ptr<CGUIViewState> guiState(CGUIViewState::GetViewState(GetID(), items));
+  if (!guiState)
+    return;
 
-  if (guiState.get())
+  SortDescription sorting = guiState->GetSortMethod();
+  sorting.sortOrder = guiState->GetSortOrder();
+  // If the sort method is "sort by playlist" and we have a specific
+  // sort order available we can use the specified sort order to do the sorting
+  // We do this as the new SortBy methods are a superset of the SORT_METHOD methods, thus
+  // not all are available. This may be removed once SORT_METHOD_* have been replaced by
+  // SortBy.
+  if ((sorting.sortBy == SortByPlaylistOrder) && items.HasProperty(PROPERTY_SORT_ORDER))
   {
-    SortDescription sorting = guiState->GetSortMethod();
-    sorting.sortOrder = guiState->GetSortOrder();
-    // If the sort method is "sort by playlist" and we have a specific
-    // sort order available we can use the specified sort order to do the sorting
-    // We do this as the new SortBy methods are a superset of the SORT_METHOD methods, thus
-    // not all are available. This may be removed once SORT_METHOD_* have been replaced by
-    // SortBy.
-    if ((sorting.sortBy == SortByPlaylistOrder) && items.HasProperty(PROPERTY_SORT_ORDER))
+    SortBy sortBy = (SortBy)items.GetProperty(PROPERTY_SORT_ORDER).asInteger();
+    if (sortBy != SortByNone && sortBy != SortByPlaylistOrder && sortBy != SortByProgramCount)
     {
-      SortBy sortBy = (SortBy)items.GetProperty(PROPERTY_SORT_ORDER).asInteger();
-      if (sortBy != SortByNone && sortBy != SortByPlaylistOrder && sortBy != SortByProgramCount)
-      {
-        sorting.sortBy = sortBy;
-        sorting.sortOrder = items.GetProperty(PROPERTY_SORT_ASCENDING).asBoolean() ? SortOrderAscending : SortOrderDescending;
-        sorting.sortAttributes = CSettings::GetInstance().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING) ? SortAttributeIgnoreArticle : SortAttributeNone;
+      sorting.sortBy = sortBy;
+      sorting.sortOrder = items.GetProperty(PROPERTY_SORT_ASCENDING).asBoolean() ? SortOrderAscending : SortOrderDescending;
+      sorting.sortAttributes = CSettings::GetInstance().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING) ? SortAttributeIgnoreArticle : SortAttributeNone;
 
-        // if the sort order is descending, we need to switch the original sort order, as we assume
-        // in CGUIViewState::AddPlaylistOrder that SortByPlaylistOrder is ascending.
-        if (guiState->GetSortOrder() == SortOrderDescending)
-          sorting.sortOrder = sorting.sortOrder == SortOrderDescending ? SortOrderAscending : SortOrderDescending;
-      }
+      // if the sort order is descending, we need to switch the original sort order, as we assume
+      // in CGUIViewState::AddPlaylistOrder that SortByPlaylistOrder is ascending.
+      if (guiState->GetSortOrder() == SortOrderDescending)
+        sorting.sortOrder = sorting.sortOrder == SortOrderDescending ? SortOrderAscending : SortOrderDescending;
     }
-
-    items.Sort(sorting);
   }
+
+  items.Sort(sorting);
 }
 
 // \brief Formats item labels based on the formatting provided by guiViewState
@@ -615,15 +613,14 @@ void CGUIMediaWindow::FormatItemLabels(CFileItemList &items, const LABEL_MASKS &
 // \brief Prepares and adds the fileitems list/thumb panel
 void CGUIMediaWindow::FormatAndSort(CFileItemList &items)
 {
-  std::unique_ptr<CGUIViewState> viewState(CGUIViewState::GetViewState(GetID(), items));
+  std::shared_ptr<CGUIViewState> viewState(CGUIViewState::GetViewState(GetID(), items));
 
   if (viewState.get())
   {
     LABEL_MASKS labelMasks;
     viewState->GetSortMethodLabelMasks(labelMasks);
     FormatItemLabels(items, labelMasks);
-
-    items.Sort(viewState->GetSortMethod().sortBy, viewState->GetSortOrder(), viewState->GetSortMethod().sortAttributes);
+    SortItems(items, viewState);
   }
 }
 
