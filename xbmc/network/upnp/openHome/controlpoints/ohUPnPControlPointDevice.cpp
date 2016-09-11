@@ -138,7 +138,7 @@ bool COhUPnPControlPointDevice::Deserialize(const std::string &deviceDescription
   XMLUtils::GetString(deviceNode, UPnPDeviceElementPresentationUrl, m_presentationUrl);
 
   // parse <iconList>
-  m_icons.Deserialize(deviceNode->FirstChildElement(m_icons.GetElementName()), { *this });
+  m_icons.Deserialize(deviceNode->FirstChildElement(m_icons.GetName()), { *this });
 
   // parse <serviceList>
   const TiXmlNode* serviceListNode = deviceNode->FirstChild(UPnPDeviceElementServiceList);

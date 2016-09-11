@@ -876,8 +876,7 @@ void COhUPnPContentDirectoryService::ContentDirectory::CreateObject(OpenHome::Ne
   const CUPnPItem* upnpItem = dynamic_cast<const CUPnPItem*>(item);
   if (upnpItem == nullptr)
   {
-    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: unknown item <%s>",
-      DidlLiteUtils::GetElementName(item->GetElementNamespace(), item->GetElementName()).c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryService::CreateObject: unknown item <%s>", item->GetName().c_str());
     invocation.ReportError(UPNP_ERROR_CD_BAD_METADATA, "Bad metadata");
     return;
   }

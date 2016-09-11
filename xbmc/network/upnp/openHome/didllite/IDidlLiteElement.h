@@ -73,8 +73,7 @@ public:
   */
   virtual bool Deserialize(const TiXmlNode* node, const OhUPnPControlPointContext& context);
 
-  const std::string& GetElementNamespace() const { return m_namespace; }
-  const std::string& GetElementName() const { return m_name; }
+  const std::string& GetName() const { return m_name; }
 
 protected:
   IDidlLiteElement();
@@ -230,7 +229,6 @@ protected:
 private:
   CDidlLiteElementProperty& addProperty(const std::string& ns, const std::string& name, CDidlLiteElementProperty::Type type, void* propertyValue);
 
-  std::string m_namespace;
   std::string m_name;
 
   std::map<std::string, CDidlLiteElementProperty> m_properties;

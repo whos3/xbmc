@@ -45,16 +45,14 @@ bool FileItemUtils::DocumentToFileItemList(const CDidlLiteDocument& document, CF
     const IFileItemElement* fileItemElement = dynamic_cast<const IFileItemElement*>(element);
     if (fileItemElement == nullptr)
     {
-      CLog::Log(LOGWARNING, "FileItemUtils: failed to deserialize element <%s:%s>",
-        element->GetElementNamespace().c_str(), element->GetElementName().c_str());
+      CLog::Log(LOGWARNING, "FileItemUtils: failed to deserialize element <%s>", element->GetName().c_str());
       continue;
     }
 
     CFileItemPtr fileItem = std::make_shared<CFileItem>();
     if (!fileItemElement->ToFileItem(*fileItem, context))
     {
-      CLog::Log(LOGWARNING, "FileItemUtils: failed to deserialize element <%s:%s> into item",
-        element->GetElementNamespace().c_str(), element->GetElementName().c_str());
+      CLog::Log(LOGWARNING, "FileItemUtils: failed to deserialize element <%s> into item", element->GetName().c_str());
       continue;
     }
 
@@ -239,9 +237,8 @@ bool FileItemUtils::ConvertFileItem(const CFileItem& item, const CFileItemElemen
 
   if (!element->FromFileItem(item, context))
   {
-    CLog::Log(LOGWARNING, "FileItemUtils: failed to serialize item \"%s\" (%s) into element <%s:%s>",
-      item.GetLabel().c_str(), item.GetPath().c_str(),
-      element->GetElementNamespace().c_str(), element->GetElementName().c_str());
+    CLog::Log(LOGWARNING, "FileItemUtils: failed to serialize item \"%s\" (%s) into element <%s>",
+      item.GetLabel().c_str(), item.GetPath().c_str(), element->GetName().c_str());
     return false;
   }
 

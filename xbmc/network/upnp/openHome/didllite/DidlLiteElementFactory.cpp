@@ -106,7 +106,7 @@ bool CDidlLiteElementFactory::RegisterElement(const IDidlLiteElement* element)
   std::shared_ptr<const IDidlLiteElement> elementPtr = std::shared_ptr<const IDidlLiteElement>(element);
 
   // determine the element name
-  std::string elementName = DidlLiteUtils::GetElementName(element->GetElementNamespace(), element->GetElementName());
+  std::string elementName = element->GetName();
 
   // check if the item is an object
   const CUPnPObject* upnpObject = dynamic_cast<const CUPnPObject*>(element);

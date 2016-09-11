@@ -31,17 +31,15 @@ IDidlLiteElement::IDidlLiteElement()
 { }
 
 IDidlLiteElement::IDidlLiteElement(const std::string& name)
-  : IDidlLiteElement("", name)
+  : m_name(name)
 { }
 
 IDidlLiteElement::IDidlLiteElement(const std::string& ns, const std::string& name)
-  : m_namespace(ns),
-    m_name(name)
+  : IDidlLiteElement(DidlLiteUtils::GetElementName(ns, name))
 { }
 
 IDidlLiteElement::IDidlLiteElement(const IDidlLiteElement& element)
-  : m_namespace(element.m_namespace),
-    m_name(element.m_name)
+  : m_name(element.m_name)
 {
   // we don't copy m_properties on purpose because every property contains a pointer to the class'
   // member variable where the actual value is stored and we can't copy/map that pointer
@@ -56,8 +54,7 @@ bool IDidlLiteElement::Serialize(TiXmlNode* node, const OhUPnPRootDeviceContext&
     return false;
 
   // create the element
-  std::string elementName = DidlLiteUtils::GetElementName(m_namespace, m_name);
-  TiXmlElement newElement(elementName);
+  TiXmlElement newElement(m_name);
 
   // add all specified attributes
   for (const auto& attr : m_properties)
@@ -65,9 +62,9 @@ bool IDidlLiteElement::Serialize(TiXmlNode* node, const OhUPnPRootDeviceContext&
     if (!attr.second.Serialize(&newElement, context))
     {
       if (attr.second.IsElement())
-        CLog::Log(LOGDEBUG, "IDidlLiteElement: failed to serialize <%s><%s>", elementName.c_str(), attr.first.c_str());
+        CLog::Log(LOGDEBUG, "IDidlLiteElement: failed to serialize <%s><%s>", m_name.c_str(), attr.first.c_str());
       else
-        CLog::Log(LOGDEBUG, "IDidlLiteElement: failed to serialize %s attribute of <%s>", attr.first.c_str(), elementName.c_str());
+        CLog::Log(LOGDEBUG, "IDidlLiteElement: failed to serialize %s attribute of <%s>", attr.first.c_str(), m_name.c_str());
 
       // only fail for required properties
       if (attr.second.IsRequired(context.device.GetDeviceTypeVersion()))
@@ -89,38 +86,12 @@ bool IDidlLiteElement::Deserialize(const TiXmlNode* node, const OhUPnPControlPoi
     return false;
 
   std::string elementName = node->ValueStr();
-  std::vector<std::string> nameParts = StringUtils::Split(elementName, ':');
-  if (nameParts.size() > 2)
-    return false;
-
-  std::string name;
-  std::string ns;
-  if (nameParts.size() == 1)
-    name = nameParts.at(0);
-  else
-  {
-    ns = nameParts.at(0);
-    name = nameParts.at(1);
-  }
-
-  if (name.empty())
+  if (elementName.empty())
     return false;
 
   // check if the deserialized namespace and name match the predefined ones
-  if (!m_name.empty())
-  {
-    if (m_namespace.empty() != ns.empty() ||
-       (!m_namespace.empty() && m_namespace.compare(ns) != 0))
+  if (!m_name.empty() && m_name.compare(elementName) != 0)
       return false;
-
-    if (m_name.compare(name) != 0)
-      return false;
-  }
-  else
-  {
-    m_namespace = ns;
-    m_name = name;
-  }
 
   // deserialize the specified attributes
   for (auto& attr : m_properties)

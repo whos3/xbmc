@@ -426,8 +426,7 @@ bool COhUPnPContentDirectoryControlPoint::CreateObject(const std::string& uuid, 
   const CUPnPItem* upnpResultItem = dynamic_cast<const CUPnPItem*>(resultItem);
   if (upnpResultItem == nullptr)
   {
-    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryControlPoint: unknown created object <%s>",
-      DidlLiteUtils::GetElementName(resultItem->GetElementNamespace(), resultItem->GetElementName()).c_str());
+    CLog::Log(LOGDEBUG, "COhUPnPContentDirectoryControlPoint: unknown created object <%s>", resultItem->GetName().c_str());
     return false;
   }
 
