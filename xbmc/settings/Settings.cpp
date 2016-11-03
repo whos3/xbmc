@@ -435,12 +435,6 @@ CSettings::~CSettings()
   delete m_settingsManager;
 }
 
-CSettings& CSettings::GetInstance()
-{
-  static CSettings sSettings;
-  return sSettings;
-}
-
 bool CSettings::Initialize()
 {
   CSingleLock lock(m_critical);

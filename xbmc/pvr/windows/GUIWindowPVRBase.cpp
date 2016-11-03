@@ -22,6 +22,7 @@
 #include "GUIWindowPVRRecordings.h"
 
 #include "Application.h"
+#include "ServiceBroker.h"
 #include "addons/AddonManager.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAEDSP.h"
 #include "dialogs/GUIDialogKaiToast.h"
@@ -488,7 +489,7 @@ bool CGUIWindowPVRBase::PlayFile(CFileItem *item, bool bPlayMinimized /* = false
           if (pDialog->IsConfirmed())
           {
             CFileItem recordingItem(recording);
-            return PlayRecording(&recordingItem, CSettings::GetInstance().GetBool(CSettings::SETTING_PVRPLAYBACK_PLAYMINIMIZED), bCheckResume);
+            return PlayRecording(&recordingItem, CServiceBroker::GetSettings().GetBool(CSettings::SETTING_PVRPLAYBACK_PLAYMINIMIZED), bCheckResume);
           }
         }
       }
@@ -931,7 +932,7 @@ bool CGUIWindowPVRBase::ActionToggleTimer(CFileItem *item)
 
 bool CGUIWindowPVRBase::ActionPlayChannel(CFileItem *item)
 {
-  return PlayFile(item, CSettings::GetInstance().GetBool(CSettings::SETTING_PVRPLAYBACK_PLAYMINIMIZED));
+  return PlayFile(item, CServiceBroker::GetSettings().GetBool(CSettings::SETTING_PVRPLAYBACK_PLAYMINIMIZED));
 }
 
 bool CGUIWindowPVRBase::ActionPlayEpg(CFileItem *item, bool bPlayRecording)

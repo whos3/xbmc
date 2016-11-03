@@ -26,6 +26,7 @@
 #include "addons/Scraper.h"
 #include "Album.h"
 #include "Application.h"
+#include "ServiceBroker.h"
 #include "Artist.h"
 #include "CueInfoLoader.h"
 #include "dbwrappers/dataset.h"
@@ -3232,7 +3233,7 @@ error:
 bool CMusicDatabase::LookupCDDBInfo(bool bRequery/*=false*/)
 {
 #ifdef HAS_DVD_DRIVE
-  if (!CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOCDS_USECDDB))
+  if (!CServiceBroker::GetSettings().GetBool(CSettings::SETTING_AUDIOCDS_USECDDB))
     return false;
 
   // check network connectivity
@@ -4662,7 +4663,7 @@ void CMusicDatabase::UpdateTables(int version)
   {
     m_pDS->exec("ALTER TABLE song ADD dateAdded text");
     CMediaSettings::GetInstance().SetMusicNeedsUpdate(53);
-    CSettings::GetInstance().Save();
+    CServiceBroker::GetSettings().Save();
   }
   if (version < 54)
   {
@@ -4849,7 +4850,7 @@ void CMusicDatabase::UpdateTables(int version)
     m_pDS->exec("ALTER TABLE album_artist_new RENAME TO album_artist");
 
     CMediaSettings::GetInstance().SetMusicNeedsUpdate(58);
-    CSettings::GetInstance().Save();
+    CServiceBroker::GetSettings().Save();
   }
   if (version < 60)
   { 
@@ -5762,7 +5763,7 @@ bool CMusicDatabase::GetItems(const std::string &strBaseDir, const std::string &
   else if (StringUtils::EqualsNoCase(itemType, "roles"))
     return GetRolesNav(strBaseDir, items, filter);
   else if (StringUtils::EqualsNoCase(itemType, "artists"))
-    return GetArtistsNav(strBaseDir, items, !CSettings::GetInstance().GetBool(CSettings::SETTING_MUSICLIBRARY_SHOWCOMPILATIONARTISTS), -1, -1, -1, filter, sortDescription);
+    return GetArtistsNav(strBaseDir, items, !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_MUSICLIBRARY_SHOWCOMPILATIONARTISTS), -1, -1, -1, filter, sortDescription);
   else if (StringUtils::EqualsNoCase(itemType, "albums"))
     return GetAlbumsByWhere(strBaseDir, filter, items, sortDescription);
   else if (StringUtils::EqualsNoCase(itemType, "songs"))
@@ -6309,7 +6310,7 @@ bool CMusicDatabase::GetFilter(CDbUrl &musicUrl, Filter &filter, SortDescription
       if (xsp.GetOrder() != SortByNone)
         sorting.sortBy = xsp.GetOrder();
       sorting.sortOrder = xsp.GetOrderAscending() ? SortOrderAscending : SortOrderDescending;
-      if (CSettings::GetInstance().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING))
+      if (CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING))
         sorting.sortAttributes = SortAttributeIgnoreArticle;
     }
   }

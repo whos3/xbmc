@@ -19,6 +19,7 @@
  */
 
 #include "AddonInstaller.h"
+#include "ServiceBroker.h"
 #include "events/EventLog.h"
 #include "events/AddonManagementEvent.h"
 #include "events/NotificationEvent.h"
@@ -626,7 +627,7 @@ bool CAddonInstallJob::DoWork()
   }
 
   g_localizeStrings.LoadAddonStrings(URIUtils::AddFileToFolder(m_addon->Path(), "resources/language/"),
-      CSettings::GetInstance().GetString(CSettings::SETTING_LOCALE_LANGUAGE), m_addon->ID());
+      CServiceBroker::GetSettings().GetString(CSettings::SETTING_LOCALE_LANGUAGE), m_addon->ID());
 
   ADDON::OnPostInstall(m_addon, m_update, IsModal());
 
@@ -640,7 +641,7 @@ bool CAddonInstallJob::DoWork()
 
   CEventLog::GetInstance().Add(
     EventPtr(new CAddonManagementEvent(m_addon, m_update ? 24065 : 24064)),
-    !IsModal() && CSettings::GetInstance().GetBool(CSettings::SETTING_ADDONS_NOTIFICATIONS), false);
+    !IsModal() && CServiceBroker::GetSettings().GetBool(CSettings::SETTING_ADDONS_NOTIFICATIONS), false);
 
   // and we're done!
   MarkFinished();

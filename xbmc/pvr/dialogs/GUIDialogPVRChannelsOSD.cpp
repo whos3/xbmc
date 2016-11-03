@@ -21,6 +21,7 @@
 #include "Application.h"
 #include "FileItem.h"
 #include "GUIInfoManager.h"
+#include "ServiceBroker.h"
 #include "dialogs/GUIDialogKaiToast.h"
 #include "epg/EpgContainer.h"
 #include "guilib/LocalizeStrings.h"
@@ -256,10 +257,10 @@ void CGUIDialogPVRChannelsOSD::Clear()
 
 void CGUIDialogPVRChannelsOSD::CloseOrSelect(unsigned int iItem)
 {
-  if (CSettings::GetInstance().GetBool(CSettings::SETTING_PVRMENU_CLOSECHANNELOSDONSWITCH))
+  if (CServiceBroker::GetSettings().GetBool(CSettings::SETTING_PVRMENU_CLOSECHANNELOSDONSWITCH))
   {
-    if (CSettings::GetInstance().GetInt(CSettings::SETTING_PVRMENU_DISPLAYCHANNELINFO) > 0)
-      g_PVRManager.ShowPlayerInfo(CSettings::GetInstance().GetInt(CSettings::SETTING_PVRMENU_DISPLAYCHANNELINFO));
+    if (CServiceBroker::GetSettings().GetInt(CSettings::SETTING_PVRMENU_DISPLAYCHANNELINFO) > 0)
+      g_PVRManager.ShowPlayerInfo(CServiceBroker::GetSettings().GetInt(CSettings::SETTING_PVRMENU_DISPLAYCHANNELINFO));
     Close();
   }
   else

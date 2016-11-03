@@ -21,6 +21,7 @@
 #include "ContextMenuManager.h"
 #include "epg/GUIEPGGridContainer.h"
 #include "GUIUserMessages.h"
+#include "ServiceBroker.h"
 #include "epg/EpgContainer.h"
 #include "view/GUIViewState.h"
 #include "input/Key.h"
@@ -314,7 +315,7 @@ bool CGUIWindowPVRGuide::OnMessage(CGUIMessage& message)
           {
             case ACTION_SELECT_ITEM:
             case ACTION_MOUSE_LEFT_CLICK:
-              switch(CSettings::GetInstance().GetInt(CSettings::SETTING_EPG_SELECTACTION))
+              switch(CServiceBroker::GetSettings().GetInt(CSettings::SETTING_EPG_SELECTACTION))
               {
                 case EPG_SELECT_ACTION_CONTEXT_MENU:
                   OnPopupMenu(iItem);

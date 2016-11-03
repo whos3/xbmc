@@ -20,6 +20,7 @@
 
 #include "ContextMenuManager.h"
 #include "GUIInfoManager.h"
+#include "ServiceBroker.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAEDSP.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "guilib/LocalizeStrings.h"
@@ -231,7 +232,7 @@ bool CGUIWindowPVRRecordings::Update(const std::string &strDirectory, bool updat
 
 void CGUIWindowPVRRecordings::UpdateButtons(void)
 {
-  bool bGroupRecordings = CSettings::GetInstance().GetBool(CSettings::SETTING_PVRRECORD_GROUPRECORDINGS);
+  bool bGroupRecordings = CServiceBroker::GetSettings().GetBool(CSettings::SETTING_PVRRECORD_GROUPRECORDINGS);
   SET_CONTROL_SELECTED(GetID(), CONTROL_BTNGROUPITEMS, bGroupRecordings);
 
   CGUIRadioButtonControl *btnShowDeleted = (CGUIRadioButtonControl*) GetControl(CONTROL_BTNSHOWDELETED);
@@ -289,7 +290,7 @@ bool CGUIWindowPVRRecordings::OnMessage(CGUIMessage &message)
               }
               else
               {
-                switch (CSettings::GetInstance().GetInt(CSettings::SETTING_MYVIDEOS_SELECTACTION))
+                switch (CServiceBroker::GetSettings().GetInt(CSettings::SETTING_MYVIDEOS_SELECTACTION))
                 {
                   case SELECT_ACTION_CHOOSE:
                     OnPopupMenu(iItem);
@@ -339,8 +340,8 @@ bool CGUIWindowPVRRecordings::OnMessage(CGUIMessage &message)
       }
       else if (message.GetSenderId() == CONTROL_BTNGROUPITEMS)
       {
-        CSettings::GetInstance().ToggleBool(CSettings::SETTING_PVRRECORD_GROUPRECORDINGS);
-        CSettings::GetInstance().Save();
+        CServiceBroker::GetSettings().ToggleBool(CSettings::SETTING_PVRRECORD_GROUPRECORDINGS);
+        CServiceBroker::GetSettings().Save();
         Refresh(true);
       }
       else if (message.GetSenderId() == CONTROL_BTNSHOWDELETED)

@@ -25,6 +25,7 @@
 #include <functional>
 
 #include "Application.h"
+#include "ServiceBroker.h"
 #include "cores/IPlayer.h"
 #include "dialogs/GUIDialogExtendedProgressBar.h"
 #include "dialogs/GUIDialogOK.h"
@@ -1557,7 +1558,7 @@ void CPVRClients::ConnectionStateChange(int clientId, std::string &strConnection
     strMsg = g_localizeStrings.Get(iMsg);
 
   // Notify user.
-  if (bNotify && !CSettings::GetInstance().GetBool(CSettings::SETTING_PVRMANAGER_HIDECONNECTIONLOSTWARNING))
+  if (bNotify && !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_PVRMANAGER_HIDECONNECTIONLOSTWARNING))
     CGUIDialogKaiToast::QueueNotification(bError ? CGUIDialogKaiToast::Error : CGUIDialogKaiToast::Info, client->Name().c_str(),
                                           strMsg, 5000, true);
 

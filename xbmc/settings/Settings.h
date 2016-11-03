@@ -388,13 +388,6 @@ public:
   CSettings();
   virtual ~CSettings();
 
-  /*!
-   \brief Returns a "global" settings wrapper which can be used from anywhere.
-
-   \return "global" settings wrapper
-   */
-  static CSettings& GetInstance();
-
   CSettingsManager* GetSettingsManager() const { return m_settingsManager; }
 
   /*!

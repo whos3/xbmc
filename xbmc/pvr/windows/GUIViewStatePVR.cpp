@@ -19,6 +19,7 @@
  */
 
 #include "FileItem.h"
+#include "ServiceBroker.h"
 #include "settings/Settings.h"
 #include "view/ViewStateSettings.h"
 
@@ -48,7 +49,7 @@ void CGUIViewStateWindowPVRChannels::SaveViewState(void)
 
 CGUIViewStateWindowPVRRecordings::CGUIViewStateWindowPVRRecordings(const int windowId, const CFileItemList& items) : CGUIViewStatePVR(windowId, items)
 {
-  AddSortMethod(SortByLabel, 551, LABEL_MASKS("%L", "%I", "%L", ""), CSettings::GetInstance().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING) ? SortAttributeIgnoreArticle : SortAttributeNone);  // FileName, Size | Foldername, empty
+  AddSortMethod(SortByLabel, 551, LABEL_MASKS("%L", "%I", "%L", ""), CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING) ? SortAttributeIgnoreArticle : SortAttributeNone);  // FileName, Size | Foldername, empty
   AddSortMethod(SortByDate, 552, LABEL_MASKS("%L", "%J", "%L", "%J"));  // FileName, Date | Foldername, Date
   AddSortMethod(SortByTime, 180, LABEL_MASKS("%T", "%D"));
   AddSortMethod(SortByFile, 561, LABEL_MASKS("%L", "%I", "%L", ""));  // Filename, Size | FolderName, empty
@@ -81,7 +82,7 @@ void CGUIViewStateWindowPVRGuide::SaveViewState(void)
 
 CGUIViewStateWindowPVRTimers::CGUIViewStateWindowPVRTimers(const int windowId, const CFileItemList& items) : CGUIViewStatePVR(windowId, items)
 {
-  int sortAttributes(CSettings::GetInstance().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING) ? SortAttributeIgnoreArticle : SortAttributeNone);
+  int sortAttributes(CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_IGNORETHEWHENSORTING) ? SortAttributeIgnoreArticle : SortAttributeNone);
   sortAttributes |= SortAttributeIgnoreFolders;
   AddSortMethod(SortByLabel, static_cast<SortAttribute>(sortAttributes), 551, LABEL_MASKS("%L", "%I", "%L", ""));   // FileName, Size | Foldername, empty
   AddSortMethod(SortByDate, static_cast<SortAttribute>(sortAttributes), 552, LABEL_MASKS("%L", "%J", "%L", "%J"));  // FileName, Date | Foldername, Date
