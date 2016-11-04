@@ -6895,7 +6895,7 @@ bool CVideoDatabase::GetEpisodesByWhere(const std::string& strBaseDir, const Fil
     
     // get data from returned rows
     items.Reserve(results.size());
-    CLabelFormatter formatter("%H. %T", "");
+    CLabelFormatter formatter("%H. %T", "", !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS));
 
     const query_data &data = m_pDS->get_result_set().records;
     for (const auto &i : results)

@@ -282,7 +282,7 @@ std::string CCDDARipper::GetTrackName(CFileItem *item)
   if (pos != std::string::npos)
     strFormat.erase(0, pos+1);
 
-  CLabelFormatter formatter(strFormat, "");
+  CLabelFormatter formatter(strFormat, "", !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS));
   formatter.FormatLabel(&destItem);
 
   // grab the label to use it as our ripped filename

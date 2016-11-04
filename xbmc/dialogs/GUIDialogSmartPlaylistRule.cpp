@@ -253,7 +253,7 @@ void CGUIDialogSmartPlaylistRule::OnBrowse()
     {
       videodatabase.GetEpisodesNav(basePath + "titles/-1/-1/", items);
       // we need to replace the db label (<season>x<episode> <title>) with the title only
-      CLabelFormatter format("%T", "");
+      CLabelFormatter format("%T", "", !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS));
       for (int i = 0; i < items.Size(); i++)
         format.FormatLabel(items[i].get());
       iLabel = 20360;

@@ -607,8 +607,10 @@ void CGUIMediaWindow::SortItems(CFileItemList &items)
 // \brief Formats item labels based on the formatting provided by guiViewState
 void CGUIMediaWindow::FormatItemLabels(CFileItemList &items, const LABEL_MASKS &labelMasks)
 {
-  CLabelFormatter fileFormatter(labelMasks.m_strLabelFile, labelMasks.m_strLabel2File);
-  CLabelFormatter folderFormatter(labelMasks.m_strLabelFolder, labelMasks.m_strLabel2Folder);
+  CLabelFormatter fileFormatter(labelMasks.m_strLabelFile, labelMasks.m_strLabel2File,
+    !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS));
+  CLabelFormatter folderFormatter(labelMasks.m_strLabelFolder, labelMasks.m_strLabel2Folder,
+    !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS));
   for (int i=0; i<items.Size(); ++i)
   {
     CFileItemPtr pItem=items[i];

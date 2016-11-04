@@ -454,7 +454,7 @@ void CGUIWindowMusicPlayList::OnItemLoaded(CFileItem* pItem)
     std::string strTrack=CServiceBroker::GetSettings().GetString(CSettings::SETTING_MUSICFILES_NOWPLAYINGTRACKFORMAT);
     if (strTrack.empty())
       strTrack = CServiceBroker::GetSettings().GetString(CSettings::SETTING_MUSICFILES_TRACKFORMAT);
-    CLabelFormatter formatter(strTrack, "%D");
+    CLabelFormatter formatter(strTrack, "%D", !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS));
     formatter.FormatLabels(pItem);
   } // if (pItem->m_musicInfoTag.Loaded())
   else

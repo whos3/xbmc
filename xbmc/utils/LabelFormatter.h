@@ -47,7 +47,7 @@ struct LABEL_MASKS
 class CLabelFormatter
 {
 public:
-  CLabelFormatter(const std::string &mask, const std::string &mask2);
+  CLabelFormatter(const std::string &mask, const std::string &mask2, bool hideFileExtensions = false);
 
   void FormatLabel(CFileItem *item) const;
   void FormatLabel2(CFileItem *item) const;

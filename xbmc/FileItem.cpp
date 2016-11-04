@@ -3187,7 +3187,8 @@ bool CFileItem::LoadMusicTag()
     URIUtils::RemoveExtension(fileName);
     for (unsigned int i = 0; i < g_advancedSettings.m_musicTagsFromFileFilters.size(); i++)
     {
-      CLabelFormatter formatter(g_advancedSettings.m_musicTagsFromFileFilters[i], "");
+      CLabelFormatter formatter(g_advancedSettings.m_musicTagsFromFileFilters[i], "",
+        !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS));
       if (formatter.FillMusicTag(fileName, GetMusicInfoTag()))
       {
         GetMusicInfoTag()->SetLoaded(true);

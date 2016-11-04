@@ -21,7 +21,6 @@
 #include <cstdlib>
 
 #include "LabelFormatter.h"
-#include "ServiceBroker.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
 #include "RegExp.h"
@@ -111,13 +110,12 @@ using namespace MUSIC_INFO;
 
 #define MASK_CHARS "NSATBGYFLDIJRCKMEPHZOQUVXWacdiprstuv"
 
-CLabelFormatter::CLabelFormatter(const std::string &mask, const std::string &mask2)
+CLabelFormatter::CLabelFormatter(const std::string &mask, const std::string &mask2, bool hideFileExtensions /* = false */)
+  : m_hideFileExtensions(hideFileExtensions)
 {
   // assemble our label masks
   AssembleMask(0, mask);
   AssembleMask(1, mask2);
-  // save a bool for faster lookups
-  m_hideFileExtensions = !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_FILELISTS_SHOWEXTENSIONS);
 }
 
 std::string CLabelFormatter::GetContent(unsigned int label, const CFileItem *item) const
