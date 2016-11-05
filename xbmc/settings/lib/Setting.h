@@ -107,6 +107,7 @@ public:
   const SettingDependencies& GetDependencies() const { return m_dependencies; }
   void SetDependencies(const SettingDependencies &dependencies) { m_dependencies = dependencies; }
   const std::set<CSettingUpdate>& GetUpdates() const { return m_updates; }
+  void SetUpdates(const std::set<CSettingUpdate>& updates) { m_updates = updates; }
 
   void SetCallback(ISettingCallback *callback) { m_callback = callback; }
 

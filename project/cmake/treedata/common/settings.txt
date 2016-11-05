@@ -1,4 +1,5 @@
-xbmc/settings         settings
-xbmc/settings/dialogs settings/dialogs
-xbmc/settings/lib     settings/lib
-xbmc/settings/windows settings/windows
+xbmc/settings                         settings
+xbmc/settings/dialogs                 settings/dialogs
+xbmc/settings/lib                     settings/lib
+xbmc/settings/serializers/definitions settings/serializers/definitions
+xbmc/settings/windows                 settings/windows

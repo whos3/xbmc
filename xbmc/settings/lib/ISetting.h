@@ -98,6 +98,14 @@ public:
    */
   void SetHelp(int help) { m_help = help; }
   /*!
+  \brief TODO
+  */
+  const CSettingRequirement& GetRequirements() const { return m_requirementCondition; }
+  /*!
+  \brief TODO
+  */
+  void SetRequirements(const CSettingRequirement& requirements) { m_requirementCondition = requirements; }
+  /*!
    \brief Whether the setting object meets all necessary requirements.
 
    \return True if the setting object meets all necessary requirements, false otherwise
