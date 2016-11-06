@@ -57,6 +57,7 @@ if(UNIX)
   option(ENABLE_INTERNAL_FSTRCMP "Enable internal fstrcmp?" OFF)
   option(ENABLE_INTERNAL_FLATBUFFERS "Enable internal flatbuffers?" OFF)
   option(ENABLE_INTERNAL_DAV1D "Enable internal dav1d?" OFF)
+  option(ENABLE_INTERNAL_SPDLOG "Enable internal spdlog?" OFF)
 endif()
 # System options
 if(NOT WIN32)
@@ -126,6 +127,7 @@ set(required_deps ASS
                   OpenSSL>=1.0.2
                   PCRE
                   RapidJSON
+                  Spdlog
                   Sqlite3
                   TagLib
                   TinyXML

@@ -53,3 +53,7 @@ set(core_DEPENDS python_binding ${core_DEPENDS} CACHE STRING "" FORCE)
 if(CORE_SYSTEM_NAME STREQUAL windowsstore)
   set_target_properties(python_binding PROPERTIES STATIC_LIBRARY_FLAGS "/ignore:4264")
 endif()
+
+if(ENABLE_INTERNAL_SPDLOG)
+  add_dependencies(python_binding spdlog)
+endif()
