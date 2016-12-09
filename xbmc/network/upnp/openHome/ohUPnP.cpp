@@ -191,7 +191,7 @@ bool COhUPnP::Initialize()
   OpenHome::Net::InitialisationParams* initParams = OpenHome::Net::InitialisationParams::Create();
   initParams->SetLogOutput(OpenHome::MakeFunctorMsg(*this, &COhUPnP::ohNetLogOutput));
   initParams->SetFatalErrorHandler(OpenHome::MakeFunctorMsg(*this, &COhUPnP::ohNetFatalErrorHandler));
-  initParams->SetUserAgent(CSysInfo::GetUserAgent().c_str());
+  initParams->SetHttpUserAgent(OpenHome::Brh(CSysInfo::GetUserAgent().c_str()));
 
   // initialise the ohNet UpnpLibrary
   m_ohEnvironment.reset(OpenHome::Net::UpnpLibrary::Initialise(initParams));
@@ -596,7 +596,7 @@ void COhUPnP::OnSettingChanged(const CSetting* setting)
   else if (settingId == CSettings::SETTING_DEBUG_EXTRALOGGING ||
            settingId == CSettings::SETTING_DEBUG_SETEXTRALOGLEVEL)
   {
-    OpenHome::TUint logLevel = OpenHome::Debug::kError;
+    OpenHome::TUint64 logLevel = OpenHome::Debug::kError;
     if (g_advancedSettings.CanLogComponent(LOGUPNP))
       logLevel = OpenHome::Debug::kAll;
 
