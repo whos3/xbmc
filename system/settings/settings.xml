@@ -1719,6 +1719,20 @@
             <hidden>true</hidden>
           </control>
         </setting>
+        <setting id="services.webserverauthenticationmode" type="integer" parent="services.webserver" label="14272" help="36356">
+          <level>3</level>
+          <default>basic</default>
+          <constraints>
+            <options>
+              <option label="14273">0</option> <!-- Basic -->
+              <option label="14274">1</option> <!-- Digest -->
+            </options>
+          </constraints>
+          <dependencies>
+            <dependency type="enable" setting="services.webserver">true</dependency>
+          </dependencies>
+          <control type="list" format="integer" />
+        </setting>
         <setting id="services.webskin" type="addon" label="199" help="36332">
           <level>1</level>
           <default>webinterface.default</default>

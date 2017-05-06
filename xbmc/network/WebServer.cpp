@@ -23,6 +23,7 @@
 #ifdef HAS_WEB_SERVER
 #include <algorithm>
 #include <memory>
+#include <random>
 #include <stdexcept>
 #include <utility>
 
@@ -40,6 +41,7 @@
 #include "Util.h"
 #include "utils/Base64.h"
 #include "utils/log.h"
+#include "utils/md5.h"
 #include "utils/Mime.h"
 #include "utils/StringUtils.h"
 #include "utils/URIUtils.h"
@@ -75,6 +77,8 @@ typedef struct {
   uint64_t writePosition;
 } HttpFileDownloadContext;
 
+static const std::string ACCESS_AUTHENTICATION_REALM = "XBMC";
+
 CWebServer::CWebServer()
   : m_port(0),
     m_daemon_ip6(nullptr),
@@ -82,6 +86,7 @@ CWebServer::CWebServer()
     m_running(false),
     m_thread_stacksize(0),
     m_authenticationRequired(false),
+    m_authenticationMode(AccessAuthenticationMode::Basic),
     m_authenticationUsername("kodi"),
     m_authenticationPassword("")
 {
@@ -132,10 +137,34 @@ int CWebServer::AskForAuthentication(HTTPRequest request) const
 
   LogResponse(request, MHD_HTTP_UNAUTHORIZED);
 
-  ret = MHD_queue_basic_auth_fail_response(request.connection, "XBMC", response);
-  MHD_destroy_response(response);
+  switch (m_authenticationMode)
+  {
+    case AccessAuthenticationMode::Digest:
+      ret = AskForDigestAuthentication(request, response);
+      break;
 
+    case AccessAuthenticationMode::Basic:
+    default:
+      ret = AskForBasicAuthentication(request, response);
+      break;
+  }
+
+  MHD_destroy_response(response);
   return ret;
+}
+
+int CWebServer::AskForBasicAuthentication(HTTPRequest request, struct MHD_Response* response) const
+{
+  return MHD_queue_basic_auth_fail_response(request.connection, ACCESS_AUTHENTICATION_REALM.c_str(), response);
+}
+
+int CWebServer::AskForDigestAuthentication(HTTPRequest request, struct MHD_Response* response) const
+{
+  int authCheck = MHD_digest_auth_check(request.connection, ACCESS_AUTHENTICATION_REALM.c_str(),
+    m_authenticationUsername.c_str(), m_authenticationPassword.c_str(), 300);
+
+  return MHD_queue_auth_fail_response(request.connection, ACCESS_AUTHENTICATION_REALM.c_str(),
+    m_authenticationDigestOpaque.c_str(), response, (authCheck == MHD_INVALID_NONCE) ? MHD_YES : MHD_NO);
 }
 
 bool CWebServer::IsAuthenticated(HTTPRequest request) const
@@ -145,6 +174,19 @@ bool CWebServer::IsAuthenticated(HTTPRequest request) const
   if (!m_authenticationRequired)
     return true;
 
+  switch (m_authenticationMode)
+  {
+    case AccessAuthenticationMode::Digest:
+      return IsDigestAuthenticated(request);
+
+    case AccessAuthenticationMode::Basic:
+    default:
+      return IsBasicAuthenticated(request);
+  }
+}
+
+bool CWebServer::IsBasicAuthenticated(HTTPRequest request) const
+{
   // try to retrieve username and password for basic authentication
   char* password = nullptr;
   char* username = MHD_basic_auth_get_username_password(request.connection, &password);
@@ -154,10 +196,27 @@ bool CWebServer::IsAuthenticated(HTTPRequest request) const
 
   // compare the received username and password
   bool authenticated = m_authenticationUsername.compare(username) == 0 &&
-                       m_authenticationPassword.compare(password) == 0;
+    m_authenticationPassword.compare(password) == 0;
 
   free(username);
   free(password);
+
+  return authenticated;
+}
+
+bool CWebServer::IsDigestAuthenticated(HTTPRequest request) const
+{
+  // get the username
+  char* username = MHD_digest_auth_get_username(request.connection);
+  if (username == nullptr)
+    return false;
+
+  // check the received username and password
+  bool authenticated = m_authenticationUsername.compare(username) == 0 &&
+    MHD_digest_auth_check(request.connection, ACCESS_AUTHENTICATION_REALM.c_str(),
+      m_authenticationUsername.c_str(), m_authenticationPassword.c_str(), 300) == MHD_YES;
+
+  free(username);
 
   return authenticated;
 }
@@ -209,12 +268,12 @@ int CWebServer::HandlePartialRequest(struct MHD_Connection *connection, Connecti
   // reset con_cls and set it if still necessary
   *con_cls = nullptr;
 
-  if (!IsAuthenticated(request)) 
-    return AskForAuthentication(request);
-
   // check if this is the first call to AnswerToConnection for this request
   if (isNewRequest)
   {
+    if (!IsAuthenticated(request))
+      return AskForAuthentication(request);
+
     // look for a IHTTPRequestHandler which can take care of the current request
     auto handler = FindRequestHandler(request);
     if (handler != nullptr)
@@ -1113,6 +1172,10 @@ struct MHD_Daemon* CWebServer::StartMHD(unsigned int flags, int port)
 {
   unsigned int timeout = 60 * 60 * 24;
 
+  // create a new digest authentication none
+  CreateRandomDigestAuthenticationNone();
+
+
 #if MHD_VERSION >= 0x00040500
   MHD_set_panic_func(&panicHandlerForMHD, nullptr);
 #endif
@@ -1147,13 +1210,15 @@ struct MHD_Daemon* CWebServer::StartMHD(unsigned int flags, int port)
 #if (MHD_VERSION >= 0x00040001)
                           MHD_OPTION_EXTERNAL_LOGGER, &logFromMHD, nullptr,
 #endif // MHD_VERSION >= 0x00040001
+                          MHD_OPTION_DIGEST_AUTH_RANDOM, sizeof(m_authenticationDigestNonce), m_authenticationDigestNonce,
+                          MHD_OPTION_NONCE_NC_SIZE, 100,
                           MHD_OPTION_THREAD_STACK_SIZE, m_thread_stacksize,
                           MHD_OPTION_END);
 }
 
-bool CWebServer::Start(uint16_t port, const std::string &username, const std::string &password)
+bool CWebServer::Start(uint16_t port, const std::string &username, const std::string &password, AccessAuthenticationMode authenticationMode /* = AccessAuthenticationMode::Basic */)
 {
-  SetCredentials(username, password);
+  SetCredentials(username, password, authenticationMode);
   if (!m_running)
   {
     int v6testSock;
@@ -1201,13 +1266,18 @@ bool CWebServer::IsStarted()
   return m_running;
 }
 
-void CWebServer::SetCredentials(const std::string &username, const std::string &password)
+void CWebServer::SetCredentials(const std::string &username, const std::string &password, AccessAuthenticationMode authenticationMode /* = AccessAuthenticationMode::Basic */)
 {
   CSingleLock lock(m_critSection);
 
   m_authenticationUsername = username;
   m_authenticationPassword = password;
   m_authenticationRequired = !m_authenticationPassword.empty();
+  m_authenticationMode = authenticationMode;
+
+  // create a new opaque string for digest authentication
+  if (m_authenticationMode == AccessAuthenticationMode::Digest)
+    m_authenticationDigestOpaque = XBMC::XBMC_MD5::GetMD5(StringUtils::CreateUUID());
 }
 
 void CWebServer::RegisterRequestHandler(IHTTPRequestHandler *handler)
@@ -1269,6 +1339,16 @@ void CWebServer::LogResponse(HTTPRequest request, int responseStatus) const
 
   for (const auto header : headerValues)
     CLog::Log(LOGDEBUG, "CWebServer[%hu] [OUT] %s: %s", m_port, header.first.c_str(), header.second.c_str());
+}
+
+void CWebServer::CreateRandomDigestAuthenticationNone()
+{
+  std::random_device rand;
+  for (size_t i = 0; i < sizeof(m_authenticationDigestNonce); i += sizeof(std::random_device::result_type))
+  {
+    std::random_device::result_type value = rand();
+    memcpy(m_authenticationDigestNonce + i, &value, sizeof(value));
+  }
 }
 
 std::string CWebServer::CreateMimeTypeFromExtension(const char *ext)

@@ -35,16 +35,22 @@ namespace XFILE
 class CDateTime;
 class CVariant;
 
+enum class AccessAuthenticationMode
+{
+  Basic = 0,
+  Digest = 1
+};
+
 class CWebServer
 {
 public:
   CWebServer();
   virtual ~CWebServer() { }
 
-  bool Start(uint16_t port, const std::string &username, const std::string &password);
+  bool Start(uint16_t port, const std::string &username, const std::string &password, AccessAuthenticationMode authenticationMode = AccessAuthenticationMode::Basic);
   bool Stop();
   bool IsStarted();
-  void SetCredentials(const std::string &username, const std::string &password);
+  void SetCredentials(const std::string &username, const std::string &password, AccessAuthenticationMode authenticationMode = AccessAuthenticationMode::Basic);
 
   void RegisterRequestHandler(IHTTPRequestHandler *handler);
   void UnregisterRequestHandler(IHTTPRequestHandler *handler);
@@ -80,7 +86,11 @@ private:
   std::shared_ptr<IHTTPRequestHandler> FindRequestHandler(HTTPRequest request) const;
 
   int AskForAuthentication(HTTPRequest request) const;
+  int AskForBasicAuthentication(HTTPRequest request, struct MHD_Response* response) const;
+  int AskForDigestAuthentication(HTTPRequest request, struct MHD_Response* response) const;
   bool IsAuthenticated(HTTPRequest request) const;
+  bool IsBasicAuthenticated(HTTPRequest request) const;
+  bool IsDigestAuthenticated(HTTPRequest request) const;
 
   bool IsRequestCacheable(HTTPRequest request) const;
   bool IsRequestRanged(HTTPRequest request, const CDateTime &lastModified) const;
@@ -104,6 +114,8 @@ private:
 
   void LogRequest(HTTPRequest request) const;
   void LogResponse(HTTPRequest request, int responseStatus) const;
+
+  void CreateRandomDigestAuthenticationNone();
 
   static std::string CreateMimeTypeFromExtension(const char *ext);
 
@@ -145,8 +157,11 @@ private:
   bool m_running;
   size_t m_thread_stacksize;
   bool m_authenticationRequired;
+  AccessAuthenticationMode m_authenticationMode;
   std::string m_authenticationUsername;
   std::string m_authenticationPassword;
+  char m_authenticationDigestNonce[16];
+  std::string m_authenticationDigestOpaque;
   CCriticalSection m_critSection;
   std::vector<IHTTPRequestHandler *> m_requestHandlers;
 };

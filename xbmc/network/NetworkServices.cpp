@@ -431,10 +431,12 @@ void CNetworkServices::OnSettingChanged(const CSetting *setting)
   const std::string &settingId = setting->GetId();
 #ifdef HAS_WEB_SERVER
   if (settingId == CSettings::SETTING_SERVICES_WEBSERVERUSERNAME ||
-      settingId == CSettings::SETTING_SERVICES_WEBSERVERPASSWORD)
+      settingId == CSettings::SETTING_SERVICES_WEBSERVERPASSWORD ||
+      settingId == CSettings::SETTING_SERVICES_WEBSERVERAUTHENTICATIONMODE)
   {
     m_webserver.SetCredentials(CServiceBroker::GetSettings().GetString(CSettings::SETTING_SERVICES_WEBSERVERUSERNAME),
-                               CServiceBroker::GetSettings().GetString(CSettings::SETTING_SERVICES_WEBSERVERPASSWORD));
+      CServiceBroker::GetSettings().GetString(CSettings::SETTING_SERVICES_WEBSERVERPASSWORD),
+      static_cast<AccessAuthenticationMode>(CServiceBroker::GetSettings().GetInt(CSettings::SETTING_SERVICES_WEBSERVERAUTHENTICATIONMODE)));
   }
   else
 #endif // HAS_WEB_SERVER
@@ -529,7 +531,9 @@ bool CNetworkServices::StartWebserver()
   if (IsWebserverRunning())
     return true;
 
-  if (!m_webserver.Start(webPort, CServiceBroker::GetSettings().GetString(CSettings::SETTING_SERVICES_WEBSERVERUSERNAME), CServiceBroker::GetSettings().GetString(CSettings::SETTING_SERVICES_WEBSERVERPASSWORD)))
+  if (!m_webserver.Start(webPort, CServiceBroker::GetSettings().GetString(CSettings::SETTING_SERVICES_WEBSERVERUSERNAME),
+    CServiceBroker::GetSettings().GetString(CSettings::SETTING_SERVICES_WEBSERVERPASSWORD),
+    static_cast<AccessAuthenticationMode>(CServiceBroker::GetSettings().GetInt(CSettings::SETTING_SERVICES_WEBSERVERAUTHENTICATIONMODE))))
     return false;
 
 #ifdef HAS_ZEROCONF

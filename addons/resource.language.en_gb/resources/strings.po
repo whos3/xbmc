@@ -7833,7 +7833,20 @@ msgctxt "#14271"
 msgid "Region default format"
 msgstr ""
 
-#empty strings from id 14272 to 14274
+#: system/settings/settings.xml
+msgctxt "#14272"
+msgid "Authentication mode"
+msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#14273"
+msgid "Basic"
+msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#14274"
+msgid "Digest"
+msgstr ""
 
 #: system/settings/settings.xml
 msgctxt "#14275"
@@ -18650,7 +18663,11 @@ msgctxt "#36355"
 msgid "In a multi-screen configuration, the screens not displaying this application are blacked out."
 msgstr ""
 
-#empty string with id 36356
+#. Description of setting with label #14272 "HTTP access authentication mode"
+#: system/settings/settings.xml
+msgctxt "#36356"
+msgid "Choose the HTTP access authentication mode to be used. Digest access authentication is more secure than basic access authentication. This only takes effect when both the username and the password are set."
+msgstr ""
 
 #. Description of setting with label #214 "Video calibration..."
 #: system/settings/settings.xml

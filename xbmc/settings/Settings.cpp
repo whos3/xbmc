@@ -318,6 +318,7 @@ const std::string CSettings::SETTING_SERVICES_WEBSERVER = "services.webserver";
 const std::string CSettings::SETTING_SERVICES_WEBSERVERPORT = "services.webserverport";
 const std::string CSettings::SETTING_SERVICES_WEBSERVERUSERNAME = "services.webserverusername";
 const std::string CSettings::SETTING_SERVICES_WEBSERVERPASSWORD = "services.webserverpassword";
+const std::string CSettings::SETTING_SERVICES_WEBSERVERAUTHENTICATIONMODE = "services.webserverauthenticationmode";
 const std::string CSettings::SETTING_SERVICES_WEBSKIN = "services.webskin";
 const std::string CSettings::SETTING_SERVICES_ESENABLED = "services.esenabled";
 const std::string CSettings::SETTING_SERVICES_ESPORT = "services.esport";
@@ -1145,6 +1146,7 @@ void CSettings::InitializeISettingCallbacks()
   settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERPORT);
   settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERUSERNAME);
   settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERPASSWORD);
+  settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERAUTHENTICATIONMODE);
   settingSet.insert(CSettings::SETTING_SERVICES_ZEROCONF);
   settingSet.insert(CSettings::SETTING_SERVICES_AIRPLAY);
   settingSet.insert(CSettings::SETTING_SERVICES_AIRPLAYVOLUMECONTROL);
