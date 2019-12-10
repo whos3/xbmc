@@ -561,7 +561,7 @@ bool CGUIControlListSetting::OnClick()
   }
 
   if (ret)
-    Update();
+    Update(true);
   else
     SetValid(false);
 
@@ -771,7 +771,7 @@ bool CGUIControlButtonSetting::OnClick()
   }
 
   // update the displayed value
-  Update();
+  Update(true);
 
   return IsValid();
 }
