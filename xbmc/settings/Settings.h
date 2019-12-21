@@ -254,6 +254,7 @@ public:
   static const std::string SETTING_SERVICES_DEVICENAME;
   static const std::string SETTING_SERVICES_DEVICEUUID;
   static const std::string SETTING_SERVICES_UPNP;
+  static const std::string SETTING_SERVICES_UPNPINTERFACE;
   static const std::string SETTING_SERVICES_UPNPSERVER;
   static const std::string SETTING_SERVICES_UPNPANNOUNCE;
   static const std::string SETTING_SERVICES_UPNPLOOKFOREXTERNALSUBTITLES;

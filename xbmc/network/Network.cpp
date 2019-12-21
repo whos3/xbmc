@@ -17,6 +17,8 @@
 #include "network/NetworkServices.h"
 #include "settings/Settings.h"
 #include "settings/SettingsComponent.h"
+#include "settings/lib/Setting.h"
+#include "settings/lib/SettingDefinitions.h"
 #include "utils/log.h"
 #ifdef TARGET_WINDOWS
 #include "platform/win32/WIN32Util.h"
@@ -521,4 +523,25 @@ std::string CNetworkBase::GetMaskByPrefixLength(uint8_t prefixLength)
   sa.sin_family = AF_INET;
   sa.sin_addr.s_addr = htonl(~((1 << (32u - prefixLength)) - 1));;
   return CNetworkBase::GetIpStr(reinterpret_cast<struct sockaddr*>(&sa));
+}
+
+void CNetworkBase::SettingOptionsNetworkInterfacesFiller(std::shared_ptr<const CSetting> setting,
+  std::vector<StringSettingOption>& list, std::string& current, void* data)
+{
+  bool foundCurrent = false;
+  const auto interfaces = CServiceBroker::GetNetwork().GetInterfaceList();
+  for (const auto& iface : interfaces)
+  {
+    if (iface == nullptr || !iface->IsEnabled() || !iface->IsConnected())
+      continue;
+
+    const auto& ip = iface->GetCurrentIPAddress();
+    list.emplace_back(ip, ip);
+
+    if (ip == current)
+      foundCurrent = true;
+  }
+
+  if (current.empty() || !foundCurrent)
+    current = list.front().value;
 }

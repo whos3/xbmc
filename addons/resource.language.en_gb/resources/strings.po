@@ -13792,7 +13792,10 @@ msgctxt "#21397"
 msgid "High quality pixel shader v2"
 msgstr ""
 
-#empty string with id 21398
+#: system/settings/settings.xml
+msgctxt "#21398"
+msgid "Network interface"
+msgstr ""
 
 msgctxt "#21399"
 msgid "Use tween animations"
@@ -19503,7 +19506,11 @@ msgctxt "#36357"
 msgid "Calibrate the user interface by adjusting the overscan. Use this tool if the image being displayed is too large or small for your display."
 msgstr ""
 
-#empty string with id 36358
+#. Description of setting with label #21398 "Network interface"
+#: system/settings/settings.xml
+msgctxt "#36358"
+msgid "Specifies which network interface UPnP shall use."
+msgstr ""
 
 #. Description of setting with label #36042 "Use limited colour range (16-235)"
 #: system/settings/settings.xml

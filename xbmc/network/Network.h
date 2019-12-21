@@ -35,6 +35,7 @@ public:
 
 class CSettings;
 class CNetworkServices;
+struct StringSettingOption;
 struct sockaddr;
 
 class CNetworkBase
@@ -108,6 +109,8 @@ public:
     \return
    */
    static std::string GetMaskByPrefixLength(uint8_t prefixLength);
+
+   static void SettingOptionsNetworkInterfacesFiller(std::shared_ptr<const CSetting> setting, std::vector<StringSettingOption>& list, std::string& current, void* data);
 
   std::unique_ptr<CNetworkServices> m_services;
 };

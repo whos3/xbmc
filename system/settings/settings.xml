@@ -1825,6 +1825,18 @@
           <default>false</default>
           <control type="toggle" />
         </setting>
+        <setting id="services.upnpinterface" type="string" parent="services.upnp" label="21398" help="36358">
+          <level>2</level>
+          <default></default>
+          <dependencies>
+            <dependency type="enable" setting="services.upnp" operator="is">true</dependency>
+          </dependencies>
+          <constraints>
+            <allowempty>true</allowempty>
+            <options>networkinterfaces</options>
+          </constraints>
+          <control type="list" format="string" />
+        </setting>
         <setting id="services.upnpserver" type="boolean" parent="services.upnp" label="21360" help="36323">
           <level>0</level>
           <default>false</default>

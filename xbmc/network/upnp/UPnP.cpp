@@ -422,15 +422,18 @@ CUPnP::CUPnP() :
     m_UPnP = new PLT_UPnP();
 
     // keep main IP around
-    if (CServiceBroker::GetNetwork().GetFirstConnectedInterface()) {
-        m_IP = CServiceBroker::GetNetwork().GetFirstConnectedInterface()->GetCurrentIPAddress().c_str();
+    m_IP = CServiceBroker::GetSettingsComponent()->GetSettings()->GetString(CSettings::SETTING_SERVICES_UPNPINTERFACE);
+    if (m_IP.empty()) {
+        if (CServiceBroker::GetNetwork().GetFirstConnectedInterface()) {
+            m_IP = CServiceBroker::GetNetwork().GetFirstConnectedInterface()->GetCurrentIPAddress().c_str();
+        }
+        NPT_List<NPT_IpAddress> list;
+        if (NPT_SUCCEEDED(PLT_UPnPMessageHelper::GetIPAddresses(list)) && list.GetItemCount()) {
+            m_IP = (*(list.GetFirstItem())).ToString();
+        }
+        else if(m_IP.empty())
+            m_IP = "localhost";
     }
-    NPT_List<NPT_IpAddress> list;
-    if (NPT_SUCCEEDED(PLT_UPnPMessageHelper::GetIPAddresses(list)) && list.GetItemCount()) {
-        m_IP = (*(list.GetFirstItem())).ToString();
-    }
-    else if(m_IP.empty())
-        m_IP = "localhost";
 
     // start upnp monitoring
     m_UPnP->Start();

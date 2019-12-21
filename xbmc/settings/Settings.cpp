@@ -22,6 +22,7 @@
 #if defined(TARGET_POSIX)
 #include "platform/posix/PosixTimezone.h"
 #endif // defined(TARGET_POSIX)
+#include "network/Network.h"
 #include "network/upnp/UPnPSettings.h"
 #include "network/WakeOnAccess.h"
 #if defined(TARGET_DARWIN_OSX)
@@ -288,6 +289,7 @@ const std::string CSettings::SETTING_WEATHER_ADDONSETTINGS = "weather.addonsetti
 const std::string CSettings::SETTING_SERVICES_DEVICENAME = "services.devicename";
 const std::string CSettings::SETTING_SERVICES_DEVICEUUID = "services.deviceuuid";
 const std::string CSettings::SETTING_SERVICES_UPNP = "services.upnp";
+const std::string CSettings::SETTING_SERVICES_UPNPINTERFACE = "services.upnpinterface";
 const std::string CSettings::SETTING_SERVICES_UPNPSERVER = "services.upnpserver";
 const std::string CSettings::SETTING_SERVICES_UPNPANNOUNCE = "services.upnpannounce";
 const std::string CSettings::SETTING_SERVICES_UPNPLOOKFOREXTERNALSUBTITLES = "services.upnplookforexternalsubtitles";
@@ -680,6 +682,7 @@ void CSettings::InitializeOptionFillers()
   GetSettingsManager()->RegisterSettingOptionsFiller("timezones", CPosixTimezone::SettingOptionsTimezonesFiller);
 #endif
   GetSettingsManager()->RegisterSettingOptionsFiller("keyboardlayouts", CKeyboardLayoutManager::SettingOptionsKeyboardLayoutsFiller);
+  GetSettingsManager()->RegisterSettingOptionsFiller("networkinterfaces", CNetworkBase::SettingOptionsNetworkInterfacesFiller);
 }
 
 void CSettings::UninitializeOptionFillers()

@@ -119,6 +119,7 @@ CNetworkServices::CNetworkServices()
     CSettings::SETTING_SERVICES_USEAIRPLAYPASSWORD,
     CSettings::SETTING_SERVICES_AIRPLAYPASSWORD,
     CSettings::SETTING_SERVICES_UPNP,
+    CSettings::SETTING_SERVICES_UPNPINTERFACE,
     CSettings::SETTING_SERVICES_UPNPSERVER,
     CSettings::SETTING_SERVICES_UPNPRENDERER,
     CSettings::SETTING_SERVICES_UPNPCONTROLLER,
@@ -305,6 +306,21 @@ bool CNetworkServices::OnSettingChanging(std::shared_ptr<const CSetting> setting
       StopUPnPController();
       StopUPnPClient();
     }
+  }
+  else if (settingId == CSettings::SETTING_SERVICES_UPNPINTERFACE)
+  {
+    const auto& ip = std::static_pointer_cast<const CSettingString>(setting)->GetValue();
+    if (ip == CUPnP::GetInstance()->GetIp())
+      return true;
+
+    // set the IP address
+    CUPnP::GetInstance()->SetIp(ip);
+
+    // restart the server and renderer
+    StopUPnPRenderer();
+    StopUPnPServer();
+    StartUPnPServer();
+    StartUPnPRenderer();
   }
   else if (settingId == CSettings::SETTING_SERVICES_UPNPSERVER)
   {
