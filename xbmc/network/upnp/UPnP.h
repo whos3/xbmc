@@ -63,6 +63,9 @@ public:
     static void   ReleaseInstance(bool bWait);
     static bool   IsInstantiated() { return upnp != NULL; }
 
+    const std::string& GetIp() const { return m_IP; }
+    void SetIp(const std::string& ip) { m_IP = ip; }
+
     static bool MarkWatched(const CFileItem& item,
                             const bool watched);
 
