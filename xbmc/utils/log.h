@@ -92,7 +92,7 @@ public:
 #define LogFC(loglevel, component, ...) LogFunction((loglevel), __FUNCTION__, (component), ##__VA_ARGS__)
   static void MemDump(char *pData, int length);
   static bool Init(const std::string& path);
-  static void PrintDebugString(const std::string& line); // universal interface for printing debug strings
+  static void PrintDebugString(const std::string& line, int logLevel = LOGDEBUG); // universal interface for printing debug strings
   static void SetLogLevel(int level);
   static int  GetLogLevel();
   static void SetExtraLogLevels(int level);

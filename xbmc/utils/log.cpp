@@ -80,7 +80,7 @@ void CLog::LogString(int logLevel, std::string&& logString)
     {
       std::string strData2 = StringUtils::Format("Previous line repeats %d times.",
                                                 g_logState.m_repeatCount);
-      PrintDebugString(strData2);
+      PrintDebugString(strData2, g_logState.m_repeatLogLevel);
       WriteLogString(g_logState.m_repeatLogLevel, strData2);
       g_logState.m_repeatCount = 0;
     }
@@ -88,7 +88,7 @@ void CLog::LogString(int logLevel, std::string&& logString)
     g_logState.m_repeatLine = strData;
     g_logState.m_repeatLogLevel = logLevel;
 
-    PrintDebugString(strData);
+    PrintDebugString(strData, logLevel);
 
     WriteLogString(logLevel, strData);
   }
@@ -182,10 +182,18 @@ bool CLog::IsLogLevelLogged(int loglevel)
 }
 
 
-void CLog::PrintDebugString(const std::string& line)
+void CLog::PrintDebugString(const std::string& line, int logLevel /* = LOGDEBUG */)
 {
 #if defined(_DEBUG) || defined(PROFILE)
-  g_logState.m_platform.PrintDebugString(line);
+  static const char* prefixFormat = "%7s: ";
+
+  std::string strData(line);
+  /* fixup newline alignment, number of spaces should equal prefix length */
+  StringUtils::Replace(strData, "\n", "\n         ");
+
+  strData = StringUtils::Format(prefixFormat, levelNames[logLevel]) + strData;
+
+  g_logState.m_platform.PrintDebugString(strData);
 #endif // defined(_DEBUG) || defined(PROFILE)
 }
 
