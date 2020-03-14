@@ -8,9 +8,6 @@
 
 #pragma once
 
-// spdlog specific defines
-#define SPDLOG_LEVEL_NAMES  { "TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL", "OFF" };
-
 #include "ServiceBroker.h"
 #include "commons/ilog.h"
 #include "settings/AdvancedSettings.h"
@@ -20,8 +17,6 @@
 #include "utils/logtypes.h"
 
 #include <string>
-
-#include <spdlog/spdlog.h>
 
 namespace spdlog
 {
@@ -48,7 +43,10 @@ public:
   template <typename Char, typename... Args>
   static inline void Log(int level, const Char* format, Args&&... args)
   {
-    Log(MapLogLevel(level), format, std::forward<Args>(args)...);
+    if (m_defaultLogger == nullptr)
+      return;
+
+    FormatAndLogInternal(level, format, std::forward<Args>(args)...);
   }
 
   template <typename Char, typename... Args>
@@ -61,40 +59,7 @@ public:
   }
 
   template <typename Char, typename... Args>
-  static inline void Log(spdlog::level::level_enum level, const Char* format, Args&&... args)
-  {
-    if (m_defaultLogger == nullptr)
-      return;
-
-    FormatAndLogInternal(level, format, std::forward<Args>(args)...);
-  }
-
-  template <typename Char, typename... Args>
-  static inline void Log(spdlog::level::level_enum level, int component, const Char* format, Args&&... args)
-  {
-    if (!CServiceBroker::GetSettingsComponent()->GetAdvancedSettings()->CanLogComponent(component))
-      return;
-
-    Log(level, format, std::forward<Args>(args)...);
-  }
-
-  template <typename Char, typename... Args>
   static inline void LogFunction(int level, const char* functionName, const Char* format, Args&&... args)
-  {
-    LogFunction(MapLogLevel(level), functionName, format, std::forward<Args>(args)...);
-  }
-
-  template <typename Char, typename... Args>
-  static inline void LogFunction(int level, const char* functionName, int component, const Char* format, Args&&... args)
-  {
-    if (!CServiceBroker::GetSettingsComponent()->GetAdvancedSettings()->CanLogComponent(component))
-      return;
-
-    LogFunction(level, functionName, format, std::forward<Args>(args)...);
-  }
-
-  template <typename Char, typename... Args>
-  static inline void LogFunction(spdlog::level::level_enum level, const char* functionName, const Char* format, Args&&... args)
   {
     if (m_defaultLogger == nullptr)
       return;
@@ -106,7 +71,7 @@ public:
   }
 
   template <typename Char, typename... Args>
-  static inline void LogFunction(spdlog::level::level_enum level, const char* functionName, int component, const Char* format, Args&&... args)
+  static inline void LogFunction(int level, const char* functionName, int component, const Char* format, Args&&... args)
   {
     if (!CServiceBroker::GetSettingsComponent()->GetAdvancedSettings()->CanLogComponent(component))
       return;
@@ -118,59 +83,38 @@ public:
 #define LogFC(level, component, format, ...) LogFunction((level), __FUNCTION__, (component), (format), ##__VA_ARGS__)
 
 private:
-  static spdlog::level::level_enum MapLogLevel(int level)
-  {
-    switch (level)
-    {
-      case LOGDEBUG:
-        return spdlog::level::debug;
-      case LOGINFO:
-      case LOGNOTICE:
-        return spdlog::level::info;
-      case LOGWARNING:
-        return spdlog::level::warn;
-      case LOGERROR:
-        return spdlog::level::err;
-      case LOGSEVERE:
-      case LOGFATAL:
-        return spdlog::level::critical;
-      case LOGNONE:
-        return spdlog::level::off;
-
-      default:
-        break;
-    }
-
-    return spdlog::level::info;
-  }
-
   template <typename... Args>
-  static inline void FormatAndLogInternal(spdlog::level::level_enum level, const char* format, Args&&... args)
+  static inline void FormatAndLogInternal(int level, const char* format, Args&&... args)
   {
     // TODO: for now we manually format the messages to support both python- and printf-style formatting.
     //       this can be removed once all log messages have been adjusted to python-style formatting
-    m_defaultLogger->log(level, StringUtils::Format(format, std::forward<Args>(args)...));
+   LogInternal(level, StringUtils::Format(format, std::forward<Args>(args)...));
   }
 
   template <typename... Args>
-  static inline void FormatAndLogInternal(spdlog::level::level_enum level, const wchar_t* format, Args&&... args)
+  static inline void FormatAndLogInternal(int level, const wchar_t* format, Args&&... args)
   {
     // TODO: for now we manually format the messages to support both python- and printf-style formatting.
     //       this can be removed once all log messages have been adjusted to python-style formatting
-    m_defaultLogger->log(level, StringUtils::Format(format, std::forward<Args>(args)...).c_str());
+    LogInternal(level, StringUtils::Format(format, std::forward<Args>(args)...));
   }
 
   template <typename... Args>
-  static inline void FormatAndLogFunctionInternal(spdlog::level::level_enum level, const char* functionName, const char* format, Args&&... args)
+  static inline void FormatAndLogFunctionInternal(int level, const char* functionName, const char* format, Args&&... args)
   {
     FormatAndLogInternal(level, StringUtils::Format("{0:s}: {1:s}", functionName, format).c_str(), std::forward<Args>(args)...);
   }
 
   template <typename... Args>
-  static inline void FormatAndLogFunctionInternal(spdlog::level::level_enum level, const char* functionName, const wchar_t* format, Args&&... args)
+  static inline void FormatAndLogFunctionInternal(int level, const char* functionName, const wchar_t* format, Args&&... args)
   {
     FormatAndLogInternal(level, StringUtils::Format(L"{0:s}: {1:s}", functionName, format).c_str(), std::forward<Args>(args)...);
   }
+
+  static void LogInternal(int level, std::string&& logString);
+#ifdef TARGET_WINDOWS
+  static void LogInternal(int level, std::wstring&& logString);
+#endif
 
   static void InitializeSinks();
   static Logger CreateLogger(const std::string& loggerName);

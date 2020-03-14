@@ -12,6 +12,9 @@
 #include "filesystem/File.h"
 #include "utils/URIUtils.h"
 
+ // spdlog specific defines
+#define SPDLOG_LEVEL_NAMES  { "TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL", "OFF" };
+
 #if defined(TARGET_ANDROID)
 #include "platform/android/utils/AndroidInterfaceForCLog.h"
 #elif defined(TARGET_DARWIN)
@@ -24,8 +27,35 @@
 
 #include <cstring>
 
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/dist_sink.h>
+
+static spdlog::level::level_enum MapLogLevel(int level)
+{
+  switch (level)
+  {
+  case LOGDEBUG:
+    return spdlog::level::debug;
+  case LOGINFO:
+  case LOGNOTICE:
+    return spdlog::level::info;
+  case LOGWARNING:
+    return spdlog::level::warn;
+  case LOGERROR:
+    return spdlog::level::err;
+  case LOGSEVERE:
+  case LOGFATAL:
+    return spdlog::level::critical;
+  case LOGNONE:
+    return spdlog::level::off;
+
+  default:
+    break;
+  }
+
+  return spdlog::level::info;
+}
 
 static constexpr unsigned char Utf8Bom[3] = { 0xEF, 0xBB, 0xBF };
 static const std::string LogFileExtension = ".log";
@@ -166,6 +196,18 @@ Logger CLog::Get(const std::string& loggerName)
     return spdlog::get(loggerName);
   }
 }
+
+void CLog::LogInternal(int level, std::string&& logString)
+{
+  m_defaultLogger->log(MapLogLevel(level), logString);
+}
+
+#ifdef TARGET_WINDOWS
+void CLog::LogInternal(int level, std::wstring&& logString)
+{
+  m_defaultLogger->log(MapLogLevel(level), logString);
+}
+#endif
 
 void CLog::InitializeSinks()
 {
