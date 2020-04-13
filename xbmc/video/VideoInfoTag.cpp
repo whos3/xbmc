@@ -36,12 +36,16 @@ bool operator!=(const CRating& lhs, const CRating& rhs)
 
 bool SActorInfo::operator==(const SActorInfo &rhs) const
 {
-  bool ret = true;
-  ret &= strName.compare(rhs.strName) == 0;
-  ret &= strRole.compare(rhs.strRole) == 0;
-  ret &= thumb.compare(rhs.thumb) == 0;
+  if (strName.compare(rhs.strName) != 0)
+    return false;
+  if (strRole.compare(rhs.strRole) != 0)
+    return false;
+  if (thumb.compare(rhs.thumb) != 0)
+    return false;
+  if (thumbUrl != rhs.thumbUrl)
+    return false;
 
-  return ret;
+  return true;
 }
 
 void CVideoInfoTag::Reset()
