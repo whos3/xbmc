@@ -326,7 +326,8 @@ bool CVideoImportHandler::Compare(const CFileItem *originalItem, const CFileItem
 
         if (originalActor.strName != newActor.strName ||
             originalActor.strRole != newActor.strRole ||
-            (!newActor.thumb.empty() && originalActor.thumb != newActor.thumb))
+           (!newActor.thumb.empty() && originalActor.thumb != newActor.thumb) ||
+           (!newActor.thumbUrl.m_xml.empty() && originalActor.thumbUrl.m_xml != newActor.thumbUrl.m_xml))
         {
           equal = false;
           break;
