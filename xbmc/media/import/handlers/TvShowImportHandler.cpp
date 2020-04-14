@@ -248,7 +248,6 @@ std::set<Field> CTvShowImportHandler::IgnoreDifferences() const
     FieldSeason,
     FieldSeasonSpecialSort,
     FieldSet,
-    FieldTag,
     FieldTagline,
     FieldTime,
     FieldTop250,
